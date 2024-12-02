@@ -1,5 +1,7 @@
 # Struttura
 
+Questo documento a l'utilità di descrivere sinteticamente l'applicazione client server e i suoi metodi
+
 Strutture dati principali:
 - Array dei clients (fd_sets, sockets, pipes, stato)
 - Topics
@@ -27,6 +29,12 @@ Con I/O Multiplexing contiene
 Concorrente (fork):
 - pipes
 
+### timeout 
+
+Alla creazione del socket viene inizializzato ad un valore predefinito ed a ogni intervallo di tempo costante si decrementa, se raggiunge zero il client/server è disconnesso
+
+A periodi di tempo costanti si inviano messaggi per sapere se il client/server è ancora attivo/presente.
+
 ## topics
 
 I topic vengono memorizzati nel seguente modo:
@@ -43,9 +51,17 @@ Funzioni:
 
 ## send and recv
 
-// Command è un enumerato
+// Command è un enumerato o un array di stringhe
 
 bool sendCommand(int socket, Command command); // Invia il comando (in binario?)
 bool sendMessage(int socket, char * message); // Invia il messaggio specificando prima la dimensione
 int recvCommand(int socket); // Riceve un comando
 char * recvMessage(int socket); // Riceve un messaggio allocato dinamicamente
+
+Ogni qual volta si riceve il dato da un client, il suo timeout viene resettato.
+
+## chiusura
+
+La comunicazione può essere chiusa tramite comando normalmente dal client o dal server, per timeout o qualsiasi ragione.
+
+In caso di chiusura del server tramite segnale del sistema operativo, si affida la chiusira dei socket a una funzione specifica (atexit e signal) ragione per cui i socket sono globali.
