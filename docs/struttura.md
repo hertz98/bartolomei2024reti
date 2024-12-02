@@ -29,9 +29,23 @@ Concorrente (fork):
 
 ## topics
 
-Può essere un array dinamico, una volta che i topics sono caricati in memoria esso non viene più modificato
+I topic vengono memorizzati nel seguente modo:
+- Un file per ogni topic, dove il nome del file è il nome del topic
+- Riga domanda e la riga successiva la risposta
+- Le righe bianche vengono ignorate in maniera da poterle mettere in maniera da migliorare la leggibilità
+
+Una volta che i topics sono caricati in memoria non vengono più modificati, può essere un array dinamico
 
 Funzioni:
 - bool loadTopics(struct Topic **) // Carica tutti i topics
 - loadTopic(struct Topic *, int i) // Carica il topic i-esimo, funzione di supporto
 - void freeTopics() // Libera lo spazio preso dai topics 
+
+## send and recv
+
+// Command è un enumerato
+
+bool sendCommand(int socket, Command command); // Invia il comando (in binario?)
+bool sendMessage(int socket, char * message); // Invia il messaggio specificando prima la dimensione
+int recvCommand(int socket); // Riceve un comando
+char * recvMessage(int socket); // Riceve un messaggio allocato dinamicamente

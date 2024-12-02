@@ -16,6 +16,7 @@ Svantaggi:
 In particolare:
 - Una volta che il client risponde, il processo deve aggiornare la classifica sul server
 - Se il client chiede la classifica, il processo servitore deve chiedere al padre la classifica aggiornata
+- Il padre deve gestire il socket listener e ascoltare le pipes aperte con i figli
 
 ## Concorrente (pthreads)
 Vantaggi:
