@@ -47,7 +47,9 @@ Una volta che i topics sono caricati in memoria non vengono pi√π modificati, pu√
 Funzioni:
 - bool loadTopics(struct Topic **) // Carica tutti i topics
 - loadTopic(struct Topic *, int i) // Carica il topic i-esimo, funzione di supporto
-- void freeTopics() // Libera lo spazio preso dai topics 
+- void freeTopics() // Libera lo spazio preso dai topics
+- char * getQuestion(int t, int i) // Ritorna la stringa della i-esima domanda del topic t-esimo, null se non esiste
+- char * getReply(int t, int i) // Ritorna la stringa della i-esima risposta alla domanda t_esima, null se non esiste
 
 ## send and recv
 
