@@ -24,7 +24,7 @@ Con I/O Multiplexing contiene
 - Se client valido
 - Il Timeout
 - Il punteggio
-- Lo stato (indice del topic e della domanda attuale)
+- Lo stato (indice del topic e della domanda attuale oppure indice del topic e puntatore al topic corrente)
 
 Concorrente (fork):
 - pipes
@@ -48,8 +48,24 @@ Funzioni:
 - bool loadTopics(struct Topic **) // Carica tutti i topics
 - loadTopic(struct Topic *, int i) // Carica il topic i-esimo, funzione di supporto
 - void freeTopics() // Libera lo spazio preso dai topics
+
+Se si usano gli array:
 - char * getQuestion(int t, int i) // Ritorna la stringa della i-esima domanda del topic t-esimo, null se non esiste
 - char * getReply(int t, int i) // Ritorna la stringa della i-esima risposta alla domanda t_esima, null se non esiste
+
+```
+void loadTopic(struct Topic *, int i)
+{
+    // Scorro il file e mi ricavo il numero di domande/risposte valide
+    // creo un buffer di dimensione QUESTION_MAX_SIZE che utilizzerò come locazione temporanea per la lettura del file
+    // Creo lo array e riapro il file
+    foreach(riga){
+        // scrivo la domanda/riposta nel buffer
+        // malloc e la aggiungo alla struttura
+        // se struttura completa, la aggiungo all'array o alla lista
+    }
+}
+```
 
 ## send and recv
 
