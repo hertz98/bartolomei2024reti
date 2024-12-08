@@ -12,6 +12,8 @@
 #include <time.h>
 #include <stdbool.h>
 
+#include "topic.h"
+
 int listener;
 struct sockaddr_in my_addr;
 
@@ -42,15 +44,12 @@ void socketclose()
 }
 
 int init(int, char **);
-void regSocket(int);
-bool handleClient(int);
-void sendAll(); // Assume message is in buffer
+bool clientHandler(int);
 
 int main (int argc, char ** argv)
 {
     fd_set master,  // Main set of file descriptors
-        read_fds,   // Set for reading
-        write_fds;  // Set for writing
+        read_fds;   // Set for reading
     int fdmax;            // Maximum number of file descriptors
     struct sockaddr_in sv_addr; // Server address
     struct sockaddr_in cl_addr; // Client address
@@ -97,7 +96,7 @@ int main (int argc, char ** argv)
                         fdmax = newfd; // Update the max file descriptor          
                 } 
                 else
-                    if (!handleClient(i))
+                    if (!clientHandler(i))
                     {
                         close(i);           // Close the socket
                         FD_CLR(i, &master); // Remove from the master set
@@ -115,8 +114,7 @@ int main (int argc, char ** argv)
             return(1);
         }
         printf("%s\n", buffer);
-        
-        sendAll();
+
     }
 
 }
@@ -162,7 +160,7 @@ int init(int argc, char ** argv)
     return 0;
 }
 
-bool handleClient(int i)
+bool clientHandler(int i)
 {
     if (recv(i, buffer, BUFFER_SIZE, 0) <= 0) 
     {
@@ -189,14 +187,4 @@ bool handleClient(int i)
     }
     printf("Client ha mandato spazzatura: %s\n", buffer);
     return true;
-}
-
-void sendAll()
-{
-    int i, ret;
-    for (i = 0; i < n_clients; i++)
-        if ((ret = send( clients[i] , &buffer, BUFFER_SIZE, 0)) == -1)
-            perror("Errore nella send");
-        else
-            printf("Spediti %d byte tramite  il socket %d\n", ret, i);
 }
