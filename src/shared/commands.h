@@ -8,10 +8,9 @@ enum Command
     STOP, // Terminate
 };
 
-enum Status 
+enum Operation 
 {
     NONE,
-    REGISTERING,
     SENDING,
     RECEIVING,
 };

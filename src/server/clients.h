@@ -10,8 +10,10 @@ struct Client
 {
     char name[MAX_CLIENT_NAME];
     int score;
-    enum Status status;
-    void *tmp;
+    // Status
+    enum Operation status;
+    int step;
+    void * tmp;
     time_t recv_timestamp;
 };
 
