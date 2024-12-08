@@ -13,6 +13,7 @@
 #include <stdbool.h>
 
 #include "topic.h"
+#include "clients.h"
 
 int listener;
 struct sockaddr_in my_addr;

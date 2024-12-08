@@ -1,9 +1,10 @@
-#include <time.h>
-#include <commands.h>
-
 #ifndef MAX_CLIENT_NAME
 #define MAX_CLIENT_NAME 32
 #endif
+
+#include <time.h>
+#include <stdbool.h>
+#include "../shared/commands.h"
 
 enum Status
 {
@@ -15,7 +16,7 @@ enum Status
 
 struct ClientStatus
 {
-    Status current;
+    enum Status current;
     int topic,
         question;
 };
@@ -24,17 +25,17 @@ struct Client
 {
     char name[MAX_CLIENT_NAME];
     int score;
-    ClientStatus status;
+    struct ClientStatus status;
     time_t recv_timestamp;
 };
 
-bool clientAdd(Client, int);
-void clientRemove(Client, int);
-bool clientFree(Client);
+bool clientAdd(struct Client, int);
+void clientRemove(struct Client, int);
+bool clientFree(struct Client);
 
-bool clientTimeout(Client, int);
+bool clientTimeout(struct Client, int);
 
-bool sendMessage(Client, char *);
-bool sendCommand(Client, Command);
-enum Command recvCommand(Client);
-char * recvMessage(Client);
+bool sendMessage(struct Client, char *);
+bool sendCommand(struct Client, enum Command);
+enum Command recvCommand(struct Client);
+char * recvMessage(struct Client);
