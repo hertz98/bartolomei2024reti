@@ -12,17 +12,17 @@ Strutture dati principali:
 Potrebbe essere una lista, ma può essere un array lungo MAX_CLIENTS, si può generare dal punteggio degli array dei clients
 
 Nel suddetto caso:
-- char * classifica(struct * clients) // Ritorna il puntatore a una stringa allocata dinamicamente contenente il testo della classifica
+- char * ranking(struct * clients) // Ritorna il puntatore a una stringa allocata dinamicamente contenente il testo della classifica
 
 Oppure inviare la struct ai clients in modalità binaria
 
 ## clients
 
-Potrebbe essere una lista di struct o un array di puntatori a struct.
+Potrebbe essere una lista di struct o un array di puntatori a struct Client, sempre allocati dinamicamente.
 
 Con I/O Multiplexing contiene
 - Se client valido
-- Il Timeout
+- Il timestamp
 - Il punteggio
 - Lo stato (indice del topic e della domanda attuale oppure indice del topic e puntatore al topic corrente)
 
@@ -45,16 +45,15 @@ I topic vengono memorizzati nel seguente modo:
 Una volta che i topics sono caricati in memoria non vengono più modificati, può essere un array dinamico
 
 Funzioni:
-- bool loadTopics(struct Topic **) // Carica tutti i topics
-- loadTopic(struct Topic *, int i) // Carica il topic i-esimo, funzione di supporto
-- void freeTopics() // Libera lo spazio preso dai topics
+- bool topicsLoader(struct Topic **) // Carica tutti i topics
+- topicLoad(int i, struct Topic *) // Carica il topic i-esimo, funzione di supporto
+- void topicsFree() // Libera lo spazio preso dai topics
 
 Se si usano gli array:
-- char * getQuestion(int t, int i) // Ritorna la stringa della i-esima domanda del topic t-esimo, null se non esiste
-- char * getReply(int t, int i) // Ritorna la stringa della i-esima risposta alla domanda t_esima, null se non esiste
+- struct Topic * topicQuestion(int t, int i) // Ritorna la stringa della i-esima domanda del topic t-esimo, null se non esiste
 
 ```
-void loadTopic(struct Topic *, int i)
+void topicLoad(int i, struct Topic *)
 {
     // Scorro il file e mi ricavo il numero di domande/risposte valide
     // creo un buffer di dimensione QUESTION_MAX_SIZE che utilizzerò come locazione temporanea per la lettura del file
@@ -73,8 +72,8 @@ void loadTopic(struct Topic *, int i)
 
 bool sendCommand(int socket, Command command); // Invia il comando (in binario?)
 bool sendMessage(int socket, char * message); // Invia il messaggio specificando prima la dimensione
-int recvCommand(int socket); // Riceve un comando
-char * recvMessage(int socket); // Riceve un messaggio allocato dinamicamente
+Enum Command recvCommand(int socket); // Riceve un comando
+char * recvMessage(int socket); // Riceve un messaggio allocato dinamicamente, deve essere deallocato
 
 Ogni qual volta si riceve il dato da un client, il suo timeout viene resettato.
 
