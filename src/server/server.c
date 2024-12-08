@@ -105,17 +105,6 @@ int main (int argc, char ** argv)
 
             }
 
-        time_t rawtime;
-        struct tm * timeinfo;
-        time(&rawtime);
-        timeinfo = localtime (&rawtime);
-        if (!strftime(buffer, BUFFER_SIZE, "%Y-%m-%d %H:%M:%S", timeinfo))
-        {
-            printf("Dimensione buffer insufficiente, termino..");
-            return(1);
-        }
-        printf("%s\n", buffer);
-
     }
 
 }

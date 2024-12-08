@@ -6,26 +6,12 @@
 #include <stdbool.h>
 #include "../shared/commands.h"
 
-enum Status
-{
-    NONE,
-    REGISTERING,
-    REGISTERED,
-    PLAYING
-};
-
-struct ClientStatus
-{
-    enum Status current;
-    int topic,
-        question;
-};
-
 struct Client
 {
     char name[MAX_CLIENT_NAME];
     int score;
-    struct ClientStatus status;
+    enum Status status;
+    void *tmp;
     time_t recv_timestamp;
 };
 
