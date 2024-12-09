@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#include <topic.h>
+#include "topic.h"
 
 bool topicsLoader(struct Question ** topics)
 {

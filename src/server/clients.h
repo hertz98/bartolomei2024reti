@@ -4,26 +4,30 @@
 
 #include <time.h>
 #include <stdbool.h>
+#include <sys/select.h>
 #include "../shared/commands.h"
 
 struct Client
 {
+    int socket; // ridondante
     char name[MAX_CLIENT_NAME];
     int score;
     // Status
-    enum Operation status;
+    bool (* operation)(struct Client *, void *);
     int step;
     void * tmp;
+    // Timeout
     time_t recv_timestamp;
+    // Shuffle array
 };
 
-bool clientAdd(struct Client, int);
-void clientRemove(struct Client, int);
-bool clientFree(struct Client);
+bool clientAdd(fd_set *, struct Client *, int);
+void clientRemove(fd_set *, struct Client *, int);
+bool clientFree(fd_set *, struct Client *);
 
-bool clientTimeout(struct Client, int);
+bool clientTimeout(struct Client *, int);
 
-bool sendMessage(struct Client, char *);
-bool sendCommand(struct Client, enum Command);
-enum Command recvCommand(struct Client);
-char * recvMessage(struct Client);
+bool sendMessage(struct Client *, char *);
+bool sendCommand(struct Client *, enum Command);
+enum Command recvCommand(struct Client *);
+bool recvMessage(struct Client *, char *);

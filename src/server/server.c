@@ -18,13 +18,10 @@
 int listener;
 struct sockaddr_in my_addr;
 
-#define MAX_CONNECTED 32
 #define MAX_CLIENTs 32
-int clients[MAX_CLIENTs];
+fd_set master;
+struct Client * clients;
 int n_clients = 0;
-
-#define BUFFER_SIZE 20
-char buffer[BUFFER_SIZE + 1];
 
 #define SLEEP_TIME 10
 
@@ -38,26 +35,24 @@ void socketclose()
 { 
     int i;
     for (i = 0; i < n_clients; i++)
-        close(clients[i]);
+        close(clients[i].socket);
     close(listener);
     printf("\nSocket chiusi\n");
     exit(0);
 }
 
 int init(int, char **);
-bool clientHandler(int);
+bool clientHandler(struct Client * client);
 
 int main (int argc, char ** argv)
 {
-    fd_set master,  // Main set of file descriptors
-        read_fds;   // Set for reading
+    fd_set read_fds;   // Set for reading
     int fdmax;            // Maximum number of file descriptors
-    struct sockaddr_in sv_addr; // Server address
     struct sockaddr_in cl_addr; // Client address
     int newfd;            // Newly accepted socket
-    int nbytes, addrlen, i, ret;
+    int i, ret;
 
-    if (ret = init(argc, argv))
+    if ((ret = init(argc, argv)))
         return ret;
 
     FD_ZERO(&master);
@@ -86,18 +81,20 @@ int main (int argc, char ** argv)
             { 
                 if (i == listener) // Listener socket is ready
                 { 
-                    addrlen = sizeof(cl_addr);
+                    unsigned int addrlen = sizeof(cl_addr);
                     if ((newfd = accept(listener, (struct sockaddr *)&cl_addr, &addrlen)) < 0) 
                     {
                         perror("Accept fallita");
                         continue;
                     }
+                    clientAdd(&master, clients, i);
+                    
                     FD_SET(newfd, &master); // Add the new socket to the master set
                     if (newfd > fdmax)
                         fdmax = newfd; // Update the max file descriptor          
                 } 
                 else
-                    if (!clientHandler(i))
+                    if (!clientHandler(clients + i))
                     {
                         close(i);           // Close the socket
                         FD_CLR(i, &master); // Remove from the master set
@@ -117,7 +114,7 @@ int init(int argc, char ** argv)
         return(1);
     }
 
-    buffer[BUFFER_SIZE] = '\0';
+    //buffer[BUFFER_SIZE] = '\0';
 
     listener = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -138,7 +135,7 @@ int init(int argc, char ** argv)
         return 1;
     }
 
-    if (listen(listener, MAX_CONNECTED) == -1)
+    if (listen(listener, MAX_CLIENTs) == -1)
     {
         perror("Errore nella listen");
         return 1;
@@ -147,34 +144,33 @@ int init(int argc, char ** argv)
     atexit(socketclose);
     signal(SIGINT, signalhandle);
 
+    //clients = (struct Client *) malloc(sizeof(struct Client) * MAX_CLIENTs);
+
+    if (!clients)
+        return 1;
+    
+    memset(clients, 0, sizeof(struct Client) * MAX_CLIENTs);
+
     return 0;
 }
 
-bool clientHandler(int i)
+
+
+bool clientHandler(struct Client * client)
 {
-    if (recv(i, buffer, BUFFER_SIZE, 0) <= 0) 
+    if (client->operation != NULL)
+        return (*client->operation)(client, NULL);
+    
+    // Client non ancora registrato
+    if (client->name[0] == '\0')
     {
-        perror("recv fallita");
-        return false;
-    }
-    else
-    {
-        if (!strncmp(buffer, "REGISTER", BUFFER_SIZE))
+        if (recvCommand(client) == REGISTER)
         {
-            strncpy(buffer, "REGISTERED", BUFFER_SIZE);
-            if (send(i, &buffer, BUFFER_SIZE, 0) == BUFFER_SIZE)
-            {
-                clients[n_clients++] = i;
-                printf("Client registrato\n");
-                return true;
-            }
-            else
-            {
-                perror("Send REGISTERED fallita");
-                return false;
-            }
+            return recvMessage(client, client->name);
         }
+        else
+            return false;
     }
-    printf("Client ha mandato spazzatura: %s\n", buffer);
+
     return true;
 }
