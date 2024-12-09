@@ -2,6 +2,10 @@
 #define MAX_CLIENT_NAME 32
 #endif
 
+#ifndef MAX_SEND_SIZE
+#define MAX_SEND_SIZE 65536
+#endif
+
 #include <time.h>
 #include <stdbool.h>
 #include <sys/select.h>
@@ -21,13 +25,17 @@ struct Client
     // Shuffle array
 };
 
-bool clientAdd(fd_set *, struct Client *, int);
-void clientRemove(fd_set *, struct Client *, int);
-bool clientFree(fd_set *, struct Client *);
+bool clientAdd(fd_set *, struct Client **, int);
+void clientRemove(fd_set *, struct Client **, int);
+void clientFree(fd_set *, struct Client **, int);
 
 bool clientTimeout(struct Client *, int);
 
-bool sendMessage(struct Client *, char *);
+bool sendMessage(struct Client *, void *);
 bool sendCommand(struct Client *, enum Command);
+bool sendInteger(struct Client *, int);
+bool sendString(struct Client *, char *);
 enum Command recvCommand(struct Client *);
-bool recvMessage(struct Client *, char *);
+bool recvMessage(struct Client *, void *);
+int recvInteger(struct Client *);
+char * recvString(struct Client *);

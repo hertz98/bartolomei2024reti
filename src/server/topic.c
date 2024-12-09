@@ -4,6 +4,7 @@
 bool topicsLoader(struct Question ** topics)
 {
 
+    return false;
 }
 
 bool topicLoad(char * file, struct Topic *)
@@ -15,9 +16,11 @@ bool topicLoad(char * file, struct Topic *)
         // scrivo la domanda/riposta nel buffer
         // malloc e la aggiungo alla struttura
         // se struttura completa, la aggiungo all'array o alla lista
+    return false;
 }
 
 void topicsFree(struct Question ** topics)
 {
 
+    return;
 }

@@ -1,10 +1,13 @@
 enum Command 
 {
-    NONE,
-    ACK, // Aknowledge
-    OK,
-    REGISTER, // Client: Ask register
-    MESSAGE, // Ask to send a message
-    RANKING, // Client: ask for ranking
-    STOP, // Terminate
+    CMD_NONE,
+    CMD_ACK, // Aknowledge
+    CMD_OK,
+    CMD_REGISTER, // Client: Ask register
+    CMD_REQMESSAGE, // Request a message
+    CMD_MESSAGE, // Ask to send a message
+    CMD_SIZE, // Ask for size
+    CMD_STRING, // Ask for string
+    CMD_RANKING, // Client: ask for ranking
+    CMD_STOP, // Terminate
 };

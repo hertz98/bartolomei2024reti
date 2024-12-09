@@ -16,11 +16,11 @@
 #include "clients.h"
 
 int listener;
+fd_set master;
 struct sockaddr_in my_addr;
 
 #define MAX_CLIENTs 32
-fd_set master;
-struct Client * clients;
+struct Client * clients[MAX_CLIENTs];
 int n_clients = 0;
 
 #define SLEEP_TIME 10
@@ -35,7 +35,7 @@ void socketclose()
 { 
     int i;
     for (i = 0; i < n_clients; i++)
-        close(clients[i].socket);
+        close(clients[i]->socket);
     close(listener);
     printf("\nSocket chiusi\n");
     exit(0);
@@ -94,7 +94,7 @@ int main (int argc, char ** argv)
                         fdmax = newfd; // Update the max file descriptor          
                 } 
                 else
-                    if (!clientHandler(clients + i))
+                    if (!clientHandler(clients[i]))
                     {
                         close(i);           // Close the socket
                         FD_CLR(i, &master); // Remove from the master set
@@ -144,13 +144,6 @@ int init(int argc, char ** argv)
     atexit(socketclose);
     signal(SIGINT, signalhandle);
 
-    //clients = (struct Client *) malloc(sizeof(struct Client) * MAX_CLIENTs);
-
-    if (!clients)
-        return 1;
-    
-    memset(clients, 0, sizeof(struct Client) * MAX_CLIENTs);
-
     return 0;
 }
 
@@ -161,10 +154,10 @@ bool clientHandler(struct Client * client)
     if (client->operation != NULL)
         return (*client->operation)(client, NULL);
     
-    // Client non ancora registrato
+    // Client non ancora registrato: ha stringa nulla
     if (client->name[0] == '\0')
     {
-        if (recvCommand(client) == REGISTER)
+        if (recvCommand(client) == CMD_REGISTER)
         {
             return recvMessage(client, client->name);
         }
