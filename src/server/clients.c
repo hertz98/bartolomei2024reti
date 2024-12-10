@@ -54,30 +54,43 @@ void clientFree(fd_set * master, struct Client ** clients, int max_clients)
 
 bool sendMessage(struct Client * client, void * buffer)
 {
-    if (buffer != NULL)
+    if (buffer != NULL){
         client->step = 0;
+        client->operation = sendMessage;
+        client->tmp_p = buffer;
+    }
     
+    // Disfaccio tutto
+    if (!sendMessageProcedure(client))
+    {
+        client->step = 0;
+        client->operation = NULL;
+        return false;
+    }
+    
+    return true;
+}
+
+bool sendMessageProcedure(struct Client * client)
+{
+    client->step++;
+
     switch (client->step)
     {
         case 0:
-            client->operation = sendMessage;
-            client->tmp = buffer;
-            client->step++;
             return sendCommand(client, CMD_MESSAGE);
             break;
 
         case 1:
-            client->step++;
-            if (recvCommand(client) != CMD_OK)
+            if (recvCommand(client) != CMD_SIZE)
                 return false;
-            return sendInteger(client, strlen(client->tmp));
+            return sendInteger(client, strlen(client->tmp_p));
             break;
 
         case 2:
-            if (recvCommand(client) != CMD_OK)
+            if (recvCommand(client) != CMD_STRING)
                 return false;
-            return sendString(client, client->tmp);
-            client->step++;
+            return sendString(client->socket, client->tmp_p, strlen(client->tmp_p));
 
         case 3:
             if (recvCommand(client) != CMD_OK)
@@ -106,16 +119,21 @@ bool sendInteger(struct Client * client, int i)
     return true;
 }
 
-bool sendString(struct Client * client, char * string)
+bool sendString(int socket, char * buffer, int lenght)
 {
-    return false;
+    int ret;
+
+    if ((ret = send(socket, buffer, lenght, 0)) != lenght)
+        return false;
+
+    return true;
 }
 
 enum Command recvCommand(struct Client *client)
 {
     int ret;
 
-    u_int16_t tmp;
+    u_int8_t tmp;
 
     if ((ret = recv(client->socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
@@ -130,7 +148,68 @@ enum Command recvCommand(struct Client *client)
 
 bool recvMessage(struct Client * client, void * buffer)
 {
-    return false;
+    if (buffer != NULL){
+        client->step = 0;
+        client->operation = recvMessage;
+    }
+    
+    // Disfaccio tutto
+    if (!sendMessage(client, buffer))
+    {
+        client->step = 0;
+        client->operation = NULL;
+        return false;
+    }
+    
+    return true;
+}
+
+bool recvMessageProcedure(struct Client * client)
+{
+    client->step++;
+
+    switch (client->step)
+    {
+        case 0:
+            return sendCommand(client, CMD_SIZE);
+            break;
+
+        case 1:
+            client->tmp_i = recvInteger(client);
+            return sendCommand(client, CMD_STRING);
+            break;
+
+        case 2:
+            if (!(recvString(client->socket, client->tmp_p, client->tmp_i)))
+            {
+                free(client->tmp_p);
+                return false;
+            }
+            
+            client->operation = NULL;
+            client->step = 0;
+
+            return sendCommand(client, CMD_OK);
+            break;
+
+        default:
+            return false;
+    }
+}
+
+bool recvString(int socket, char * buffer, int lenght)
+{
+    int ret;
+
+    buffer = (char *) malloc(sizeof(char) * lenght);
+
+    if ((ret = recv(socket, buffer, lenght, 0)) != lenght)
+    {
+        free(buffer);
+        return false;
+    }
+
+    return true;
 }
 
 int recvInteger(struct Client * client)
@@ -150,16 +229,11 @@ int recvInteger(struct Client * client)
     return ntohl(tmp);
 }
 
-char *recvString(struct Client * client)
-{
-    return NULL;
-}
-
 bool sendCommand(struct Client * client, enum Command cmd)
 {
     int ret;
 
-    u_int16_t cmd_n = htonl((u_int16_t) cmd);
+    u_int8_t cmd_n = (u_int8_t) cmd;
 
     if ((ret = send(client->socket, &cmd_n, sizeof(cmd_n), 0)) != sizeof(cmd_n))
     {

@@ -2,10 +2,6 @@
 #define MAX_CLIENT_NAME 32
 #endif
 
-#ifndef MAX_SEND_SIZE
-#define MAX_SEND_SIZE 65536
-#endif
-
 #include <time.h>
 #include <stdbool.h>
 #include <sys/select.h>
@@ -16,10 +12,16 @@ struct Client
     int socket; // ridondante
     char name[MAX_CLIENT_NAME];
     int score;
+
     // Status
     bool (* operation)(struct Client *, void *);
     int step;
-    void * tmp;
+
+    union {
+        int tmp_i;
+        void * tmp_p;
+    };
+    
     // Timeout
     time_t recv_timestamp;
     // Shuffle array
@@ -31,11 +33,16 @@ void clientFree(fd_set *, struct Client **, int);
 
 bool clientTimeout(struct Client *, int);
 
-bool sendMessage(struct Client *, void *);
 bool sendCommand(struct Client *, enum Command);
-bool sendInteger(struct Client *, int);
-bool sendString(struct Client *, char *);
 enum Command recvCommand(struct Client *);
-bool recvMessage(struct Client *, void *);
+
+bool sendInteger(struct Client *, int);
 int recvInteger(struct Client *);
-char * recvString(struct Client *);
+
+bool sendMessage(struct Client *, void *);
+bool sendMessageProcedure(struct Client *);
+bool sendString(int, char *, int);
+
+bool recvMessage(struct Client *, void *);
+bool recvMessageProcedure(struct Client *);
+bool recvString(int, char *, int);

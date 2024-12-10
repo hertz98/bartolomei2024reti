@@ -61,7 +61,7 @@ int init(int argc, char ** argv)
 int main (int argc, char ** argv)
 {
     int ret;
-    if (ret = init(argc, argv))
+    if ((ret = init(argc, argv)))
         return ret;
 
     strncpy(buffer, "REGISTER", BUFFER_SIZE);
@@ -74,7 +74,7 @@ int main (int argc, char ** argv)
     else
         printf("send effettuata %d bytes\n", ret);
 
-    int addrlen = sizeof(server_addr);
+    //int addrlen = sizeof(server_addr);
     if (( ret = recv(sd, buffer, BUFFER_SIZE, 0) == -1))
     {
         perror("Errore nella recv");
@@ -92,9 +92,9 @@ int main (int argc, char ** argv)
 
     while(1)
     {
-        int addrlen = sizeof(server_addr);
+        //int addrlen = sizeof(server_addr);
         if (recv(sd, buffer, BUFFER_SIZE, 0) == -1)
-            printf("Errore nella ricezione\n", ret);
+            printf("Errore nella ricezione\n");
         printf("\n%s\n", buffer);
     }
 
