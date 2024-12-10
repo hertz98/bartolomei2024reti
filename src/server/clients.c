@@ -32,11 +32,11 @@ void clientRemove(fd_set * master, struct Client ** clients, int socket)
 {
     struct Client * client = clients[socket];
 
-    FD_CLR(socket, master);
-
     if (FD_ISSET(socket, master))
         free(client);
     
+    FD_CLR(socket, master);
+
     return;
 }
 
