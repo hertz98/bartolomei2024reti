@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <time.h>
 
-#include "../shared/commands.h"
+#include "server_comm.h"
 
 struct sockaddr_in server_addr;
 int sd;

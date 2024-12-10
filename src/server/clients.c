@@ -189,6 +189,8 @@ bool recvMessageProcedure(struct Client * client)
             client->operation = NULL;
             client->step = 0;
 
+            client->recv_timestamp = time(NULL);
+
             return sendCommand(client, CMD_OK);
             break;
 
