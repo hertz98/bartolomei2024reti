@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <errno.h>
@@ -15,7 +16,7 @@ bool clientAdd(fd_set * master, struct Client ** clients, int socket)
 
     clients[socket] = client;
 
-    memset(clients, 0, sizeof(struct Client));
+    memset(client, 0, sizeof(struct Client));
 
     client->socket = socket;
     client->name[0] = '\0';
@@ -31,6 +32,9 @@ bool clientAdd(fd_set * master, struct Client ** clients, int socket)
 void clientRemove(fd_set * master, struct Client ** clients, int socket)
 {
     struct Client * client = clients[socket];
+
+    sendCommand(client, CMD_STOP); // Prova a inviare e ignora eventuali errori
+    close(client->socket);
 
     if (FD_ISSET(socket, master))
         free(client);

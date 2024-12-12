@@ -63,40 +63,9 @@ int main (int argc, char ** argv)
     int ret;
     if ((ret = init(argc, argv)))
         return ret;
-
-    strncpy(buffer, "REGISTER", BUFFER_SIZE);
-
-    if (( ret = send(sd, buffer, BUFFER_SIZE, 0)) < 0)
-    {
-        perror("Errore nella sendto");
-        return(1);
-    }
-    else
-        printf("send effettuata %d bytes\n", ret);
-
-    //int addrlen = sizeof(server_addr);
-    if (( ret = recv(sd, buffer, BUFFER_SIZE, 0) == -1))
-    {
-        perror("Errore nella recv");
-        return(1);
-    }
-    if (!strncmp(buffer, "REGISTERED", BUFFER_SIZE))
-    {
-        printf("Registrato al server\n");
-    }
-    else
-    {
-        printf("La registrazione NON ha avuto successo\n");
-        return(1);
-    }
-
-    while(1)
-    {
-        //int addrlen = sizeof(server_addr);
-        if (recv(sd, buffer, BUFFER_SIZE, 0) == -1)
-            printf("Errore nella ricezione\n");
-        printf("\n%s\n", buffer);
-    }
+    
+    printf("%d\n", sendCommand(sd, CMD_ACK));
+    printf("%d\n", recvCommand(sd));
 
     return(0);
 

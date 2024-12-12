@@ -16,7 +16,6 @@
 #include "clients.h"
 
 int listener;
-fd_set master;
 struct sockaddr_in my_addr;
 
 #define MAX_CLIENTs 32
@@ -46,7 +45,7 @@ bool clientHandler(struct Client * client);
 
 int main (int argc, char ** argv)
 {
-    fd_set read_fds;   // Set for reading
+    fd_set master, read_fds;   // Set for reading
     int fdmax;            // Maximum number of file descriptors
     struct sockaddr_in cl_addr; // Client address
     int newfd;            // Newly accepted socket
@@ -65,7 +64,7 @@ int main (int argc, char ** argv)
     while(true)
     {
 
-        struct timeval timeout = {10, 0};
+        struct timeval timeout = {1, 0};
 
         read_fds = master; // Copy the master set
 
@@ -87,17 +86,16 @@ int main (int argc, char ** argv)
                         perror("Accept fallita");
                         continue;
                     }
-                    clientAdd(&master, clients, i);
-                    
-                    FD_SET(newfd, &master); // Add the new socket to the master set
+                    clientAdd(&master, clients, newfd);
+                    printf("registered\n");
                     if (newfd > fdmax)
                         fdmax = newfd; // Update the max file descriptor          
                 } 
                 else
                     if (!clientHandler(clients[i]))
                     {
-                        close(i);           // Close the socket
-                        FD_CLR(i, &master); // Remove from the master set
+                        clientRemove(&master, clients, i);
+                        printf("removed\n");
                     }
 
             }
