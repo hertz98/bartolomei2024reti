@@ -19,7 +19,7 @@ bool clientAdd(fd_set * master, struct Client ** clients, int socket)
     memset(client, 0, sizeof(struct Client));
 
     client->socket = socket;
-    client->name[0] = '\0';
+    client->registered = false;
     client->operation = NULL;
     client->step = 0;
     client->recv_timestamp = time(NULL);
@@ -37,7 +37,11 @@ void clientRemove(fd_set * master, struct Client ** clients, int socket)
     close(client->socket);
 
     if (FD_ISSET(socket, master))
+    {
+        if(client->registered)
+            free(client->name);
         free(client);
+    }
     
     FD_CLR(socket, master);
 
@@ -199,7 +203,7 @@ bool recvMessageProcedure(struct Client * client)
 
             client->recv_timestamp = time(NULL);
 
-            printf("%s\n", client->name);
+            printf("%s\n", (char *) client->tmp_p);
 
             return sendCommand(client, CMD_OK);
             break;

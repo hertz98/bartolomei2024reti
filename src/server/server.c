@@ -89,7 +89,7 @@ int main (int argc, char ** argv)
                         continue;
                     }
                     clientAdd(&master, clients, newfd);
-                    printf("registered\n");
+                    printf("registering\n");
                     if (newfd > fdmax)
                         fdmax = newfd; // Update the max file descriptor          
                 } 
@@ -165,7 +165,7 @@ bool clientHandler(struct Client * client)
         return (*client->operation)(client, NULL);
     
     // Client non ancora registrato: ha stringa nulla
-    if (client->name[0] == '\0')
+    if (!client->registered)
     {
         if (recvCommand(client) == CMD_REGISTER)
         {

@@ -1,7 +1,3 @@
-#ifndef MAX_CLIENT_NAME
-#define MAX_CLIENT_NAME 32
-#endif
-
 #include <time.h>
 #include <stdbool.h>
 #include <sys/select.h>
@@ -10,7 +6,8 @@
 struct Client
 {
     int socket; // ridondante
-    char name[MAX_CLIENT_NAME];
+    bool registered;
+    char * name;
     int score;
 
     // Status
