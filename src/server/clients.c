@@ -59,7 +59,7 @@ void clientFree(fd_set * master, struct Client ** clients, int max_clients)
 bool sendMessage(struct Client * client, void * buffer)
 {
     if (buffer != NULL){
-        client->step = 0;
+        client->step = -1;
         client->operation = sendMessage;
         client->tmp_p = buffer;
     }
@@ -116,7 +116,7 @@ bool sendInteger(struct Client * client, int i)
 
     if ((ret = send(client->socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
     {
-        perror("sendCommand failed");
+        perror("sendInteger failed");
         return false;    
     }
     
@@ -153,12 +153,12 @@ enum Command recvCommand(struct Client *client)
 bool recvMessage(struct Client * client, void * buffer)
 {
     if (buffer != NULL){
-        client->step = 0;
+        client->step = -1;
         client->operation = recvMessage;
     }
     
-    // Disfaccio tutto
-    if (!sendMessage(client, buffer))
+    // Disfaccio tutto se non va a buon fine
+    if (!recvMessageProcedure(client))
     {
         client->step = 0;
         client->operation = NULL;
@@ -174,12 +174,15 @@ bool recvMessageProcedure(struct Client * client)
 
     switch (client->step)
     {
-        case 0:
+        case 0: // Il client non invia mai una stringa senza preavviso
+            if (recvCommand(client) != CMD_MESSAGE)
+                return false;
             return sendCommand(client, CMD_SIZE);
             break;
 
         case 1:
-            client->tmp_i = recvInteger(client);
+            if ((client->tmp_i = recvInteger(client)) <= 0)
+                return false;
             return sendCommand(client, CMD_STRING);
             break;
 
@@ -189,8 +192,6 @@ bool recvMessageProcedure(struct Client * client)
                 free(client->tmp_p);
                 return false;
             }
-
-            
             
             client->operation = NULL;
             client->step = 0;
@@ -203,6 +204,8 @@ bool recvMessageProcedure(struct Client * client)
         default:
             return false;
     }
+
+    return true;
 }
 
 bool recvString(int socket, char * buffer, int lenght)
@@ -228,7 +231,7 @@ int recvInteger(struct Client * client)
 
     if ((ret = recv(client->socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
-        perror("recvCommand failed");
+        perror("recvInteger failed");
         return false;    
     }
 

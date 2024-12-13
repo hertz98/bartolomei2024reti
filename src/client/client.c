@@ -63,11 +63,14 @@ int main (int argc, char ** argv)
     int ret;
     if ((ret = init(argc, argv)))
         return ret;
-    
-    printf("%d\n", sendCommand(sd, CMD_ACK));
-    enum Command tmp = recvCommand(sd);
-    printf("%d\n", tmp);
+
+    printf("%d\n", sendCommand(sd, CMD_REGISTER));
+    char * name = "prova";
+    if (recvCommand(sd) == CMD_OK)
+    {
+        printf("registering\n");
+        sendMessage(sd, name);
+    }
 
     return(0);
-
 }

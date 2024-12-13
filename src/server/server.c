@@ -151,12 +151,15 @@ bool clientHandler(struct Client * client)
 {
     if (client->operation != NULL)
         return (*client->operation)(client, NULL);
+
+    printf("%s\n", client->name);
     
     // Client non ancora registrato: ha stringa nulla
     if (client->name[0] == '\0')
     {
         if (recvCommand(client) == CMD_REGISTER)
         {
+            sendCommand(client, CMD_OK);
             return recvMessage(client, client->name);
         }
         else

@@ -113,7 +113,7 @@ int recvInteger(int socket)
 
     if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
-        perror("recvCommand failed");
+        perror("recvInteger failed");
         return false;    
     }
 
