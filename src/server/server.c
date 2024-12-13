@@ -163,8 +163,6 @@ bool clientHandler(struct Client * client)
 {
     if (client->operation != NULL)
         return (*client->operation)(client, NULL);
-
-    printf("%s\n", client->name);
     
     // Client non ancora registrato: ha stringa nulla
     if (client->name[0] == '\0')
@@ -177,6 +175,13 @@ bool clientHandler(struct Client * client)
         else
             return false;
     }
+
+    enum Command cmd = recvCommand(client);
+
+    if (cmd == CMD_STOP)
+        return false;
+
+    printf("%s\n",client->name);
 
     return true;
 }

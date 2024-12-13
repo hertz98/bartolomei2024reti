@@ -17,10 +17,8 @@ struct Client
     bool (* operation)(struct Client *, void *);
     int step;
 
-    union {
-        int tmp_i;
-        void * tmp_p;
-    };
+    int tmp_i;
+    void * tmp_p;
     
     // Timeout
     time_t recv_timestamp;
@@ -45,4 +43,4 @@ bool sendString(int, char *, int);
 
 bool recvMessage(struct Client *, void *);
 bool recvMessageProcedure(struct Client *);
-bool recvString(int, char *, int);
+bool recvString(int, char **, int);

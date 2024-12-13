@@ -153,6 +153,7 @@ enum Command recvCommand(struct Client *client)
 bool recvMessage(struct Client * client, void * buffer)
 {
     if (buffer != NULL){
+        client->tmp_p = buffer;
         client->step = -1;
         client->operation = recvMessage;
     }
@@ -198,6 +199,8 @@ bool recvMessageProcedure(struct Client * client)
 
             client->recv_timestamp = time(NULL);
 
+            printf("%s\n", client->name);
+
             return sendCommand(client, CMD_OK);
             break;
 
@@ -208,11 +211,11 @@ bool recvMessageProcedure(struct Client * client)
     return true;
 }
 
-bool recvString(int socket, char * buffer, int lenght)
+bool recvString(int socket, char ** buffer, int lenght)
 {
     int ret;
 
-    buffer = (char *) malloc(sizeof(char) * lenght);
+    *buffer = (char *) malloc(sizeof(char) * lenght);
 
     if ((ret = recv(socket, buffer, lenght, 0)) != lenght)
     {

@@ -72,5 +72,11 @@ int main (int argc, char ** argv)
         sendMessage(sd, name);
     }
 
+    printf("registered\n");
+
+    sendCommand(sd, CMD_STOP);
+
+    close(sd);
+
     return(0);
 }
