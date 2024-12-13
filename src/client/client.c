@@ -65,7 +65,8 @@ int main (int argc, char ** argv)
         return ret;
     
     printf("%d\n", sendCommand(sd, CMD_ACK));
-    printf("%d\n", recvCommand(sd));
+    enum Command tmp = recvCommand(sd);
+    printf("%d\n", tmp);
 
     return(0);
 

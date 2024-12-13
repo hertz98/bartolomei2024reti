@@ -68,7 +68,7 @@ enum Command recvCommand(int socket)
 
     //client->recv_timestamp = time(NULL);
 
-    return (enum Command) ntohl(tmp);
+    return (enum Command) tmp;
 }
 
 bool recvMessage(int socket, void * buffer)
@@ -126,9 +126,9 @@ bool sendCommand(int socket, enum Command cmd)
 {
     int ret;
 
-    u_int8_t cmd_n = (u_int8_t) cmd;
+    u_int8_t tmp = (u_int8_t) cmd;
 
-    if ((ret = send(socket, &cmd_n, sizeof(cmd_n), 0)) != sizeof(cmd_n))
+    if ((ret = send(socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
     {
         perror("sendCommand failed");
         return false;    

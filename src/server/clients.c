@@ -147,7 +147,7 @@ enum Command recvCommand(struct Client *client)
 
     client->recv_timestamp = time(NULL);
 
-    return (enum Command) ntohl(tmp);
+    return (enum Command) tmp;
 }
 
 bool recvMessage(struct Client * client, void * buffer)
@@ -189,6 +189,8 @@ bool recvMessageProcedure(struct Client * client)
                 free(client->tmp_p);
                 return false;
             }
+
+            
             
             client->operation = NULL;
             client->step = 0;
@@ -239,9 +241,9 @@ bool sendCommand(struct Client * client, enum Command cmd)
 {
     int ret;
 
-    u_int8_t cmd_n = (u_int8_t) cmd;
+    u_int8_t tmp = (u_int8_t) cmd;
 
-    if ((ret = send(client->socket, &cmd_n, sizeof(cmd_n), 0)) != sizeof(cmd_n))
+    if ((ret = send(client->socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
     {
         perror("sendCommand failed");
         return false;    
