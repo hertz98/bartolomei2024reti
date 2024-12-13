@@ -19,9 +19,16 @@ windows: ./src/client/client.c ./src/server/server.c
 	x86_64-pc-cygwin-gcc ./src/client/*.c -o ./bin/client.exe
 	cp "/usr/x86_64-pc-cygwin/sys-root/usr/bin/cygwin1.dll"	./bin/
 
-run:
-	# run server on 127.0.0.1 1234
-	# run client on 127.0.0.1 1234
+run_server: test_server
+test_server:
+	./bin/server 127.0.0.1 1234
 
-test:
+run_client: test_client
+test_client:
+	./bin/client 127.0.0.1 1234
 
+gdb_server:
+	gdb -x ./src/server/gdbinit ./bin/server
+
+gdb_client:
+	gdb -x ./src/client/gdbinit ./bin/client

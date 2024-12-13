@@ -15,6 +15,8 @@
 #include "topic.h"
 #include "clients.h"
 
+#define DEBUG
+
 int listener;
 struct sockaddr_in my_addr;
 
@@ -138,6 +140,16 @@ int init(int argc, char ** argv)
         perror("Errore nella listen");
         return 1;
     }
+
+#ifdef DEBUG
+    
+    int opt = 1;
+    if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt failed");
+        exit(EXIT_FAILURE);
+    }
+
+#endif
 
     atexit(socketclose);
     signal(SIGINT, signalhandle);
