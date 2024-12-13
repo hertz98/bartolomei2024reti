@@ -1,3 +1,4 @@
 - The socket indexes the array, but the socket number can be any (usually the smaller non negative)
 - bool sendString and recvString should get struct Client instead of the socket, and update the recvtime
-- need a function that manage the registration itself
+- nameValid
+- closing functions

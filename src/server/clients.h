@@ -47,3 +47,6 @@ bool sendString(int, char *, int);
 bool recvMessage(struct Client *, void *, bool);
 enum OperationStatus recvMessageProcedure(struct Client *);
 bool recvString(int, char **, int);
+
+bool regPlayer(struct Client *, void *, bool);
+bool nameValid(struct Client **, char *);

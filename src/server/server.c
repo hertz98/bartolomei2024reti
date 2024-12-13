@@ -43,7 +43,7 @@ void socketclose()
 }
 
 int init(int, char **);
-bool clientHandler(struct Client * client);
+bool clientHandler(struct Client **, int);
 
 int main (int argc, char ** argv)
 {
@@ -94,12 +94,11 @@ int main (int argc, char ** argv)
                         fdmax = newfd; // Update the max file descriptor          
                 } 
                 else
-                    if (!clientHandler(clients[i]))
+                    if (!clientHandler(clients, i))
                     {
                         clientRemove(&master, clients, i);
                         printf("removed\n");
                     }
-
             }
 
     }
@@ -159,18 +158,19 @@ int init(int argc, char ** argv)
 
 
 
-bool clientHandler(struct Client * client)
+bool clientHandler(struct Client ** clients, int socket)
 {
+    struct Client * client = clients[socket];
+
     if (client->operation != NULL)
         return (*client->operation)(client, NULL, false);
     
-    // Client non ancora registrato: ha stringa nulla
     if (!client->registered)
     {
         if (recvCommand(client) == CMD_REGISTER)
         {
             sendCommand(client, CMD_OK);
-            return recvMessage(client, client->name, true);
+            return regPlayer(client, clients, true);
         }
         else
             return false;

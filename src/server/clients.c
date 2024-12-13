@@ -52,10 +52,7 @@ void clientFree(fd_set * master, struct Client ** clients, int max_clients)
 {
     for (int i = 0; i < max_clients; i++)
         if (FD_ISSET(i, master))
-        {
-            sendCommand(clients[i], CMD_STOP);
-            free(clients + i);
-        }
+            clientRemove(master, clients, i);
     
     return;
 }
@@ -177,7 +174,6 @@ bool recvMessage(struct Client * client, void * buffer, bool init)
         client->operation = recvMessage;
     }
     
-    // Disfaccio tutto se non va a buon fine
     switch (recvMessageProcedure(client))
     {
         case OP_FAIL:
@@ -193,7 +189,6 @@ bool recvMessage(struct Client * client, void * buffer, bool init)
         case OP_DONE:
             client->step = 0;
             client->operation = NULL;
-            printf("%s\n", (char *) client->tmp_p);
             return true;
             break;
 
@@ -223,11 +218,8 @@ enum OperationStatus recvMessageProcedure(struct Client * client)
             break;
 
         case 2:
-            if (!(recvString(client->socket, (char **) &client->tmp_p, client->tmp_i)))
-            {
-                free(client->tmp_p);
+            if (!(recvString(client->socket, (char **) client->tmp_p, client->tmp_i)))
                 return false;
-            }
 
             client->recv_timestamp = time(NULL);
 
@@ -253,6 +245,56 @@ bool recvString(int socket, char ** buffer, int lenght)
         return false;
     }
 
+    return true;
+}
+
+bool regPlayer(struct Client * client, void * p, bool init)
+{
+
+    struct Client **clients = p;
+
+    if (init)
+    {
+        client->tmp_p = &client->name;
+        client->step = -1;
+        client->operation = regPlayer;
+    }
+    
+    switch (recvMessageProcedure(client))
+    {
+        case OP_FAIL:
+            client->step = 0;
+            client->operation = NULL;
+            return false;
+            break;
+        
+        case OP_OK:
+            return true;
+            break;
+
+        case OP_DONE:
+            client->step = 0;
+            client->operation = NULL;
+
+            if (nameValid(clients, client->name))
+            {
+                client->registered = true;
+                return true;
+            }
+            else
+                return false;
+            break;
+
+        default:
+            return false;
+    }
+    
+    return true;
+}
+
+bool nameValid(struct Client ** clients, char * name)
+{
+    // To Do
     return true;
 }
 
