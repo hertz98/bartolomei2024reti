@@ -162,7 +162,7 @@ int init(int argc, char ** argv)
 bool clientHandler(struct Client * client)
 {
     if (client->operation != NULL)
-        return (*client->operation)(client, NULL);
+        return (*client->operation)(client, NULL, false);
     
     // Client non ancora registrato: ha stringa nulla
     if (!client->registered)
@@ -170,7 +170,7 @@ bool clientHandler(struct Client * client)
         if (recvCommand(client) == CMD_REGISTER)
         {
             sendCommand(client, CMD_OK);
-            return recvMessage(client, client->name);
+            return recvMessage(client, client->name, true);
         }
         else
             return false;

@@ -3,6 +3,12 @@
 #include <sys/select.h>
 #include "../shared/commands.h"
 
+enum OperationStatus {
+    OP_FAIL = false,
+    OP_OK = true,
+    OP_DONE
+};
+
 struct Client
 {
     int socket; // ridondante
@@ -11,7 +17,7 @@ struct Client
     int score;
 
     // Status
-    bool (* operation)(struct Client *, void *);
+    bool (* operation)(struct Client *, void *, bool);
     int step;
 
     int tmp_i;
@@ -34,10 +40,10 @@ enum Command recvCommand(struct Client *);
 bool sendInteger(struct Client *, int);
 int recvInteger(struct Client *);
 
-bool sendMessage(struct Client *, void *);
-bool sendMessageProcedure(struct Client *);
+bool sendMessage(struct Client *, void *, bool);
+enum OperationStatus sendMessageProcedure(struct Client *);
 bool sendString(int, char *, int);
 
-bool recvMessage(struct Client *, void *);
-bool recvMessageProcedure(struct Client *);
+bool recvMessage(struct Client *, void *, bool);
+enum OperationStatus recvMessageProcedure(struct Client *);
 bool recvString(int, char **, int);

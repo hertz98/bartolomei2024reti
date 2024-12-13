@@ -60,26 +60,41 @@ void clientFree(fd_set * master, struct Client ** clients, int max_clients)
     return;
 }
 
-bool sendMessage(struct Client * client, void * buffer)
+bool sendMessage(struct Client * client, void * buffer, bool init)
 {
-    if (buffer != NULL){
+    if (init)
+    {
         client->step = -1;
         client->operation = sendMessage;
         client->tmp_p = buffer;
     }
     
-    // Disfaccio tutto
-    if (!sendMessageProcedure(client))
+    switch (sendMessageProcedure(client))
     {
-        client->step = 0;
-        client->operation = NULL;
-        return false;
+        case OP_FAIL:
+            client->step = 0;
+            client->operation = NULL;
+            return false;
+            break;
+
+        case OP_OK:
+            return true;
+            break;
+
+        case OP_DONE:
+            client->step = 0;
+            client->operation = NULL;
+            return true;
+            break;
+
+        default:
+            return false;
     }
     
-    return true;
+    return false;
 }
 
-bool sendMessageProcedure(struct Client * client)
+enum OperationStatus sendMessageProcedure(struct Client * client)
 {
     client->step++;
 
@@ -103,9 +118,8 @@ bool sendMessageProcedure(struct Client * client)
         case 3:
             if (recvCommand(client) != CMD_OK)
                 return false;
-            client->operation = NULL;
-            client->step = 0;
-
+            return OP_DONE;
+            
         default:
             return false;
     }
@@ -154,26 +168,43 @@ enum Command recvCommand(struct Client *client)
     return (enum Command) tmp;
 }
 
-bool recvMessage(struct Client * client, void * buffer)
+bool recvMessage(struct Client * client, void * buffer, bool init)
 {
-    if (buffer != NULL){
+    if (init)
+    {
         client->tmp_p = buffer;
         client->step = -1;
         client->operation = recvMessage;
     }
     
     // Disfaccio tutto se non va a buon fine
-    if (!recvMessageProcedure(client))
+    switch (recvMessageProcedure(client))
     {
-        client->step = 0;
-        client->operation = NULL;
-        return false;
+        case OP_FAIL:
+            client->step = 0;
+            client->operation = NULL;
+            return false;
+            break;
+        
+        case OP_OK:
+            return true;
+            break;
+
+        case OP_DONE:
+            client->step = 0;
+            client->operation = NULL;
+            printf("%s\n", (char *) client->tmp_p);
+            return true;
+            break;
+
+        default:
+            return false;
     }
     
     return true;
 }
 
-bool recvMessageProcedure(struct Client * client)
+enum OperationStatus recvMessageProcedure(struct Client * client)
 {
     client->step++;
 
@@ -192,27 +223,22 @@ bool recvMessageProcedure(struct Client * client)
             break;
 
         case 2:
-            if (!(recvString(client->socket, client->tmp_p, client->tmp_i)))
+            if (!(recvString(client->socket, (char **) &client->tmp_p, client->tmp_i)))
             {
                 free(client->tmp_p);
                 return false;
             }
-            
-            client->operation = NULL;
-            client->step = 0;
 
             client->recv_timestamp = time(NULL);
 
-            printf("%s\n", (char *) client->tmp_p);
-
-            return sendCommand(client, CMD_OK);
+            return sendCommand(client, CMD_OK) ? OP_DONE : OP_FAIL;
             break;
 
         default:
             return false;
     }
 
-    return true;
+    return false;
 }
 
 bool recvString(int socket, char ** buffer, int lenght)
@@ -221,7 +247,7 @@ bool recvString(int socket, char ** buffer, int lenght)
 
     *buffer = (char *) malloc(sizeof(char) * lenght);
 
-    if ((ret = recv(socket, buffer, lenght, 0)) != lenght)
+    if ((ret = recv(socket, *buffer, lenght, 0)) != lenght)
     {
         free(buffer);
         return false;
