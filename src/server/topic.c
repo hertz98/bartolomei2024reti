@@ -35,6 +35,7 @@ bool topicsInit(struct TopicsContext *context, char * directory)
     if (!parentDirectory(context->directory))
         return false;
     strcat(context->directory, directory);
+    return true;
 }
 
 bool topicsLoader(struct TopicsContext *context)
