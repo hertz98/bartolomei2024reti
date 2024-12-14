@@ -74,6 +74,8 @@ int main (int argc, char ** argv)
 
     printf("registered\n");
 
+    while(1);
+
     sendCommand(sd, CMD_STOP);
 
     close(sd);

@@ -66,36 +66,21 @@ bool sendMessage(struct Client * client, void * buffer, bool init)
         client->tmp_p = buffer;
     }
     
-    switch (sendMessageProcedure(client))
+    enum OperationStatus ret = recvMessageProcedure(client);
+
+    if (ret == OP_DONE || ret == OP_FAIL)
     {
-        case OP_FAIL:
             client->step = 0;
             client->operation = NULL;
-            return false;
-            break;
-
-        case OP_OK:
-            return true;
-            break;
-
-        case OP_DONE:
-            client->step = 0;
-            client->operation = NULL;
-            return true;
-            break;
-
-        default:
-            return false;
+            return ret;
     }
-    
-    return false;
+
+    return true;
 }
 
 enum OperationStatus sendMessageProcedure(struct Client * client)
 {
-    client->step++;
-
-    switch (client->step)
+    switch (++client->step)
     {
         case 0:
             return sendCommand(client, CMD_MESSAGE);
@@ -174,36 +159,21 @@ bool recvMessage(struct Client * client, void * buffer, bool init)
         client->operation = recvMessage;
     }
     
-    switch (recvMessageProcedure(client))
+    enum OperationStatus ret = recvMessageProcedure(client);
+
+    if (ret == OP_DONE || ret == OP_FAIL)
     {
-        case OP_FAIL:
             client->step = 0;
             client->operation = NULL;
-            return false;
-            break;
-        
-        case OP_OK:
-            return true;
-            break;
-
-        case OP_DONE:
-            client->step = 0;
-            client->operation = NULL;
-            return true;
-            break;
-
-        default:
-            return false;
+            return ret;
     }
-    
+
     return true;
 }
 
 enum OperationStatus recvMessageProcedure(struct Client * client)
 {
-    client->step++;
-
-    switch (client->step)
+    switch (++client->step)
     {
         case 0: // Il client non invia mai una stringa senza preavviso
             if (recvCommand(client) != CMD_MESSAGE)
@@ -260,36 +230,27 @@ bool regPlayer(struct Client * client, void * p, bool init)
         client->operation = regPlayer;
     }
     
-    switch (recvMessageProcedure(client))
+    enum OperationStatus ret = recvMessageProcedure(client);
+
+    if (ret == OP_DONE || ret == OP_FAIL)
     {
-        case OP_FAIL:
             client->step = 0;
             client->operation = NULL;
-            return false;
-            break;
-        
-        case OP_OK:
-            return true;
-            break;
+    }
 
-        case OP_DONE:
-            client->step = 0;
-            client->operation = NULL;
-
-            if (nameValid(clients, client->name))
+    if (ret == OP_DONE)
+    {
+        if (nameValid(clients, client->name))
             {
                 client->registered = true;
                 return true;
             }
             else
                 return false;
-            break;
-
-        default:
-            return false;
     }
+    else 
+        return ret;
     
-    return true;
 }
 
 bool nameValid(struct Client ** clients, char * name)
