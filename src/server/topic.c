@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <dirent.h> 
 #include <stdio.h>
-#include "topic.h"
 #include <unistd.h>
+#include "topic.h"
 
 
 #ifndef DT_REG
@@ -30,6 +30,7 @@ bool parentDirectory(char * path)
 bool topicsInit(struct TopicsContext *context, char * directory)
 {
     context->nTopics = 0;
+    context->topics = NULL;
     if (readlink("/proc/self/exe", context->directory, PATH_BUFFER_SIZE) == -1)
         return false;
     if (!parentDirectory(context->directory))
@@ -40,24 +41,30 @@ bool topicsInit(struct TopicsContext *context, char * directory)
 
 bool topicsLoader(struct TopicsContext *context)
 {
-    int count = 0;
     DIR * stream = opendir(context->directory);
-    struct dirent *directory;
+    struct dirent *file;
 
     printf("directory: %s\n", context->directory);
     if (stream)
     {
-        while ((directory = readdir(stream)) != NULL)
+        while ((file = readdir(stream)) != NULL)
         {
-            if (directory->d_type != DT_REG)
+            if (file->d_type != DT_REG)
                 continue;
-            printf("%s\n", directory->d_name);
-            count++;
+
+            context->nTopics++;
+            context->topics = realloc(context->topics, sizeof(Topic) * context->nTopics);
+
+            Topic * current = &context->topics[context->nTopics - 1];
+            memset(current, 0, sizeof(Topic));
+            strncpy(current->name, file->d_name, FILE_NAME_SIZE);
+            current->questions = NULL;
         }
         closedir(stream);
     }
 
-    printf("count= %d\n", count);
+    for (int i = 0; i < context->nTopics; i++)
+        printf("%s\n",context->topics[i].name);
 
     return false;
 }
