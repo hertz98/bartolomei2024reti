@@ -10,7 +10,14 @@ struct Topic
     struct Question * questions;
 };
 
+struct TopicsContext
+{
+    char *directory;
+    int nTopics;
+    struct Topic **topics;
+};
 
-bool topicsLoader(struct Question **);
-bool topicLoad(char *, struct Topic *);
+
+bool topicsLoader(struct TopicsContext *);
+bool topicLoad(FILE *, struct Topic *);
 void topicsFree(struct Question **);
