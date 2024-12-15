@@ -43,6 +43,12 @@ bool removeExtension(char * path)
     return true;
 }
 
+int topics_compare(const void *a, const void *b){
+    Topic * topic_a = (Topic *) a,
+     * topic_b = (Topic *) b;
+    return strcmp(topic_a->name, topic_b->name);
+}
+
 bool topicsInit(struct TopicsContext *context, char * directory)
 {
     context->nTopics = 0;
@@ -79,8 +85,10 @@ bool topicsLoader(struct TopicsContext *context)
         closedir(stream);
     }
 
-    for (int i = 0; i < context->nTopics; i++)
-        printf("%s\n",context->topics[i].name);
+    qsort(context->topics, context->nTopics, sizeof(Topic), topics_compare);
+
+    // for (int i = 0; i < context->nTopics; i++)
+    //     printf("%s\n",context->topics[i].name);
 
     for (int i = 0; i < context->nTopics; i++)
     {
