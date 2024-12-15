@@ -99,7 +99,7 @@ bool topicsLoader(struct TopicsContext *context)
     return false;
 }
 
-void list_print_question(void * data)
+void topic_list_print_question(void * data)
 {
     Question * tmp = (Question *) data;
     printf("_%s_: _%s_\n", tmp->question, tmp->answer);
