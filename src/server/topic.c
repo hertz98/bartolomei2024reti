@@ -94,7 +94,7 @@ bool topicsLoader(struct TopicsContext *context)
 void list_print_question(void * data)
 {
     Question * tmp = (Question *) data;
-    printf("%s: %s\n", tmp->question, tmp->answer);
+    printf("_%s_: _%s_\n", tmp->question, tmp->answer);
 }
 
 bool topicLoad(struct TopicsContext *context, struct Topic * topic)
@@ -109,16 +109,23 @@ bool topicLoad(struct TopicsContext *context, struct Topic * topic)
         return false;
 
     Question * new_question = NULL;
-    size_t n;
-    for (char * line = NULL; getline(&line, &n, file) != -1; line = NULL)
+    size_t alloc_len;
+    for (char * line = NULL; getline(&line, &alloc_len, file) != -1; line = NULL)
     {
-        if ((line[0] == '\n')) // Ignora linee vuote
+        // Ignora linee vuote, valutazione in corto circuito
+        if ((line[0] == '\n' || line[1] == '\n'))
         {
             new_question = NULL;
             continue;
         }
-        if (line[strlen(line) - 1] == '\n')
-            line[strlen(line) - 1] = '\0'; // Rimuovo il carattere di nuova line
+
+        int len = strlen(line);
+        if (len >= 2 && line[len - 2] == '\r') // Caso codifica Windows
+            line[len - 2] = '\0';
+        else if (line[len - 1] == '\n') // Rimuovo il carattere di nuova linea
+            line[len - 1] = '\0';
+
+        // printf("line %d/%d: _%s_\n", len, (int) alloc_len, line); // DEBUG
 
         if (!new_question)
         {
