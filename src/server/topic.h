@@ -31,4 +31,4 @@ typedef struct TopicsContext
 bool topicsInit(struct TopicsContext *, char *);
 bool topicsLoader(struct TopicsContext *);
 bool topicLoad(struct TopicsContext *, struct Topic *);
-void topicsFree(struct Question **);
+void topicsFree(struct TopicsContext *);

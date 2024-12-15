@@ -125,6 +125,7 @@ bool topicLoad(struct TopicsContext *context, struct Topic * topic)
             new_question = malloc( sizeof(Question) );
             list_append(&topic->questions, new_question);
             new_question->question = line;
+            new_question->answer = ""; // Nel caso la risposta non venisse caricata
         }
         else
         {
@@ -139,8 +140,24 @@ bool topicLoad(struct TopicsContext *context, struct Topic * topic)
     return false;
 }
 
-void topicsFree(struct Question ** topics)
+void topics_questionDestroy(void * p)
 {
+    Question * question = (Question *) p;
+    if (question->question)
+        free(question->question);
+    if (question->answer)
+        free(question->answer);
+}
 
+void topicsFree(struct TopicsContext *context)
+{
+    if (!context->nTopics)
+        return;
+
+    for (int i = 0; i < context->nTopics; i++)
+        list_destroy(context->topics[i].questions, topics_questionDestroy);
+    free(context->topics);
+
+    context->nTopics = 0;
     return;
 }
