@@ -1,8 +1,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <dirent.h> 
 #include <stdio.h>
+#include <dirent.h> 
 #include <unistd.h>
 #include "topic.h"
 
@@ -18,12 +18,28 @@ bool parentDirectory(char * path)
     if (path[n] == '/')
         n--;
 
-    while (n-- > 1 && path[n] != '/');
+    while (n > 0 && path[n] != '/')
+        n--;
 
     if (path[n] != '/')
         return false;
 
     path[ n + 1 ] = '\0';
+    return true;
+}
+
+bool removeExtension(char * path)
+{
+    int n = strlen(path) - 1;
+
+    while(n > 0 && path[ n ] != '.')
+        n--;
+
+    if (n == 0 || path[n - 1] == '/')
+        return false;
+
+    path[n] = '\0';
+
     return true;
 }
 
@@ -66,18 +82,60 @@ bool topicsLoader(struct TopicsContext *context)
     for (int i = 0; i < context->nTopics; i++)
         printf("%s\n",context->topics[i].name);
 
+    for (int i = 0; i < context->nTopics; i++)
+    {
+        topicLoad(context, &context->topics[i]);
+        removeExtension(context->topics[i].name);
+    }
+
     return false;
 }
 
-bool topicLoad(FILE * file, struct Topic *)
+void list_print_question(void * data)
 {
-    // Scorro il file e mi ricavo il numero di domande/risposte valide
-    // creo un buffer di dimensione QUESTION_MAX_SIZE che utilizzerò come locazione temporanea per la lettura del file
-    // Creo lo array e riapro il file
-    //foreach(riga){
-        // scrivo la domanda/riposta nel buffer
-        // malloc e la aggiungo alla struttura
-        // se struttura completa, la aggiungo all'array o alla lista
+    Question * tmp = (Question *) data;
+    printf("%s: %s\n", tmp->question, tmp->answer);
+}
+
+bool topicLoad(struct TopicsContext *context, struct Topic * topic)
+{
+    FILE *file;
+
+    char file_path[4096];
+    strcpy(file_path, context->directory);
+    strncat(file_path, topic->name, FILE_NAME_SIZE);
+
+    if (!(file = fopen(file_path, "r")))
+        return false;
+
+    Question * new_question = NULL;
+    size_t n;
+    for (char * line = NULL; getline(&line, &n, file) != -1; line = NULL)
+    {
+        if ((line[0] == '\0')) // Ignore empty lines
+        {
+            new_question = NULL;
+            continue;
+        }
+
+        line[strlen(line) - 1] = '\0'; // Rimuovo il carattere di nuova line
+
+        if (!new_question)
+        {
+            new_question = malloc( sizeof(Question) );
+            list_append(&topic->questions, new_question);
+            new_question->question = line;
+        }
+        else
+        {
+            new_question->answer = line;
+            new_question = NULL;
+        }
+    }
+    fclose(file);
+
+    list_print(topic->questions, list_print_question);
+
     return false;
 }
 

@@ -34,4 +34,4 @@ gdb_client:
 	gdb -x ./src/client/gdbinit ./bin/client
 
 testing:
-	gcc -g -Wall ./src/testing/main.c ./src/server/topic.c -o ./bin/testing && ./bin/testing
+	gcc -g -Wall ./src/testing/main.c ./src/server/{topic.c,list.c} -o ./bin/testing && ./bin/testing

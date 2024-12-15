@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "list.h"
 
-Node * create_node(void *data)
+Node * list_create_node(void *data)
 {
     Node *tmp = (Node *)malloc(sizeof(Node));
 
@@ -17,9 +17,9 @@ Node * create_node(void *data)
     return tmp;
 }
 
-Node * append(Node ** head, void *data)
+Node * list_append(Node ** head, void *data)
 {
-    Node *tmp = create_node(data);
+    Node *tmp = list_create_node(data);
     if (!tmp)
         return NULL;
 
@@ -36,18 +36,22 @@ Node * append(Node ** head, void *data)
     return tmp;
 }
 
-void print_list(Node *head, void (*print)(void *))
+void list_print_string(void *data) {
+    printf("%s\n", (char *) data);
+}
+
+void list_print(Node *head, void (*print)(void *))
 {
     for(Node *tmp = head; tmp; tmp = tmp->next)
         print(tmp->data);
 }
 
-void destroy(Node *node, void (*release)(void *))
+void list_destroy(Node *node, void (*release)(void *))
 {
     if (!node)
         return;
 
-    destroy(node->next, release);
+    list_destroy(node->next, release);
 
     if (release)
         release(node->data);
