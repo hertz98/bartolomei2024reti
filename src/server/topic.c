@@ -135,8 +135,6 @@ bool topicLoad(struct TopicsContext *context, struct Topic * topic)
     }
     fclose(file);
 
-    list_print(topic->questions, list_print_question);
-
     return false;
 }
 
