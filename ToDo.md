@@ -1,4 +1,11 @@
+Server:
+- exiting functions
+
+Client:
 - The socket indexes the array, but the socket number can be any (usually the smaller non negative)
-- bool sendString and recvString should get struct Client instead of the socket, and update the recvtime
+- ClientContext structure
+- bool sendString and recvString should get struct Client instead of the socket, and update the recvtime, to standarize
 - nameValid
-- closing functions
+
+topic/client/sqlite:
+- using sqlite, store played topics, and function generate available topic string (per player)
