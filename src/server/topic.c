@@ -112,25 +112,25 @@ bool topicLoad(struct TopicsContext *context, struct Topic * topic)
     size_t n;
     for (char * line = NULL; getline(&line, &n, file) != -1; line = NULL)
     {
-        if ((line[0] == '\0')) // Ignore empty lines
+        if ((line[0] == '\n')) // Ignora linee vuote
         {
             new_question = NULL;
             continue;
         }
-
-        line[strlen(line) - 1] = '\0'; // Rimuovo il carattere di nuova line
+        if (line[strlen(line) - 1] == '\n')
+            line[strlen(line) - 1] = '\0'; // Rimuovo il carattere di nuova line
 
         if (!new_question)
         {
             new_question = malloc( sizeof(Question) );
             list_append(&topic->questions, new_question);
             new_question->question = line;
-            new_question->answer = ""; // Nel caso la risposta non venisse caricata
+            new_question->answer = NULL; // Nel caso la risposta non venisse caricata
         }
         else
         {
             new_question->answer = line;
-            new_question = NULL;
+            new_question = NULL; // Verrà create una nuova domanda per prossima linea
         }
     }
     fclose(file);
@@ -142,6 +142,8 @@ bool topicLoad(struct TopicsContext *context, struct Topic * topic)
 
 void topics_questionDestroy(void * p)
 {
+    if (!p)
+        return;
     Question * question = (Question *) p;
     if (question->question)
         free(question->question);
