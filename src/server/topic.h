@@ -23,7 +23,7 @@ typedef struct Topic
 
 typedef struct TopicsContext
 {
-    char directory[PATH_BUFFER_SIZE];
+    char * directory;
     int nTopics;
     struct Topic * topics;
 } TopicsContext;

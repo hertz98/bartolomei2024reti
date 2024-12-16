@@ -2,3 +2,4 @@
 
 bool parentDirectory(char *);
 bool removeExtension(char *);
+char * executablePath();

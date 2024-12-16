@@ -21,20 +21,26 @@ bool topicsInit(struct TopicsContext *context, char * directory)
 {
     context->nTopics = 0;
     context->topics = NULL;
-    if (readlink("/proc/self/exe", context->directory, PATH_BUFFER_SIZE) == -1)
+    context->directory = NULL;
+
+    if (!(context->directory = executablePath()))
         return false;
+
     if (!parentDirectory(context->directory))
         return false;
+
     strcat(context->directory, directory);
+
     return true;
 }
 
 bool topicsLoader(struct TopicsContext *context)
 {
+    //printf("directory: %s\n", context->directory); // DEBUG
+    
     DIR * stream = opendir(context->directory);
     struct dirent *file;
 
-    printf("directory: %s\n", context->directory);
     if (stream)
     {
         while ((file = readdir(stream)) != NULL)
@@ -55,7 +61,7 @@ bool topicsLoader(struct TopicsContext *context)
 
     qsort(context->topics, context->nTopics, sizeof(Topic), topics_compare);
 
-    // for (int i = 0; i < context->nTopics; i++)
+    // for (int i = 0; i < context->nTopics; i++) // DEBUG
     //     printf("%s\n",context->topics[i].name);
 
     for (int i = 0; i < context->nTopics; i++)
@@ -139,7 +145,11 @@ void topicsFree(struct TopicsContext *context)
 
     for (int i = 0; i < context->nTopics; i++)
         list_destroy(context->topics[i].questions, topics_questionDestroy);
+        
     free(context->topics);
+
+    if(context->directory)
+        free(context->directory);
 
     context->nTopics = 0;
     return;

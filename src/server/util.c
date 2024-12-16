@@ -1,4 +1,7 @@
 #include <string.h>
+#include <stdlib.h>
+#include <linux/limits.h>
+#include <unistd.h>
 #include "util.h"
 
 bool parentDirectory(char * path)
@@ -31,4 +34,14 @@ bool removeExtension(char * path)
     path[n] = '\0';
 
     return true;
+}
+
+char * executablePath()
+{
+    char * path = malloc( PATH_MAX + 1 );
+    if (readlink("/proc/self/exe", path, PATH_MAX) == -1)
+        return NULL;
+    path[PATH_MAX] = '\0';
+    path = realloc(path, strlen(path) + 1);
+    return path;
 }
