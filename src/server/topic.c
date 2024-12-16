@@ -5,43 +5,11 @@
 #include <dirent.h> 
 #include <unistd.h>
 #include "topic.h"
-
+#include "util.h"
 
 #ifndef DT_REG
 #define DT_REG 8
 #endif
-
-bool parentDirectory(char * path)
-{
-    int n = strlen(path) - 1;
-
-    if (path[n] == '/')
-        n--;
-
-    while (n > 0 && path[n] != '/')
-        n--;
-
-    if (path[n] != '/')
-        return false;
-
-    path[ n + 1 ] = '\0';
-    return true;
-}
-
-bool removeExtension(char * path)
-{
-    int n = strlen(path) - 1;
-
-    while(n > 0 && path[ n ] != '.')
-        n--;
-
-    if (n == 0 || path[n - 1] == '/')
-        return false;
-
-    path[n] = '\0';
-
-    return true;
-}
 
 int topics_compare(const void *a, const void *b){
     Topic * topic_a = (Topic *) a,
