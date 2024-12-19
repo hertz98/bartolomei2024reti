@@ -95,7 +95,7 @@ enum OperationStatus sendMessageProcedure(struct Client * client)
         case 2:
             if (recvCommand(client) != CMD_STRING)
                 return false;
-            return sendString(client->socket, client->tmp_p, strlen(client->tmp_p));
+            return sendString(client, client->tmp_p, strlen(client->tmp_p));
 
         case 3:
             if (recvCommand(client) != CMD_OK)
@@ -123,11 +123,11 @@ bool sendInteger(struct Client * client, int i)
     return true;
 }
 
-bool sendString(int socket, char * buffer, int lenght)
+bool sendString(struct Client * client, char * buffer, int lenght)
 {
     int ret;
 
-    if ((ret = send(socket, buffer, lenght, 0)) != lenght)
+    if ((ret = send(client->socket, buffer, lenght, 0)) != lenght)
         return false;
 
     return true;
@@ -176,12 +176,9 @@ enum OperationStatus recvMessage(struct Client * client, void * buffer, bool ini
             break;
 
         case 2:
-            if (!(recvString(client->socket, (char **) client->tmp_p, client->tmp_i)))
-                break;
-
-            client->recv_timestamp = time(NULL);
-
-            ret = sendCommand(client, CMD_OK) ? OP_DONE : OP_FAIL;
+            if (recvString(client, (char **) client->tmp_p, client->tmp_i) &&
+             sendCommand(client, CMD_OK))
+                ret = OP_DONE;
             break;
 
         default:
@@ -202,17 +199,19 @@ enum OperationStatus recvMessage(struct Client * client, void * buffer, bool ini
     return ret;
 }
 
-bool recvString(int socket, char ** buffer, int lenght)
+bool recvString(struct Client * client, char ** buffer, int lenght)
 {
     int ret;
 
     *buffer = (char *) malloc(sizeof(char) * lenght);
 
-    if ((ret = recv(socket, *buffer, lenght, 0)) != lenght)
+    if ((ret = recv(client->socket, *buffer, lenght, 0)) != lenght)
     {
         free(buffer);
         return false;
     }
+
+    client->recv_timestamp = time(NULL);
 
     return true;
 }
@@ -243,7 +242,7 @@ enum OperationStatus regPlayer(struct Client * client, void * p, bool init)
             if (nameValid(clients, client->name))
                 {
                     client->registered = true;
-                    printf(client->name);
+                    printf("%s\n",client->name);
                     return true;
                 }
                 else

@@ -42,11 +42,11 @@ int recvInteger(struct Client *);
 
 bool sendMessage(struct Client *, void *, bool);
 enum OperationStatus sendMessageProcedure(struct Client *);
-bool sendString(int, char *, int);
+bool sendString(struct Client *, char *, int);
 
 //bool recvMessage(struct Client *, void *, bool);
 enum OperationStatus recvMessageProcedure(struct Client *, void *, bool);
-bool recvString(int, char **, int);
+bool recvString(struct Client *, char **, int);
 
 enum OperationStatus regPlayer(struct Client *, void *, bool);
 bool nameValid(struct Client **, char *);

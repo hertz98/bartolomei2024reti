@@ -4,7 +4,6 @@ Server:
 Client:
 - The socket indexes the array, but the socket number can be any (usually the smaller non negative)
 - ClientContext structure
-- bool sendString and recvString should get struct Client instead of the socket, and update the recvtime, to standarize
 - nameValid
 
 topic/client/sqlite:
