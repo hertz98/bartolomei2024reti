@@ -17,7 +17,7 @@ struct Client
     int score;
 
     // Status
-    bool (* operation)(struct Client *, void *, bool);
+    enum OperationStatus (* operation)(struct Client *, void *, bool);
     int step;
 
     int tmp_i;
@@ -44,9 +44,9 @@ bool sendMessage(struct Client *, void *, bool);
 enum OperationStatus sendMessageProcedure(struct Client *);
 bool sendString(int, char *, int);
 
-bool recvMessage(struct Client *, void *, bool);
-enum OperationStatus recvMessageProcedure(struct Client *);
+//bool recvMessage(struct Client *, void *, bool);
+enum OperationStatus recvMessageProcedure(struct Client *, void *, bool);
 bool recvString(int, char **, int);
 
-bool regPlayer(struct Client *, void *, bool);
+enum OperationStatus regPlayer(struct Client *, void *, bool);
 bool nameValid(struct Client **, char *);

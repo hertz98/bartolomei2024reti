@@ -57,26 +57,26 @@ void clientFree(fd_set * master, struct Client ** clients, int max_clients)
     return;
 }
 
-bool sendMessage(struct Client * client, void * buffer, bool init)
-{
-    if (init)
-    {
-        client->step = -1;
-        client->operation = sendMessage;
-        client->tmp_p = buffer;
-    }
+// bool sendMessage(struct Client * client, void * buffer, bool init)
+// {
+//     if (init)
+//     {
+//         client->step = -1;
+//         client->operation = sendMessage;
+//         client->tmp_p = buffer;
+//     }
     
-    enum OperationStatus ret = recvMessageProcedure(client);
+//     enum OperationStatus ret = sendMessageProcedure(client);
 
-    if (ret == OP_DONE || ret == OP_FAIL)
-    {
-            client->step = 0;
-            client->operation = NULL;
-            return ret;
-    }
+//     if (ret == OP_DONE || ret == OP_FAIL)
+//     {
+//             client->step = 0;
+//             client->operation = NULL;
+//             return ret;
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
 enum OperationStatus sendMessageProcedure(struct Client * client)
 {
@@ -150,57 +150,56 @@ enum Command recvCommand(struct Client *client)
     return (enum Command) tmp;
 }
 
-bool recvMessage(struct Client * client, void * buffer, bool init)
+enum OperationStatus recvMessage(struct Client * client, void * buffer, bool init)
 {
+    enum OperationStatus ret = OP_FAIL;
+
     if (init)
     {
         client->tmp_p = buffer;
         client->step = -1;
         client->operation = recvMessage;
     }
-    
-    enum OperationStatus ret = recvMessageProcedure(client);
 
-    if (ret == OP_DONE || ret == OP_FAIL)
-    {
-            client->step = 0;
-            client->operation = NULL;
-            return ret;
-    }
-
-    return true;
-}
-
-enum OperationStatus recvMessageProcedure(struct Client * client)
-{
     switch (++client->step)
     {
         case 0: // Il client non invia mai una stringa senza preavviso
-            if (recvCommand(client) != CMD_MESSAGE)
-                return false;
-            return sendCommand(client, CMD_SIZE);
+            if (recvCommand(client) == CMD_MESSAGE &&
+             sendCommand(client, CMD_SIZE))
+                ret = OP_OK;
             break;
 
         case 1:
-            if ((client->tmp_i = recvInteger(client)) <= 0)
-                return false;
-            return sendCommand(client, CMD_STRING);
+            if ((client->tmp_i = recvInteger(client)) > 0 &&
+             sendCommand(client, CMD_STRING))
+                ret = OP_OK;
             break;
 
         case 2:
             if (!(recvString(client->socket, (char **) client->tmp_p, client->tmp_i)))
-                return false;
+                break;
 
             client->recv_timestamp = time(NULL);
 
-            return sendCommand(client, CMD_OK) ? OP_DONE : OP_FAIL;
+            ret = sendCommand(client, CMD_OK) ? OP_DONE : OP_FAIL;
             break;
 
         default:
             return false;
     }
 
-    return false;
+    switch(ret)
+    {
+        case OP_OK:
+            break;
+        case OP_FAIL:
+        case OP_DONE:
+            client->operation = NULL;
+            break;
+        default:
+            return OP_FAIL;
+    }
+    return ret;
 }
 
 bool recvString(int socket, char ** buffer, int lenght)
@@ -218,7 +217,7 @@ bool recvString(int socket, char ** buffer, int lenght)
     return true;
 }
 
-bool regPlayer(struct Client * client, void * p, bool init)
+enum OperationStatus regPlayer(struct Client * client, void * p, bool init)
 {
 
     struct Client **clients = p;
@@ -230,27 +229,31 @@ bool regPlayer(struct Client * client, void * p, bool init)
         client->operation = regPlayer;
     }
     
-    enum OperationStatus ret = recvMessageProcedure(client);
-
-    if (ret == OP_DONE || ret == OP_FAIL)
+    enum OperationStatus ret;
+    switch( ret = recvMessage(client, NULL, false) )
     {
-            client->step = 0;
+        case OP_OK:
+            break;
+        case OP_FAIL:
             client->operation = NULL;
-    }
+            break;
 
-    if (ret == OP_DONE)
-    {
-        if (nameValid(clients, client->name))
-            {
-                client->registered = true;
-                return true;
-            }
-            else
-                return false;
+        case OP_DONE:
+            client->operation = NULL;
+            if (nameValid(clients, client->name))
+                {
+                    client->registered = true;
+                    printf(client->name);
+                    return true;
+                }
+                else
+                    return false;
+            break;
+
+        default:
+            return OP_FAIL;
     }
-    else 
-        return ret;
-    
+    return (bool) ret;
 }
 
 bool nameValid(struct Client ** clients, char * name)
