@@ -20,17 +20,17 @@ windows: ./src/client/client.c ./src/server/server.c
 	cp "/usr/x86_64-pc-cygwin/sys-root/usr/bin/cygwin1.dll"	./bin/
 
 run_server: test_server
-test_server:
+test_server: server
 	./bin/server 127.0.0.1 1234
 
 run_client: test_client
-test_client:
+test_client: client
 	./bin/client 127.0.0.1 1234
 
-gdb_server:
+gdb_server: server
 	gdb -x ./src/server/gdbinit ./bin/server
 
-gdb_client:
+gdb_client: client
 	gdb -x ./src/client/gdbinit ./bin/client
 
 testing:
