@@ -28,10 +28,10 @@ test_client: client
 	./bin/client 127.0.0.1 1234
 
 gdb_server: server
-	gdb -x ./src/server/gdbinit ./bin/server
+	gdb -x ./src/server/.gdbinit ./bin/server
 
 gdb_client: client
-	gdb -x ./src/client/gdbinit ./bin/client
+	gdb -x ./src/client/.gdbinit ./bin/client
 
 testing:
 	gcc -g -Wall ./src/testing/main.c ./src/server/{util.c,topic.c,list.c} -o ./bin/testing && ./bin/testing

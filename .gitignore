@@ -1,2 +1,4 @@
 .vscode
 bin/
+src/server/.gdbinit
+src/client/.gdbinit
