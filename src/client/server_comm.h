@@ -19,4 +19,4 @@ bool sendMessage(int, void *);
 bool sendString(int, char *, int);
 
 bool recvMessage(int, void *);
-bool recvString(int, char *, int);
+bool recvString(int , char **, int);

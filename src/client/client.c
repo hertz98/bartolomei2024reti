@@ -70,9 +70,17 @@ int main (int argc, char ** argv)
     {
         printf("registering\n");
         sendMessage(sd, name);
+        if(recvCommand(sd) == CMD_OK)
+            printf("registered\n");
     }
 
-    printf("registered\n");
+    if (recvCommand(sd) == CMD_MESSAGE)
+    {
+    char * prova;
+    recvMessage(sd, &prova);
+    printf("%s\n", prova);
+    free(prova);
+    }
 
     while(1);
 

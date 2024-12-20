@@ -40,7 +40,8 @@ enum Command recvCommand(struct Client *);
 bool sendInteger(struct Client *, int);
 int recvInteger(struct Client *);
 
-bool sendMessage(struct Client *, void *, bool);
+
+enum OperationStatus sendMessage(struct Client *, void *, bool);
 enum OperationStatus sendMessageProcedure(struct Client *);
 bool sendString(struct Client *, char *, int);
 

@@ -57,26 +57,26 @@ void clientFree(fd_set * master, struct Client ** clients, int max_clients)
     return;
 }
 
-// bool sendMessage(struct Client * client, void * buffer, bool init)
-// {
-//     if (init)
-//     {
-//         client->step = -1;
-//         client->operation = sendMessage;
-//         client->tmp_p = buffer;
-//     }
+enum OperationStatus sendMessage(struct Client * client, void * buffer, bool init)
+{
+    if (init)
+    {
+        client->step = -1;
+        client->operation = sendMessage;
+        client->tmp_p = buffer;
+    }
     
-//     enum OperationStatus ret = sendMessageProcedure(client);
+    enum OperationStatus ret = sendMessageProcedure(client);
 
-//     if (ret == OP_DONE || ret == OP_FAIL)
-//     {
-//             client->step = 0;
-//             client->operation = NULL;
-//             return ret;
-//     }
+    if (ret == OP_DONE || ret == OP_FAIL)
+    {
+            client->step = 0;
+            client->operation = NULL;
+            return ret;
+    }
 
-//     return true;
-// }
+    return true;
+}
 
 enum OperationStatus sendMessageProcedure(struct Client * client)
 {
@@ -204,10 +204,13 @@ bool recvString(struct Client * client, char ** buffer, int lenght)
     int ret;
 
     *buffer = (char *) malloc(sizeof(char) * lenght);
+    if (!buffer)
+        return false;
 
     if ((ret = recv(client->socket, *buffer, lenght, 0)) != lenght)
     {
-        free(buffer);
+        free(*buffer);
+        *buffer = NULL;
         return false;
     }
 
@@ -242,11 +245,16 @@ enum OperationStatus regPlayer(struct Client * client, void * p, bool init)
             if (nameValid(clients, client->name))
                 {
                     client->registered = true;
-                    printf("%s\n",client->name);
+                    printf("%s\n",client->name); // DEBUG
+                    sendCommand(client, CMD_OK);
+                    sendMessage(client, "provasendfromserver", true);
                     return true;
                 }
                 else
+                {
+                    sendCommand(client, CMD_STOP);
                     return false;
+                }
             break;
 
         default:

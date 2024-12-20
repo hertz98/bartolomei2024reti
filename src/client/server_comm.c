@@ -76,12 +76,11 @@ bool recvMessage(int socket, void * buffer)
     if (!sendCommand(socket, CMD_SIZE))
         return false;
 
-    int size;
-    size = recvInteger(socket);
+    int size = recvInteger(socket);
     if (!sendCommand(socket, CMD_STRING))
         return false;
 
-    if (!(recvString(socket, buffer, size)))
+    if (!(recvString(socket, (char **) buffer, size)))
     {
         free(buffer);
         return false;
@@ -90,15 +89,18 @@ bool recvMessage(int socket, void * buffer)
     return sendCommand(socket, CMD_OK);
 }
 
-bool recvString(int socket, char * buffer, int lenght)
+bool recvString(int socket, char ** buffer, int lenght)
 {
     int ret;
 
-    buffer = (char *) malloc(sizeof(char) * lenght);
+    *buffer = (char *) malloc(sizeof(char) * lenght);
+    if (!buffer)
+        return false;
 
-    if ((ret = recv(socket, buffer, lenght, 0)) != lenght)
+    if ((ret = recv(socket, *buffer, lenght, 0)) != lenght)
     {
-        free(buffer);
+        free(*buffer);
+        *buffer = NULL;
         return false;
     }
 
