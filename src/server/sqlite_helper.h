@@ -29,5 +29,5 @@ bool db_isPlayed(sqlite3 * connection, char * player, char * topic);
 bool db_setPlayed(sqlite3 *connection, char * player, char * topic, int score);
 
 /// @brief Chiude la connessione col database
-/// @param connection 
+/// @param connection Connessione al database sqlite già aperta
 void db_close(sqlite3 * connection);

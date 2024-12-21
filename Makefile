@@ -34,4 +34,7 @@ gdb_client: client
 	gdb -x ./src/client/.gdbinit ./bin/client
 
 testing:
-	gcc -g -Wall ./src/testing/main.c ./src/server/{util.c,topic.c,list.c} -o ./bin/testing && ./bin/testing
+	gcc -g -Wall ./src/testing/main.c ./src/server/{util.c,topic.c,list.c,sqlite_helper.c} ./src/server/sqlite-amalgamation/sqlite3.o -o ./bin/testing && ./bin/testing
+
+sqlite:
+	gcc -c ./src/server/sqlite-amalgamation/sqlite3.c -o ./src/server/sqlite-amalgamation/sqlite3.o
