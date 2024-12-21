@@ -59,53 +59,56 @@ void clientFree(fd_set * master, struct Client ** clients, int max_clients)
 
 enum OperationStatus sendMessage(struct Client * client, void * buffer, bool init)
 {
+    enum OperationStatus ret = OP_FAIL;
+
     if (init)
     {
-        client->step = -1;
+        client->step = 0;
         client->operation = sendMessage;
         client->tmp_p = buffer;
     }
-    
-    enum OperationStatus ret = sendMessageProcedure(client);
 
-    if (ret == OP_DONE || ret == OP_FAIL)
-    {
-            client->step = 0;
-            client->operation = NULL;
-            return ret;
-    }
-
-    return true;
-}
-
-enum OperationStatus sendMessageProcedure(struct Client * client)
-{
-    switch (++client->step)
+    switch (client->step++)
     {
         case 0:
-            return sendCommand(client, CMD_MESSAGE);
+            if (sendCommand(client, CMD_MESSAGE))
+                ret = OP_OK;
             break;
 
         case 1:
-            if (recvCommand(client) != CMD_SIZE)
-                return false;
-            return sendInteger(client, strlen(client->tmp_p));
+            if (recvCommand(client) == CMD_SIZE &&
+             sendInteger(client, strlen(client->tmp_p)))
+                ret = OP_OK;
             break;
 
         case 2:
-            if (recvCommand(client) != CMD_STRING)
-                return false;
-            return sendString(client, client->tmp_p, strlen(client->tmp_p));
+            if (recvCommand(client) == CMD_STRING &&
+             sendString(client, client->tmp_p, strlen(client->tmp_p)))
+                ret = OP_OK;
+            break;
 
         case 3:
-            if (recvCommand(client) != CMD_OK)
-                return false;
-            return OP_DONE;
+            if (recvCommand(client) == CMD_OK)
+                ret = OP_DONE;
+            break;
             
         default:
             return false;
     }
-    return true;
+
+    switch(ret)
+    {
+        case OP_OK:
+            break;
+        case OP_FAIL:
+        case OP_DONE:
+            client->operation = NULL;
+            break;
+        default:
+            return OP_FAIL;
+    }
+
+    return ret;
 }
 
 bool sendInteger(struct Client * client, int i)
@@ -157,11 +160,11 @@ enum OperationStatus recvMessage(struct Client * client, void * buffer, bool ini
     if (init)
     {
         client->tmp_p = buffer;
-        client->step = -1;
+        client->step = 0;
         client->operation = recvMessage;
     }
 
-    switch (++client->step)
+    switch (client->step++)
     {
         case 0: // Il client non invia mai una stringa senza preavviso
             if (recvCommand(client) == CMD_MESSAGE &&
@@ -196,6 +199,7 @@ enum OperationStatus recvMessage(struct Client * client, void * buffer, bool ini
         default:
             return OP_FAIL;
     }
+
     return ret;
 }
 
@@ -227,7 +231,7 @@ enum OperationStatus regPlayer(struct Client * client, void * p, bool init)
     if (init)
     {
         client->tmp_p = &client->name;
-        client->step = -1;
+        client->step = 0;
         client->operation = regPlayer;
     }
     

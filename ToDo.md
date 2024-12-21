@@ -1,4 +1,5 @@
 Server:
+- Handling TCP connection halting
 - exiting functions
 
 Client:
