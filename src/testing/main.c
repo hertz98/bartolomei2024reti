@@ -2,13 +2,18 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DB_FILE "./data/quiz.db"
+#define TOPIC_DIR "./data/topics/"
 
-#include "../server/sqlite_helper.h"
+#include "../server/topic.h"
+
+
+struct TopicsContext topics_context;
 
 int main(int argc, char ** argv)
 {
-    
+    topicsInit(&topics_context, TOPIC_DIR);
 
+    topicsLoader(&topics_context);
+    topicsFree(&topics_context);
     return 0;
 }
