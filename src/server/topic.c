@@ -105,8 +105,9 @@ bool topicLoad(char * path, Topic * topic)
         return false;
 
     Question * new_question = NULL;
+    char * line = NULL;
     size_t alloc_len;
-    for (char * line = NULL; getline(&line, &alloc_len, file) != -1; line = NULL)
+    while( getline(&line, &alloc_len, file) != -1)
     {
         // Ignora linee vuote, valutazione in corto circuito
         if ((line[0] == '\n' || line[1] == '\n'))
@@ -133,7 +134,10 @@ bool topicLoad(char * path, Topic * topic)
             new_question->answer = line;
             new_question = NULL; // Verrà create una nuova domanda per prossima linea
         }
+
+        line = NULL;
     }
+    free(line);
     fclose(file);
 
     path[endline] = '\0';
@@ -189,16 +193,17 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
         printf("%s\n", path);
     #endif
 
-    bool *tmp = (bool *) malloc(context->nTopics);
+    bool *unplayed = (bool *) malloc(context->nTopics);
     for (int i = 0; i < context->nTopics; i++)
-        tmp[i] = true;
+        unplayed[i] = true;
 
     FILE *file;
     if (!(file = fopen(path, "r")))
-        return tmp;
-
+        return unplayed;
+ 
+    char * line = (char *) malloc(NAME_MAX * sizeof(char)); // getline() vuole una stringa allocata con la malloc()
     size_t alloc_len;
-    for (char * line = NULL; getline(&line, &alloc_len, file) != -1; line = NULL)
+    while(getline(&line, &alloc_len, file) != -1)
     {
         if ((line[0] == '\n' || line[1] == '\n')) // Linee vuote
             continue;
@@ -207,13 +212,13 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
 
         for (int i = 0; i < context->nTopics; i++)
             if (!strcmp(line, topic_name(context->topics[i].name)))
-                tmp[i] = false;
+                unplayed[i] = false;
 
-        free(line);
     }
-
+    free(line);
+    
     context->directory[endline] = '\0';
-    return tmp;
+    return unplayed;
 }
 
 bool topicPlayed(TopicsContext *context, char *user, int topic)
