@@ -36,13 +36,13 @@ bool removeExtension(char * path)
     return true;
 }
 
-void newlineReplace(char * string)
+void newlineReplace(char * path)
 {
-    int len = strlen(string);
-    if (len >= 2 && string[len - 2] == '\r') // Caso codifica Windows
-        string[len - 2] = '\0';
-    else if (string[len - 1] == '\n') // Rimuovo il carattere di nuova linea
-        string[len - 1] = '\0';
+    int len = strlen(path);
+    if (len >= 2 && path[len - 2] == '\r') // Caso codifica Windows
+        path[len - 2] = '\0';
+    else if (path[len - 1] == '\n') // Rimuovo il carattere di nuova linea
+        path[len - 1] = '\0';
     return;
 }
 
