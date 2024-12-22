@@ -50,14 +50,14 @@ void topicsFree(TopicsContext *context);
 /// @param context Strutture dati inerenti ai topic inizializzate
 /// @param user Username dell'utente (stringa)
 /// @return Ritorna un array di booleani di lunghezza nTopics, dove true significa giocabile
-bool * topicsGet(TopicsContext *context, char * user);
+bool * topicsUnplayed(TopicsContext *context, char * user);
 
-/// @brief Si occupa di contrassegnare su disco un topic come giocato per un certo l'utente
+/// @brief Si occupa di contrassegnare su disco un topic come giocato per un certo utente
 /// @param context Strutture dati inerenti ai topic inizializzate 
 /// @param user Username dell'utente (stringa) 
 /// @param topic Topic da contrassegnare come giocato (stringa)
 /// @return Ritorna true se ha successo
-bool topicSet(TopicsContext * context, char * topic, char * user);
+bool topicPlayed(TopicsContext * context, char * topic, char * user);
 
 /* FUNZIONI UTILITA' */
 
@@ -74,3 +74,8 @@ void topic_list_print_question(void * data);
 /// @brief Funzione utilità: da utilizzare in list_destroy, si occupa di deallocare domanda e risposta
 /// @param data Puntatore al dato del nodo, punta a una Question
 void topics_questionDestroy(void * data);
+
+/// @brief Restituisce il puntatore alla sottostringa rimovendo la numerazione iniziale (non rimuove l'estensione)
+/// @param name Nome con numerazione
+/// @return 
+char * topic_name(char * name);

@@ -156,6 +156,16 @@ void topics_questionDestroy(void * data)
         free(question->answer);
 }
 
+// Ritorno il puntatore al primo carattere alfabetico
+char *topic_name(char *name)
+{
+    for (int i = 0; name[i] != '\0'; i++)
+        if ( (name[i] >= 'A' && name[i] <= 'Z') ||
+         (name[i] >= 'a' && name[i] <= 'z'))
+            return name + i;
+    return NULL;
+}
+
 void topicsFree(TopicsContext *context)
 {
     if (!context->nTopics)
@@ -168,6 +178,16 @@ void topicsFree(TopicsContext *context)
     
     context->nTopics = 0;
     return;
+}
+
+bool *topicsUnplayed(TopicsContext *context, char *user)
+{
+    return NULL;
+}
+
+bool topicPlayed(TopicsContext *context, char *topic, char *user)
+{
+    return false;
 }
 
 void topic_list_print_question(void * data)
