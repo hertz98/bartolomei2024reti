@@ -9,5 +9,5 @@ enum Command
     CMD_SIZE, // Ask for size
     CMD_STRING, // Ask for string
     CMD_RANKING, // Client: ask for ranking
-    CMD_STOP, // Terminate
+    CMD_STOP = false, // Terminate
 };

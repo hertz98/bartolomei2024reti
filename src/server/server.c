@@ -178,7 +178,7 @@ bool clientHandler(struct Client ** clients, int socket)
 
     enum Command cmd = recvCommand(client);
 
-    if (cmd == CMD_STOP)
+    if (cmd == false) // false
         return false;
 
     printf("%s\n",client->name);

@@ -119,7 +119,8 @@ bool sendInteger(struct Client * client, int i)
 
     if ((ret = send(client->socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
     {
-        perror("sendInteger failed");
+        if (errno)
+            perror("sendInteger failed");
         return false;    
     }
     
@@ -144,7 +145,8 @@ enum Command recvCommand(struct Client *client)
 
     if ((ret = recv(client->socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
-        perror("recvCommand failed");
+        if (errno)
+            perror("recvCommand failed");
         return false;    
     }
 
@@ -215,6 +217,8 @@ bool recvString(struct Client * client, char ** buffer, int lenght)
     {
         free(*buffer);
         *buffer = NULL;
+        if (errno)
+            perror("recvString");
         return false;
     }
 
@@ -281,7 +285,8 @@ int recvInteger(struct Client * client)
 
     if ((ret = recv(client->socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
-        perror("recvInteger failed");
+        if (errno)
+            perror("recvInteger failed");
         return false;    
     }
 
@@ -298,7 +303,8 @@ bool sendCommand(struct Client * client, enum Command cmd)
 
     if ((ret = send(client->socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
     {
-        perror("sendCommand failed");
+        if (errno)
+            perror("sendCommand failed");
         return false;    
     }
     

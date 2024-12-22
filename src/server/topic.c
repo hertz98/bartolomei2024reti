@@ -119,7 +119,7 @@ bool topicLoad(char * path, Topic * topic)
         newlineReplace(line);
 
         #ifdef DEBUG_QUESTION
-            printf("line %d/%d: _%s_\n", len, (int) alloc_len, line); // DEBUG
+            printf("line %d/%d: _%s_\n", strlen(line), (int) alloc_len, line); // DEBUG
         #endif
 
         if (!new_question)
