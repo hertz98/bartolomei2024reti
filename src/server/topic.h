@@ -38,9 +38,9 @@ bool topicsLoader(TopicsContext *context);
 
 /// @brief Dato il topic si occupa di caricarne domande e risposte nella lista
 /// @param context Strutture dati inerenti ai topic inizializzate
-/// @param topic Struttura dati associata al topic contenente il nome del file (completo)
+/// @param path La directory che contiene i topics
 /// @return Ritorna true se fila tutto liscio
-bool topicLoad(TopicsContext *context, struct Topic * topic);
+bool topicLoad(char * path, struct Topic * topic);
 
 /// @brief Si occupa di deallocare tutto ciò che riguarda i topic
 /// @param context Strutture dati inerenti ai topic inizializzate

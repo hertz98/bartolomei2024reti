@@ -7,6 +7,10 @@
 #include "topic.h"
 #include "util.h"
 
+// #define DEBUG_PATH
+// #define DEBUG_TOPIC
+// #define DEBUG_QUESTION
+
 // Nel mio caso dirent.h non include alcune definizioni
 #ifndef DT_REG
 #define DT_REG 8    /* File regolare */
@@ -25,13 +29,22 @@ bool topicsInit(TopicsContext *context, char * directory)
 
     strcat(context->directory, directory);
 
+#ifdef DEBUG_PATH
+    printf("directory: %s\n", context->directory); // DEBUG
+#endif
+
     return true;
 }
 
 bool topicsLoader(TopicsContext *context)
 {
-    //printf("directory: %s\n", context->directory); // DEBUG
-    
+#ifdef DEBUG_PATH
+    printf("directory: %s\n", context->directory); // DEBUG
+#endif
+
+    int endline = strlen(context->directory);
+    strncat(context->directory, "./topics/", NAME_MAX);
+
     DIR * stream = opendir(context->directory);
     struct dirent *file;
 
@@ -55,27 +68,40 @@ bool topicsLoader(TopicsContext *context)
 
     qsort(context->topics, context->nTopics, sizeof(Topic), topics_compare);
 
-    // for (int i = 0; i < context->nTopics; i++) // DEBUG
-    //     printf("%s\n",context->topics[i].name);
-
     for (int i = 0; i < context->nTopics; i++)
     {
-        topicLoad(context, &context->topics[i]);
+#ifdef DEBUG_TOPIC
+         printf("topic %d: %s\n", i, context->topics[i].name);
+#endif
+        topicLoad(context->directory, &context->topics[i]);
         removeExtension(context->topics[i].name);
     }
+
+    context->directory[endline] = '\0';
+
+#ifdef DEBUG_PATH
+    printf("directory: %s\n", context->directory); // DEBUG
+#endif
 
     return false;
 }
 
-bool topicLoad(TopicsContext *context, Topic * topic)
+bool topicLoad(char * path, Topic * topic)
 {
+#ifdef DEBUG_PATH
+    printf("directory: %s\n", path);
+#endif
+
     FILE *file;
 
-    char file_path[4096];
-    strcpy(file_path, context->directory);
-    strncat(file_path, topic->name, NAME_MAX);
+    int endline = strlen(path);
+    strncat(path, topic->name, NAME_MAX);
 
-    if (!(file = fopen(file_path, "r")))
+#ifdef DEBUG_PATH
+    printf("directory: %s\n", path);
+#endif
+
+    if (!(file = fopen(path, "r")))
         return false;
 
     Question * new_question = NULL;
@@ -95,7 +121,9 @@ bool topicLoad(TopicsContext *context, Topic * topic)
         else if (line[len - 1] == '\n') // Rimuovo il carattere di nuova linea
             line[len - 1] = '\0';
 
-        // printf("line %d/%d: _%s_\n", len, (int) alloc_len, line); // DEBUG
+#ifdef DEBUG_QUESTION
+        printf("line %d/%d: _%s_\n", len, (int) alloc_len, line); // DEBUG
+#endif
 
         if (!new_question)
         {
@@ -111,6 +139,8 @@ bool topicLoad(TopicsContext *context, Topic * topic)
         }
     }
     fclose(file);
+
+    path[endline] = '\0';
 
     return false;
 }
