@@ -55,9 +55,9 @@ bool * topicsUnplayed(TopicsContext *context, char * user);
 /// @brief Si occupa di contrassegnare su disco un topic come giocato per un certo utente
 /// @param context Strutture dati inerenti ai topic inizializzate 
 /// @param user Username dell'utente (stringa) 
-/// @param topic Topic da contrassegnare come giocato (stringa)
+/// @param topic Topic da contrassegnare come giocato
 /// @return Ritorna true se ha successo
-bool topicPlayed(TopicsContext * context, char * topic, char * user);
+bool topicPlayed(TopicsContext * context, char * user, int topic);
 
 /* FUNZIONI UTILITA' */
 

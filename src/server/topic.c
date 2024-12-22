@@ -7,7 +7,7 @@
 #include "topic.h"
 #include "util.h"
 
-// #define DEBUG_PATH
+ #define DEBUG_PATH
 // #define DEBUG_TOPIC
 // #define DEBUG_QUESTION
 
@@ -182,10 +182,47 @@ void topicsFree(TopicsContext *context)
 
 bool *topicsUnplayed(TopicsContext *context, char *user)
 {
-    return NULL;
+    int endline = strlen(context->directory);
+    
+    char *path = context->directory;
+    strncat(path, "./users/", NAME_MAX);
+    strncat(path, user, NAME_MAX);
+    strncat(path, ".txt", NAME_MAX);
+    
+    #ifdef DEBUG_PATH
+        printf("%s\n", path);
+    #endif
+
+    bool *tmp = (bool *) malloc(context->nTopics);
+    for (int i = 0; i < context->nTopics; i++)
+        tmp[i] = true;
+
+    FILE *file;
+    if (!(file = fopen(path, "r")))
+        return tmp;
+
+    size_t alloc_len;
+    for (char * line = NULL; getline(&line, &alloc_len, file) != -1; line = NULL)
+    {
+        if ((line[0] == '\n' || line[1] == '\n')) // Linee vuote
+            continue;
+
+        int len = strlen(line);
+        if (len >= 2 && line[len - 2] == '\r') // Caso codifica Windows
+            line[len - 2] = '\0';
+        else if (line[len - 1] == '\n') // Rimuovo il carattere di nuova linea
+            line[len - 1] = '\0';
+
+        for (int i = 0; i < context->nTopics; i++)
+            if (!strcmp(line, topic_name(context->topics[i].name)))
+                tmp[i] = false;
+    }
+
+    context->directory[endline] = '\0';
+    return tmp;
 }
 
-bool topicPlayed(TopicsContext *context, char *topic, char *user)
+bool topicPlayed(TopicsContext *context, char *user, int topic)
 {
     return false;
 }
