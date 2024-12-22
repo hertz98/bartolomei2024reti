@@ -21,6 +21,17 @@ int main(int argc, char ** argv)
         printf("%d", played[i]);
     printf("\n");
 
+    return 0;
+
+    topicPlayed(&topics_context, "gabriele", 3);
+    topicPlayed(&topics_context, "gabriele", 4);
+
+    played = topicsUnplayed(&topics_context, "gabriele");
+
+    for (int i = 0; i < topics_context.nTopics; i++)
+        printf("%d", played[i]);
+    printf("\n");
+
     topicsFree(&topics_context);
     return 0;
 }

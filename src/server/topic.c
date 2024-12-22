@@ -7,7 +7,7 @@
 #include "topic.h"
 #include "util.h"
 
- #define DEBUG_PATH
+// #define DEBUG_PATH
 // #define DEBUG_TOPIC
 // #define DEBUG_QUESTION
 
@@ -198,32 +198,59 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
         unplayed[i] = true;
 
     FILE *file;
-    if (!(file = fopen(path, "r")))
-        return unplayed;
- 
-    char * line = (char *) malloc(NAME_MAX * sizeof(char)); // getline() vuole una stringa allocata con la malloc()
-    size_t alloc_len;
-    while(getline(&line, &alloc_len, file) != -1)
+    if ((file = fopen(path, "r")))
     {
-        if ((line[0] == '\n' || line[1] == '\n')) // Linee vuote
-            continue;
+        char * line = (char *) malloc(NAME_MAX * sizeof(char)); // getline() vuole una stringa allocata con la malloc()
+        size_t alloc_len;
+        while(getline(&line, &alloc_len, file) != -1)
+        {
+            if ((line[0] == '\n' || line[1] == '\n')) // Linee vuote
+                continue;
 
-        newlineReplace(line);
+            newlineReplace(line);
 
-        for (int i = 0; i < context->nTopics; i++)
-            if (!strcmp(line, topic_name(context->topics[i].name)))
-                unplayed[i] = false;
+            for (int i = 0; i < context->nTopics; i++)
+                if (!strcmp(line, topic_name(context->topics[i].name) ))
+                    unplayed[i] = false;
 
+        }
+        free(line);
+        fclose(file);
     }
-    free(line);
     
     context->directory[endline] = '\0';
+
     return unplayed;
 }
 
-bool topicPlayed(TopicsContext *context, char *user, int topic)
+bool topicPlayed(TopicsContext *context, char *user, int i_topic)
 {
-    return false;
+    if (i_topic >= context->nTopics)
+        return false;
+
+    int endline = strlen(context->directory);
+    
+    char *path = context->directory;
+    strncat(path, "./users/", NAME_MAX);
+    strncat(path, user, NAME_MAX);
+    strncat(path, ".txt", NAME_MAX);
+
+    #ifdef DEBUG_PATH
+        printf("%s\n", path);
+    #endif
+
+    char * topic = topic_name( context->topics[i_topic].name );
+
+    FILE *file;
+    if (!(file = fopen(path, "a")))
+        return false;
+
+    fprintf(file, "%s\n", topic);
+
+    fclose(file);
+
+    context->directory[endline] = '\0';
+    return true;
 }
 
 void topic_list_print_question(void * data)
