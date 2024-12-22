@@ -7,17 +7,12 @@
 #include "topic.h"
 #include "util.h"
 
+// Nel mio caso dirent.h non include alcune definizioni
 #ifndef DT_REG
-#define DT_REG 8
+#define DT_REG 8    /* File regolare */
 #endif
 
-int topics_compare(const void *a, const void *b){
-    Topic * topic_a = (Topic *) a,
-     * topic_b = (Topic *) b;
-    return strcmp(topic_a->name, topic_b->name);
-}
-
-bool topicsInit(struct TopicsContext *context, char * directory)
+bool topicsInit(TopicsContext *context, char * directory)
 {
     context->nTopics = 0;
     context->topics = NULL;
@@ -34,7 +29,7 @@ bool topicsInit(struct TopicsContext *context, char * directory)
     return true;
 }
 
-bool topicsLoader(struct TopicsContext *context)
+bool topicsLoader(TopicsContext *context)
 {
     //printf("directory: %s\n", context->directory); // DEBUG
     
@@ -73,13 +68,7 @@ bool topicsLoader(struct TopicsContext *context)
     return false;
 }
 
-void topic_list_print_question(void * data)
-{
-    Question * tmp = (Question *) data;
-    printf("_%s_: _%s_\n", tmp->question, tmp->answer);
-}
-
-bool topicLoad(struct TopicsContext *context, struct Topic * topic)
+bool topicLoad(TopicsContext *context, Topic * topic)
 {
     FILE *file;
 
@@ -127,18 +116,18 @@ bool topicLoad(struct TopicsContext *context, struct Topic * topic)
     return false;
 }
 
-void topics_questionDestroy(void * p)
+void topics_questionDestroy(void * data)
 {
-    if (!p)
+    if (!data)
         return;
-    Question * question = (Question *) p;
+    Question * question = (Question *) data;
     if (question->question)
         free(question->question);
     if (question->answer)
         free(question->answer);
 }
 
-void topicsFree(struct TopicsContext *context)
+void topicsFree(TopicsContext *context)
 {
     if (!context->nTopics)
         return;
@@ -153,4 +142,16 @@ void topicsFree(struct TopicsContext *context)
 
     context->nTopics = 0;
     return;
+}
+
+void topic_list_print_question(void * data)
+{
+    Question * tmp = (Question *) data;
+    printf("_%s_: _%s_\n", tmp->question, tmp->answer);
+}
+
+int topics_compare(const void *a, const void *b){
+    Topic * topic_a = (Topic *) a,
+     * topic_b = (Topic *) b;
+    return strcmp(topic_a->name, topic_b->name);
 }
