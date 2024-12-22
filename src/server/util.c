@@ -36,6 +36,16 @@ bool removeExtension(char * path)
     return true;
 }
 
+void newlineReplace(char * string)
+{
+    int len = strlen(string);
+    if (len >= 2 && string[len - 2] == '\r') // Caso codifica Windows
+        string[len - 2] = '\0';
+    else if (string[len - 1] == '\n') // Rimuovo il carattere di nuova linea
+        string[len - 1] = '\0';
+    return;
+}
+
 char * executablePath(char * string)
 {
     if (string)
@@ -54,3 +64,4 @@ char * executablePath(char * string)
         return path;
     }
 }
+

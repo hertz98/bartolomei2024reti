@@ -29,18 +29,18 @@ bool topicsInit(TopicsContext *context, char * directory)
 
     strcat(context->directory, directory);
 
-#ifdef DEBUG_PATH
-    printf("directory: %s\n", context->directory); // DEBUG
-#endif
+    #ifdef DEBUG_PATH
+        printf("directory: %s\n", context->directory); // DEBUG
+    #endif
 
     return true;
 }
 
 bool topicsLoader(TopicsContext *context)
 {
-#ifdef DEBUG_PATH
-    printf("directory: %s\n", context->directory); // DEBUG
-#endif
+    #ifdef DEBUG_PATH
+        printf("directory: %s\n", context->directory); // DEBUG
+    #endif
 
     int endline = strlen(context->directory);
     strncat(context->directory, "./topics/", NAME_MAX);
@@ -70,36 +70,36 @@ bool topicsLoader(TopicsContext *context)
 
     for (int i = 0; i < context->nTopics; i++)
     {
-#ifdef DEBUG_TOPIC
-         printf("topic %d: %s\n", i, context->topics[i].name);
-#endif
+    #ifdef DEBUG_TOPIC
+            printf("topic %d: %s\n", i, context->topics[i].name);
+    #endif
         topicLoad(context->directory, &context->topics[i]);
         removeExtension(context->topics[i].name);
     }
 
     context->directory[endline] = '\0';
 
-#ifdef DEBUG_PATH
-    printf("directory: %s\n", context->directory); // DEBUG
-#endif
+    #ifdef DEBUG_PATH
+        printf("directory: %s\n", context->directory); // DEBUG
+    #endif
 
     return false;
 }
 
 bool topicLoad(char * path, Topic * topic)
 {
-#ifdef DEBUG_PATH
-    printf("directory: %s\n", path);
-#endif
+    #ifdef DEBUG_PATH
+        printf("directory: %s\n", path);
+    #endif
 
     FILE *file;
 
     int endline = strlen(path);
     strncat(path, topic->name, NAME_MAX);
 
-#ifdef DEBUG_PATH
-    printf("directory: %s\n", path);
-#endif
+    #ifdef DEBUG_PATH
+        printf("directory: %s\n", path);
+    #endif
 
     if (!(file = fopen(path, "r")))
         return false;
@@ -115,15 +115,11 @@ bool topicLoad(char * path, Topic * topic)
             continue;
         }
 
-        int len = strlen(line);
-        if (len >= 2 && line[len - 2] == '\r') // Caso codifica Windows
-            line[len - 2] = '\0';
-        else if (line[len - 1] == '\n') // Rimuovo il carattere di nuova linea
-            line[len - 1] = '\0';
+        newlineReplace(line);
 
-#ifdef DEBUG_QUESTION
-        printf("line %d/%d: _%s_\n", len, (int) alloc_len, line); // DEBUG
-#endif
+        #ifdef DEBUG_QUESTION
+            printf("line %d/%d: _%s_\n", len, (int) alloc_len, line); // DEBUG
+        #endif
 
         if (!new_question)
         {
@@ -207,15 +203,13 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
         if ((line[0] == '\n' || line[1] == '\n')) // Linee vuote
             continue;
 
-        int len = strlen(line);
-        if (len >= 2 && line[len - 2] == '\r') // Caso codifica Windows
-            line[len - 2] = '\0';
-        else if (line[len - 1] == '\n') // Rimuovo il carattere di nuova linea
-            line[len - 1] = '\0';
+        newlineReplace(line);
 
         for (int i = 0; i < context->nTopics; i++)
             if (!strcmp(line, topic_name(context->topics[i].name)))
                 tmp[i] = false;
+
+        free(line);
     }
 
     context->directory[endline] = '\0';
