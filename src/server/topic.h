@@ -1,12 +1,9 @@
 #include <stdbool.h>
+#include <linux/limits.h>
 #include "list.h"
 
 #ifndef PATH_BUFFER_SIZE
 #define PATH_BUFFER_SIZE 4096
-#endif
-
-#ifndef FILE_NAME_SIZE
-#define FILE_NAME_SIZE 256
 #endif
 
 typedef struct Question 
@@ -17,13 +14,13 @@ typedef struct Question
 
 typedef struct Topic 
 {
-    char name[FILE_NAME_SIZE];
+    char name[NAME_MAX];
     Node * questions;
 } Topic;
 
 typedef struct TopicsContext
 {
-    char * directory;
+    char directory[PATH_MAX];
     int nTopics;
     struct Topic * topics;
 } TopicsContext;

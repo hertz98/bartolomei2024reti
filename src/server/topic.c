@@ -16,9 +16,8 @@ bool topicsInit(TopicsContext *context, char * directory)
 {
     context->nTopics = 0;
     context->topics = NULL;
-    context->directory = NULL;
 
-    if (!(context->directory = executablePath()))
+    if (!(executablePath(context->directory)))
         return false;
 
     if (!parentDirectory(context->directory))
@@ -48,7 +47,7 @@ bool topicsLoader(TopicsContext *context)
 
             Topic * current = &context->topics[context->nTopics - 1];
             memset(current, 0, sizeof(Topic));
-            strncpy(current->name, file->d_name, FILE_NAME_SIZE);
+            strncpy(current->name, file->d_name, NAME_MAX);
             current->questions = NULL;
         }
         closedir(stream);
@@ -74,7 +73,7 @@ bool topicLoad(TopicsContext *context, Topic * topic)
 
     char file_path[4096];
     strcpy(file_path, context->directory);
-    strncat(file_path, topic->name, FILE_NAME_SIZE);
+    strncat(file_path, topic->name, NAME_MAX);
 
     if (!(file = fopen(file_path, "r")))
         return false;
@@ -136,10 +135,7 @@ void topicsFree(TopicsContext *context)
         list_destroy(context->topics[i].questions, topics_questionDestroy);
         
     free(context->topics);
-
-    if(context->directory)
-        free(context->directory);
-
+    
     context->nTopics = 0;
     return;
 }

@@ -36,12 +36,21 @@ bool removeExtension(char * path)
     return true;
 }
 
-char * executablePath()
+char * executablePath(char * string)
 {
-    char * path = malloc( PATH_MAX + 1 );
-    if (readlink("/proc/self/exe", path, PATH_MAX) == -1)
-        return NULL;
-    path[PATH_MAX] = '\0';
-    path = realloc(path, strlen(path) + 1);
-    return path;
+    if (string)
+    {
+        if (readlink("/proc/self/exe", string, PATH_MAX) == -1)
+            return NULL;
+        return string;
+    }
+    else
+    {
+        char * path = malloc( PATH_MAX + 1 );
+        if (readlink("/proc/self/exe", path, PATH_MAX) == -1)
+            return NULL;
+        path[PATH_MAX] = '\0';
+        path = realloc(path, strlen(path) + 1);
+        return path;
+    }
 }
