@@ -5,6 +5,11 @@
 /// @return true if succeded
 bool parentDirectory(char * path);
 
+/// @brief Rimuove i primi caratteri non alfabetici da una stringa
+/// @param string La stringa contentente il nome del file
+/// @return true in caso di modifica
+bool removeNumbering(char * string);
+
 /// @brief Returns the path, with the filename and not the extension
 /// @param path The string containing the path
 /// @return true if succeded
@@ -17,4 +22,4 @@ char * executablePath(char * string);
 
 /// @brief Replace the newline character '\\n' with endline character '\\0'
 /// @param path String containing '\n' character
-void newlineReplace(char * path);
+bool newlineReplace(char * path);

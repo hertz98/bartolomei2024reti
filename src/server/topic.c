@@ -74,7 +74,7 @@ bool topicsLoader(TopicsContext *context)
             printf("topic %d: %s\n", i, context->topics[i].name);
     #endif
         topicLoad(context->directory, &context->topics[i]);
-        removeExtension(context->topics[i].name);
+        topic_name(context->topics[i].name);
     }
 
     context->directory[endline] = '\0';
@@ -156,14 +156,16 @@ void topics_questionDestroy(void * data)
         free(question->answer);
 }
 
-// Ritorno il puntatore al primo carattere alfabetico
-char *topic_name(char *name)
+void topic_name(char *name)
 {
-    for (int i = 0; name[i] != '\0'; i++)
-        if ( (name[i] >= 'A' && name[i] <= 'Z') ||
-         (name[i] >= 'a' && name[i] <= 'z'))
-            return name + i;
-    return NULL;
+    if (!name[0])
+        return;
+
+    removeExtension(name);
+
+    removeNumbering(name);
+
+    return;
 }
 
 void topicsFree(TopicsContext *context)
@@ -210,7 +212,7 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
             newlineReplace(line);
 
             for (int i = 0; i < context->nTopics; i++)
-                if (!strcmp(line, topic_name(context->topics[i].name) ))
+                if (!strcmp(line, context->topics[i].name ))
                     unplayed[i] = false;
 
         }
@@ -239,7 +241,7 @@ bool topicPlayed(TopicsContext *context, char *user, int i_topic)
         printf("%s\n", path);
     #endif
 
-    char * topic = topic_name( context->topics[i_topic].name );
+    char * topic = context->topics[i_topic].name;
 
     FILE *file;
     if (!(file = fopen(path, "a")))

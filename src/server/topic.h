@@ -75,7 +75,6 @@ void topic_list_print_question(void * data);
 /// @param data Puntatore al dato del nodo, punta a una Question
 void topics_questionDestroy(void * data);
 
-/// @brief Restituisce il puntatore alla sottostringa rimovendo la numerazione iniziale (non rimuove l'estensione)
-/// @param name Nome con numerazione
-/// @return 
-char * topic_name(char * name);
+/// @brief Ottiene il nome del topic dal nome del file completo
+/// @param name Stringa contenente il nome del file con numerazione ed estensione
+void topic_name(char * name);

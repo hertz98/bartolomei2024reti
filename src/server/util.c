@@ -36,14 +36,39 @@ bool removeExtension(char * path)
     return true;
 }
 
-void newlineReplace(char * path)
+bool newlineReplace(char * path)
 {
     int len = strlen(path);
+
     if (len >= 2 && path[len - 2] == '\r') // Caso codifica Windows
+    {
         path[len - 2] = '\0';
-    else if (path[len - 1] == '\n') // Rimuovo il carattere di nuova linea
+        return true;
+    }
+
+    else if (len >= 1 && path[len - 1] == '\n') // Rimuovo il carattere di nuova linea
+    {
         path[len - 1] = '\0';
-    return;
+        return true;
+    }
+    
+    return false;
+}
+
+bool removeNumbering(char *string)
+{
+    int i = 0;
+    while(string[i] != '\0')
+    {
+        if ( (string[i] >= 'A' && string[i] <= 'Z') ||
+         (string[i] >= 'a' && string[i] <= 'z'))
+        {
+            strcpy(string, string + i);
+            return true;
+        }
+        i++;
+    }
+    return false;
 }
 
 char * executablePath(char * string)
