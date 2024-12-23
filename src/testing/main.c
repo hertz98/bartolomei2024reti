@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "../server/util.h"
 
 #define DATA_DIR "./data/"
 
@@ -20,6 +21,8 @@ int main(int argc, char ** argv)
     for (int i = 0; i < topics_context.nTopics; i++)
         printf("%d", played[i]);
     printf("\n");
+
+    printf("%d %d\n", stricmp("stringa","stringA"), strcmp("stringa","stringA"));
 
     return 0;
 

@@ -24,3 +24,9 @@ char * executablePath(char * string);
 /// @param path Stringa contenente il carattere di nuova linea'\n' 
 /// @return true in caso di modifica
 bool newlineReplace(char * path);
+
+/// @brief Comparazione tra stringhe case Insensitive
+/// @param string1 Stringa 1
+/// @param string2 Stringa 2
+/// @return Ritorna 0 se sono uguali, >0 se string1 > string2, <0 se string1 < string2
+int stricmp(const char * string1, const char * string2);

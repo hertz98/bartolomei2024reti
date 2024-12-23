@@ -55,6 +55,34 @@ bool newlineReplace(char * path)
     return false;
 }
 
+int stricmp(const char *string1, const char *string2)
+{
+    int i = 0;
+    while (string1[i] != '\0' && string2[i] != '\0')
+    {
+        char tmp1 = string1[i],
+             tmp2 = string2[i];
+
+        if (tmp1 >= 'A' && tmp1 <= 'Z')
+            tmp1 += 'a' - 'A';
+
+        if (tmp2 >= 'A' && tmp2 <= 'Z')
+            tmp2 += 'a' - 'A';
+
+        if (tmp1 != tmp2)
+            return tmp1 - tmp2;
+        
+        i++;
+    }
+
+    if (string1[i] == '\0' && string2[i] == '\0')
+        return 0;
+    else if (string1[i] == '\0')
+        return -1;
+    else
+        return 1;
+}
+
 bool removeNumbering(char *string)
 {
     int i = 0;
