@@ -9,7 +9,10 @@ typedef enum OperationStatus {
     OP_DONE
 } OperationStatus;
 
-typedef struct Client
+typedef struct Client Client;
+typedef struct ClientsContext ClientsContext;
+
+struct Client
 {
     int socket; // ridondante
     bool registered;
@@ -17,16 +20,16 @@ typedef struct Client
     int score;
 
     // Status
-    OperationStatus (* operation)(struct Client *, void *, bool);
+    OperationStatus (* operation)(ClientsContext *, int, void *, bool);
     int step;
 
     int tmp_i;
     void * tmp_p;
     
     // Shuffle array
-} Client;
+};
 
-typedef struct ClientsContext {
+struct ClientsContext {
     int nClients; // Numero di clients attuali
     int maxClients; // Numero massimo di clients servibili
 
@@ -35,7 +38,7 @@ typedef struct ClientsContext {
 
     Client ** clients;
     int allocated; // Numero di strutture allocate per i clients
-} ClientsContext;
+};
 
 int clientsInit(ClientsContext ** clientsContext, int max);
 
@@ -49,11 +52,11 @@ enum Command recvCommand(Client *);
 bool sendInteger(Client *, int);
 int recvInteger(Client *);
 
-OperationStatus sendMessage(Client *, void *, bool);
+OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, bool init);
 bool sendString(Client *, char *, int);
 
-OperationStatus recvMessageProcedure(Client *, void *, bool);
+OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, bool init);
 bool recvString(Client *, char **, int);
 
-OperationStatus regPlayer(Client *, void *, bool);
-bool nameValid(ClientsContext *, char *);
+OperationStatus regPlayer(ClientsContext *context, int socket, void *, bool init);
+bool nameValid(ClientsContext * context, int socket, char * name);

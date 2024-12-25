@@ -59,8 +59,7 @@ int main (int argc, char ** argv)
     FD_ZERO(&read_fds);
 
     // Add the listener to the master set
-    FD_SET(listener, master);
-    clientsContext->fd_max = listener; // Keep track of the maximum file descriptor
+    clientAdd(clientsContext, listener);
 
     while(true)
     {
@@ -160,14 +159,14 @@ bool clientHandler(ClientsContext * context, int socket)
     struct Client * client = context->clients[socket];
 
     if (client->operation != NULL)
-        return (*client->operation)(client, NULL, false);
+        return (*client->operation)(context, socket, NULL, false);
     
     if (!client->registered)
     {
         if (recvCommand(client) == CMD_REGISTER)
         {
             sendCommand(client, CMD_OK);
-            return regPlayer(client, context, true);
+            return regPlayer(context, socket, NULL, true);
         }
         else
             return false;

@@ -65,7 +65,7 @@ int main (int argc, char ** argv)
         return ret;
 
     printf("%d\n", sendCommand(sd, CMD_REGISTER));
-    char * name = "prova_nome";
+    char * name = "provanome";
     if (recvCommand(sd) == CMD_OK)
     {
         printf("registering\n");

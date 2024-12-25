@@ -54,6 +54,7 @@ bool clientAdd(ClientsContext * context, int socket)
     if (socket > context->fd_max)
         context->fd_max = socket;
 
+    (*client)->name = NULL;
     (*client)->socket = socket;
     (*client)->registered = false;
     (*client)->operation = NULL;
@@ -113,9 +114,11 @@ void clientsFree(ClientsContext * context, int socket)
     return;
 }
 
-OperationStatus sendMessage(Client * client, void * buffer, bool init)
+OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, bool init)
 {
     OperationStatus ret = OP_FAIL;
+
+    Client * client = context->clients[socket];
 
     if (init)
     {
@@ -209,9 +212,11 @@ enum Command recvCommand(Client *client)
     return (enum Command) tmp;
 }
 
-OperationStatus recvMessage(Client * client, void * buffer, bool init)
+OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, bool init)
 {
     OperationStatus ret = OP_FAIL;
+
+    Client * client = context->clients[socket];
 
     if (init)
     {
@@ -279,10 +284,9 @@ bool recvString(Client * client, char ** buffer, int lenght)
     return true;
 }
 
-OperationStatus regPlayer(Client * client, void * p, bool init)
+OperationStatus regPlayer(ClientsContext *context, int socket, void *, bool init)
 {
-
-    ClientsContext * context = p;
+    Client * client = context->clients[socket];
 
     if (init)
     {
@@ -292,7 +296,7 @@ OperationStatus regPlayer(Client * client, void * p, bool init)
     }
     
     OperationStatus ret;
-    switch( ret = recvMessage(client, NULL, false) )
+    switch( ret = recvMessage(context, socket, NULL, false) )
     {
         case OP_OK:
             break;
@@ -302,12 +306,12 @@ OperationStatus regPlayer(Client * client, void * p, bool init)
 
         case OP_DONE:
             client->operation = NULL;
-            if (1)
+            if (nameValid(context, socket, client->name))
                 {
                     client->registered = true;
                     printf("%s\n",client->name); // DEBUG
                     sendCommand(client, CMD_OK);
-                    sendMessage(client, "provasendfromserver", true);
+                    sendMessage(context, socket, "provasendfromserver", true);
                     return true;
                 }
                 else
@@ -323,14 +327,17 @@ OperationStatus regPlayer(Client * client, void * p, bool init)
     return (bool) ret;
 }
 
-bool nameValid(ClientsContext * context, char * name)
+bool nameValid(ClientsContext * context, int socket, char * name)
 {
     // Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
-    if (strlen(name) > NAME_MAX - strlen(".txt"))
+    if (strlen(name) > NAME_MAX - strlen(".txt") && strlen(name) < 4)
         return false;
 
     for (int i = 0; i <= context->fd_max; i++)
-        if (FD_ISSET(i, &context->master))
+        if (i != socket &&
+            FD_ISSET(i, &context->master) &&
+            context->clients[i]->name
+            )
             if (strcmp(name, context->clients[i]->name) == 0)
                 return false;
     
