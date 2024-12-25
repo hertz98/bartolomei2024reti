@@ -114,6 +114,22 @@ void clientsFree(ClientsContext * context, int socket)
     return;
 }
 
+void setListener(ClientsContext *context, int socket)
+{
+    context->listener = socket;
+    if (socket > context->fd_max)
+        context->fd_max = socket;
+    FD_SET(socket, &context->master);
+}
+
+bool isClient(ClientsContext *context, int socket)
+{
+    if (FD_ISSET(socket, &context->master) &&
+        socket != context->listener)
+        return true;
+    return false;
+}
+
 OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, bool init)
 {
     OperationStatus ret = OP_FAIL;
@@ -334,10 +350,7 @@ bool nameValid(ClientsContext * context, int socket, char * name)
         return false;
 
     for (int i = 0; i <= context->fd_max; i++)
-        if (i != socket &&
-            FD_ISSET(i, &context->master) &&
-            context->clients[i]->name
-            )
+        if (i != socket && isClient(context, i))
             if (strcmp(name, context->clients[i]->name) == 0)
                 return false;
     

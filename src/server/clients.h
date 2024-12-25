@@ -35,6 +35,7 @@ struct ClientsContext {
 
     fd_set master;
     int fd_max; // Massimo intero nel set master
+    int listener;
 
     Client ** clients;
     int allocated; // Numero di strutture allocate per i clients
@@ -45,6 +46,9 @@ int clientsInit(ClientsContext ** clientsContext, int max);
 bool clientAdd(ClientsContext * context, int socket);
 void clientRemove(ClientsContext * context, int socket);
 void clientsFree(ClientsContext *context, int socket);
+
+void setListener(ClientsContext *context, int socket);
+bool isClient(ClientsContext *context, int socket);
 
 bool sendCommand(Client *, enum Command);
 enum Command recvCommand(Client *);

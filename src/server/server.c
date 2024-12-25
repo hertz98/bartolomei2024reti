@@ -59,11 +59,10 @@ int main (int argc, char ** argv)
     FD_ZERO(&read_fds);
 
     // Add the listener to the master set
-    clientAdd(clientsContext, listener);
+    setListener(clientsContext, listener);
 
     while(true)
     {
-
         struct timeval timeout = {1, 0};
 
         read_fds = *master; // Copy the master set
