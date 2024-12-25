@@ -3,13 +3,13 @@
 #include <sys/select.h>
 #include "../shared/commands.h"
 
-enum OperationStatus {
+typedef enum OperationStatus {
     OP_FAIL = false,
     OP_OK = true,
     OP_DONE
-};
+} OperationStatus;
 
-struct Client
+typedef struct Client
 {
     int socket; // ridondante
     bool registered;
@@ -17,7 +17,7 @@ struct Client
     int score;
 
     // Status
-    enum OperationStatus (* operation)(struct Client *, void *, bool);
+    OperationStatus (* operation)(struct Client *, void *, bool);
     int step;
 
     int tmp_i;
@@ -26,25 +26,25 @@ struct Client
     // Timeout
     time_t recv_timestamp;
     // Shuffle array
-};
+} Client;
 
-bool clientAdd(fd_set *, struct Client **, int);
-void clientRemove(fd_set *, struct Client **, int);
-void clientFree(fd_set *, struct Client **, int);
+bool clientAdd(fd_set *, Client **, int);
+void clientRemove(fd_set *, Client **, int);
+void clientFree(fd_set *, Client **, int);
 
-bool clientTimeout(struct Client *, int);
+bool clientTimeout(Client *, int);
 
-bool sendCommand(struct Client *, enum Command);
-enum Command recvCommand(struct Client *);
+bool sendCommand(Client *, enum Command);
+enum Command recvCommand(Client *);
 
-bool sendInteger(struct Client *, int);
-int recvInteger(struct Client *);
+bool sendInteger(Client *, int);
+int recvInteger(Client *);
 
-enum OperationStatus sendMessage(struct Client *, void *, bool);
-bool sendString(struct Client *, char *, int);
+OperationStatus sendMessage(Client *, void *, bool);
+bool sendString(Client *, char *, int);
 
-enum OperationStatus recvMessageProcedure(struct Client *, void *, bool);
-bool recvString(struct Client *, char **, int);
+OperationStatus recvMessageProcedure(Client *, void *, bool);
+bool recvString(Client *, char **, int);
 
-enum OperationStatus regPlayer(struct Client *, void *, bool);
-bool nameValid(struct Client **, char *);
+OperationStatus regPlayer(Client *, void *, bool);
+bool nameValid(Client **, char *);

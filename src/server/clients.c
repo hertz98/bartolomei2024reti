@@ -7,16 +7,16 @@
 #include <errno.h>
 #include "clients.h"
 
-bool clientAdd(fd_set * master, struct Client ** clients, int socket)
+bool clientAdd(fd_set * master, Client ** clients, int socket)
 {
-    struct Client * client = (struct Client *) malloc(sizeof(struct Client));
+    Client * client = (Client *) malloc(sizeof(Client));
 
     if (! client)
         return false;
 
     clients[socket] = client;
 
-    memset(client, 0, sizeof(struct Client));
+    memset(client, 0, sizeof(Client));
 
     client->socket = socket;
     client->registered = false;
@@ -29,9 +29,9 @@ bool clientAdd(fd_set * master, struct Client ** clients, int socket)
     return true;
 }
 
-void clientRemove(fd_set * master, struct Client ** clients, int socket)
+void clientRemove(fd_set * master, Client ** clients, int socket)
 {
-    struct Client * client = clients[socket];
+    Client * client = clients[socket];
 
     sendCommand(client, CMD_STOP); // Prova a inviare e ignora eventuali errori
     close(client->socket);
@@ -48,7 +48,7 @@ void clientRemove(fd_set * master, struct Client ** clients, int socket)
     return;
 }
 
-void clientFree(fd_set * master, struct Client ** clients, int max_clients)
+void clientFree(fd_set * master, Client ** clients, int max_clients)
 {
     for (int i = 0; i < max_clients; i++)
         if (FD_ISSET(i, master))
@@ -57,9 +57,9 @@ void clientFree(fd_set * master, struct Client ** clients, int max_clients)
     return;
 }
 
-enum OperationStatus sendMessage(struct Client * client, void * buffer, bool init)
+OperationStatus sendMessage(Client * client, void * buffer, bool init)
 {
-    enum OperationStatus ret = OP_FAIL;
+    OperationStatus ret = OP_FAIL;
 
     if (init)
     {
@@ -111,7 +111,7 @@ enum OperationStatus sendMessage(struct Client * client, void * buffer, bool ini
     return ret;
 }
 
-bool sendInteger(struct Client * client, int i)
+bool sendInteger(Client * client, int i)
 {
     int ret;
 
@@ -127,7 +127,7 @@ bool sendInteger(struct Client * client, int i)
     return true;
 }
 
-bool sendString(struct Client * client, char * buffer, int lenght)
+bool sendString(Client * client, char * buffer, int lenght)
 {
     int ret;
 
@@ -137,7 +137,7 @@ bool sendString(struct Client * client, char * buffer, int lenght)
     return true;
 }
 
-enum Command recvCommand(struct Client *client)
+enum Command recvCommand(Client *client)
 {
     int ret;
 
@@ -155,9 +155,9 @@ enum Command recvCommand(struct Client *client)
     return (enum Command) tmp;
 }
 
-enum OperationStatus recvMessage(struct Client * client, void * buffer, bool init)
+OperationStatus recvMessage(Client * client, void * buffer, bool init)
 {
-    enum OperationStatus ret = OP_FAIL;
+    OperationStatus ret = OP_FAIL;
 
     if (init)
     {
@@ -205,7 +205,7 @@ enum OperationStatus recvMessage(struct Client * client, void * buffer, bool ini
     return ret;
 }
 
-bool recvString(struct Client * client, char ** buffer, int lenght)
+bool recvString(Client * client, char ** buffer, int lenght)
 {
     int ret;
 
@@ -227,10 +227,10 @@ bool recvString(struct Client * client, char ** buffer, int lenght)
     return true;
 }
 
-enum OperationStatus regPlayer(struct Client * client, void * p, bool init)
+OperationStatus regPlayer(Client * client, void * p, bool init)
 {
 
-    struct Client **clients = p;
+    Client **clients = p;
 
     if (init)
     {
@@ -239,7 +239,7 @@ enum OperationStatus regPlayer(struct Client * client, void * p, bool init)
         client->operation = regPlayer;
     }
     
-    enum OperationStatus ret;
+    OperationStatus ret;
     switch( ret = recvMessage(client, NULL, false) )
     {
         case OP_OK:
@@ -271,13 +271,13 @@ enum OperationStatus regPlayer(struct Client * client, void * p, bool init)
     return (bool) ret;
 }
 
-bool nameValid(struct Client ** clients, char * name)
+bool nameValid(Client ** clients, char * name)
 {
     // To Do
     return true;
 }
 
-int recvInteger(struct Client * client)
+int recvInteger(Client * client)
 {
     int ret;
 
@@ -295,7 +295,7 @@ int recvInteger(struct Client * client)
     return ntohl(tmp);
 }
 
-bool sendCommand(struct Client * client, enum Command cmd)
+bool sendCommand(Client * client, enum Command cmd)
 {
     int ret;
 
