@@ -56,4 +56,4 @@ OperationStatus recvMessageProcedure(Client *, void *, bool);
 bool recvString(Client *, char **, int);
 
 OperationStatus regPlayer(Client *, void *, bool);
-bool nameValid(Client **, char *);
+bool nameValid(ClientsContext *, char *);

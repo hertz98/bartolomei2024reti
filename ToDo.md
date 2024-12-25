@@ -3,3 +3,4 @@ Server:
 
 Client:
 - nameValid
+- (ret = recv) == 0

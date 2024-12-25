@@ -30,3 +30,8 @@ bool newlineReplace(char * path);
 /// @param string2 Stringa 2
 /// @return Ritorna 0 se sono uguali, >0 se string1 > string2, <0 se string1 < string2
 int stricmp(const char * string1, const char * string2);
+
+/// @brief Verifica che la stringa data sia alfanumerica
+/// @param string Stringa da verificare
+/// @return true se la stringa è alfanumerica
+bool isAlphaNumeric(const char * string);

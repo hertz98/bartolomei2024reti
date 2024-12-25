@@ -5,8 +5,10 @@
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <linux/limits.h>
 #include <errno.h>
 #include "clients.h"
+#include "util.h"
 
 int clientsInit(ClientsContext **context, int max)
 {
@@ -300,7 +302,7 @@ OperationStatus regPlayer(Client * client, void * p, bool init)
 
         case OP_DONE:
             client->operation = NULL;
-            if (nameValid(clients, client->name))
+            if (1)
                 {
                     client->registered = true;
                     printf("%s\n",client->name); // DEBUG
@@ -321,9 +323,20 @@ OperationStatus regPlayer(Client * client, void * p, bool init)
     return (bool) ret;
 }
 
-bool nameValid(Client ** clients, char * name)
+bool nameValid(ClientsContext * context, char * name)
 {
-    // To Do
+    // Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
+    if (strlen(name) > NAME_MAX - strlen(".txt"))
+        return false;
+
+    for (int i = 0; i <= context->fd_max; i++)
+        if (FD_ISSET(i, &context->master))
+            if (strcmp(name, context->clients[i].name) == 0)
+                return false;
+    
+    if (!isAlphaNumeric(name))
+        return false;
+
     return true;
 }
 

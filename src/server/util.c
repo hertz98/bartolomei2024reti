@@ -83,6 +83,18 @@ int stricmp(const char *string1, const char *string2)
         return 1;
 }
 
+bool isAlphaNumeric(const char *string)
+{
+    for (int i = 0; string[i] != '\0'; i++)
+    {
+        if (!((string[i] >= 'A' && string[i] <= 'Z') ||
+            (string[i] >= 'a' && string[i] <= 'z') ||
+            (string[i] >= '0' && string[i] <= '9')))
+            return false;
+    }
+    return true;
+}
+
 bool removeNumbering(char *string)
 {
     int i = 0;
