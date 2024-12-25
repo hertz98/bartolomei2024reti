@@ -87,7 +87,7 @@ int main (int argc, char ** argv)
                         perror("Accept fallita");
                         continue;
                     }
-                    clientAdd(master, &clientsContext->clients, newfd);
+                    clientAdd(clientsContext, newfd);
                     printf("registering\n");
                     if (newfd > clientsContext->fd_max)
                         clientsContext->fd_max = newfd; // Update the max file descriptor          
@@ -95,7 +95,7 @@ int main (int argc, char ** argv)
                 else
                     if (!clientHandler(&clientsContext->clients, i))
                     {
-                        clientRemove(master, &clientsContext->clients, i);
+                        clientRemove(clientsContext, i);
                         printf("removed\n");
                     }
             }

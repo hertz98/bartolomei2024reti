@@ -41,9 +41,9 @@ typedef struct ClientsContext {
 
 int clientsInit(ClientsContext ** clientsContext, int max);
 
-bool clientAdd(fd_set *, Client **, int);
-void clientRemove(fd_set *, Client **, int);
-void clientsFree(fd_set *, Client **, int);
+bool clientAdd(ClientsContext * context, int socket);
+void clientRemove(ClientsContext * context, int socket);
+void clientsFree(ClientsContext *context, int socket);
 
 bool clientTimeout(Client *, int);
 

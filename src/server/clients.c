@@ -7,73 +7,72 @@
 #include <errno.h>
 #include "clients.h"
 
-int clientsInit(ClientsContext **clientsContext, int max)
+int clientsInit(ClientsContext **context, int max)
 {
     if (max < 0 || max > 1024)
         return 1;
 
-    *clientsContext = (ClientsContext *) malloc( sizeof(ClientsContext) );
+    *context = (ClientsContext *) malloc( sizeof(ClientsContext) );
 
-    if (!clientsContext)
+    if (!context)
         return 1;
 
-    memset(*clientsContext, 0, sizeof(ClientsContext));
+    memset(*context, 0, sizeof(ClientsContext));
 
-    (*clientsContext)->nClients = 0;
-    (*clientsContext)->allocated = 0;
-    FD_ZERO(&(*clientsContext)->master);
-    (*clientsContext)->clients = malloc( sizeof(Client) * max);
-    (*clientsContext)->maxClients = max;
+    (*context)->nClients = 0;
+    (*context)->allocated = 0;
+    FD_ZERO(&(*context)->master);
+    (*context)->clients = malloc( sizeof(Client) * max);
+    (*context)->maxClients = max;
 
     return 0;
 }
 
-bool clientAdd(fd_set *master, Client **clients, int socket)
+bool clientAdd(ClientsContext * context, int socket)
 {
-    Client * client = (Client *) malloc(sizeof(Client));
+    Client ** client = &context->clients + socket;
 
+    *client = (Client *) malloc(sizeof(Client));
     if (! client)
         return false;
 
-    clients[socket] = client;
+    memset(*client, 0, sizeof(Client));
 
-    memset(client, 0, sizeof(Client));
+    (*client)->socket = socket;
+    (*client)->registered = false;
+    (*client)->operation = NULL;
+    (*client)->step = 0;
+    (*client)->recv_timestamp = time(NULL);
 
-    client->socket = socket;
-    client->registered = false;
-    client->operation = NULL;
-    client->step = 0;
-    client->recv_timestamp = time(NULL);
-
-    FD_SET(socket, master);
+    FD_SET(socket, &context->master);
 
     return true;
 }
 
-void clientRemove(fd_set * master, Client ** clients, int socket)
+void clientRemove(ClientsContext * context, int socket)
 {
-    Client * client = clients[socket];
+    Client ** client = &context->clients +socket;
 
-    sendCommand(client, CMD_STOP); // Prova a inviare e ignora eventuali errori
-    close(client->socket);
+    sendCommand(*client, CMD_STOP); // Prova a inviare e ignora eventuali errori
+    close((*client)->socket);
 
-    if (FD_ISSET(socket, master))
+    if (FD_ISSET(socket, &context->master))
     {
-        if(client->registered)
-            free(client->name);
-        free(client);
+        if((*client)->registered)
+            free((*client)->name);
+        free(*client);
     }
     
-    FD_CLR(socket, master);
+    FD_CLR(socket, &context->master);
 
     return;
 }
 
-void clientsFree(fd_set * master, Client ** clients, int max_clients)
+void clientsFree(ClientsContext * context, int socket)
 {
-    for (int i = 0; i < max_clients; i++)
-        if (FD_ISSET(i, master))
-            clientRemove(master, clients, i);
+    for (int i = 0; i < context->fd_max; i++)
+        if (FD_ISSET(i, &context->master))
+            clientRemove(context, i);
     
     return;
 }
