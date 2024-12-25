@@ -23,8 +23,6 @@ typedef struct Client
     int tmp_i;
     void * tmp_p;
     
-    // Timeout
-    time_t recv_timestamp;
     // Shuffle array
 } Client;
 
@@ -44,8 +42,6 @@ int clientsInit(ClientsContext ** clientsContext, int max);
 bool clientAdd(ClientsContext * context, int socket);
 void clientRemove(ClientsContext * context, int socket);
 void clientsFree(ClientsContext *context, int socket);
-
-bool clientTimeout(Client *, int);
 
 bool sendCommand(Client *, enum Command);
 enum Command recvCommand(Client *);

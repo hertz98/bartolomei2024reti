@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include "clients.h"
@@ -55,9 +56,21 @@ bool clientAdd(ClientsContext * context, int socket)
     (*client)->registered = false;
     (*client)->operation = NULL;
     (*client)->step = 0;
-    (*client)->recv_timestamp = time(NULL);
 
     FD_SET(socket, &context->master);
+
+    int keepalive = 1;
+    int keepidle = 60; // Tempo di inattività per testare la connessione
+    int keepintvl = 10; // Intervallo tra i test
+    int keepcnt = 5;  // Numero di tentativi
+    if (setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive)) < 0 ||
+        setsockopt(socket, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle)) < 0 ||
+        setsockopt(socket, IPPROTO_TCP, TCP_KEEPINTVL, &keepintvl, sizeof(keepintvl)) < 0 ||
+        setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT, &keepcnt, sizeof(keepcnt)) < 0
+        )
+    {
+        perror("setsockopt(SO_KEEPALIVE) failed");
+    }
 
     return true;
 }
@@ -191,8 +204,6 @@ enum Command recvCommand(Client *client)
         return false;    
     }
 
-    client->recv_timestamp = time(NULL);
-
     return (enum Command) tmp;
 }
 
@@ -263,8 +274,6 @@ bool recvString(Client * client, char ** buffer, int lenght)
         return false;
     }
 
-    client->recv_timestamp = time(NULL);
-
     return true;
 }
 
@@ -330,8 +339,6 @@ int recvInteger(Client * client)
             perror("recvInteger failed");
         return false;    
     }
-
-    client->recv_timestamp = time(NULL);
 
     return ntohl(tmp);
 }
