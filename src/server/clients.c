@@ -20,22 +20,35 @@ int clientsInit(ClientsContext **context, int max)
     memset(*context, 0, sizeof(ClientsContext));
 
     (*context)->nClients = 0;
-    (*context)->allocated = 0;
-    FD_ZERO(&(*context)->master);
-    (*context)->clients = malloc( sizeof(Client) * max);
     (*context)->maxClients = max;
+    (*context)->clients = malloc( sizeof(Client *) * max);
+    (*context)->allocated = max;
+    FD_ZERO(&(*context)->master);
 
     return 0;
 }
 
 bool clientAdd(ClientsContext * context, int socket)
 {
-    Client ** client = &context->clients + socket;
+    const int increment = 10;
 
+    if (context->nClients >= context->maxClients)
+        return false;
+
+    // Il numero di socket è usato per indirizzare le strutture dati
+    // ma non necessariamente coincide col numero di clients
+    if (socket > context->allocated){
+        context->clients = realloc(context->clients, sizeof(Client *) * (socket + increment));
+        context->allocated += increment;
+    }
+
+    Client ** client = &context->clients + socket;
     *client = (Client *) malloc(sizeof(Client));
     if (! client)
         return false;
 
+    context->nClients++;
+    context->fd_max = socket;
     memset(*client, 0, sizeof(Client));
 
     (*client)->socket = socket;
@@ -60,7 +73,12 @@ void clientRemove(ClientsContext * context, int socket)
     {
         if((*client)->registered)
             free((*client)->name);
+
         free(*client);
+
+        context->nClients--;
+        // if (context->fd_max == socket)
+        //     context->fd_max--;
     }
     
     FD_CLR(socket, &context->master);
@@ -74,6 +92,9 @@ void clientsFree(ClientsContext * context, int socket)
         if (FD_ISSET(i, &context->master))
             clientRemove(context, i);
     
+    free(context->clients);
+    free(context);
+
     return;
 }
 
