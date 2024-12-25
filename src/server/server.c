@@ -21,8 +21,8 @@ int listener;
 struct sockaddr_in my_addr;
 
 #define MAX_CLIENTs 32
-struct Client * clients[MAX_CLIENTs];
-int n_clients = 0;
+//struct Client * clients[MAX_CLIENTs];
+//int n_clients = 0;
 
 #define SLEEP_TIME 10
 
@@ -34,12 +34,7 @@ void signalhandle(int signal)
 
 void socketclose()
 { 
-    int i;
-    for (i = 0; i < n_clients; i++)
-        close(clients[i]->socket);
-    close(listener);
-    printf("\nSocket chiusi\n");
-    exit(0);
+
 }
 
 int init(int, char **);
@@ -47,8 +42,9 @@ bool clientHandler(struct Client **, int);
 
 int main (int argc, char ** argv)
 {
-    fd_set master, read_fds;   // Set for reading
-    int fdmax;            // Maximum number of file descriptors
+    ClientsContext * clientsContext;
+
+    fd_set read_fds, *master;   // Set for reading
     struct sockaddr_in cl_addr; // Client address
     int newfd;            // Newly accepted socket
     int i, ret;
@@ -56,28 +52,31 @@ int main (int argc, char ** argv)
     if ((ret = init(argc, argv)))
         return ret;
 
-    FD_ZERO(&master);
+    if ((ret = clientsInit(&clientsContext, MAX_CLIENTs)))
+            return ret;
+    master = &clientsContext->master;
+
     FD_ZERO(&read_fds);
 
     // Add the listener to the master set
-    FD_SET(listener, &master);
-    fdmax = listener; // Keep track of the maximum file descriptor
+    FD_SET(listener, master);
+    clientsContext->fd_max = listener; // Keep track of the maximum file descriptor
 
     while(true)
     {
 
         struct timeval timeout = {1, 0};
 
-        read_fds = master; // Copy the master set
+        read_fds = *master; // Copy the master set
 
         // Use select to wait for activity on the sockets
-        if (select(fdmax + 1, &read_fds, NULL, NULL, &timeout) == -1) {
+        if (select(clientsContext->fd_max + 1, &read_fds, NULL, NULL, &timeout) == -1) {
             perror("Select failed");
             exit(1);
         }
 
         // Loop through the file descriptors to check activity
-        for (i = 0; i <= fdmax; i++) 
+        for (i = 0; i <= clientsContext->fd_max; i++) 
             if (FD_ISSET(i, &read_fds)) // Found a ready descriptor
             { 
                 if (i == listener) // Listener socket is ready
@@ -88,15 +87,15 @@ int main (int argc, char ** argv)
                         perror("Accept fallita");
                         continue;
                     }
-                    clientAdd(&master, clients, newfd);
+                    clientAdd(master, &clientsContext->clients, newfd);
                     printf("registering\n");
-                    if (newfd > fdmax)
-                        fdmax = newfd; // Update the max file descriptor          
+                    if (newfd > clientsContext->fd_max)
+                        clientsContext->fd_max = newfd; // Update the max file descriptor          
                 } 
                 else
-                    if (!clientHandler(clients, i))
+                    if (!clientHandler(&clientsContext->clients, i))
                     {
-                        clientRemove(&master, clients, i);
+                        clientRemove(master, &clientsContext->clients, i);
                         printf("removed\n");
                     }
             }

@@ -28,9 +28,22 @@ typedef struct Client
     // Shuffle array
 } Client;
 
+typedef struct ClientsContext {
+    int nClients; // Numero di clients attuali
+    int maxClients; // Numero massimo di clients servibili
+
+    fd_set master;
+    int fd_max; // Massimo intero nel set master
+
+    Client * clients;
+    int allocated; // Numero di strutture allocate per i clients
+} ClientsContext;
+
+int clientsInit(ClientsContext ** clientsContext, int max);
+
 bool clientAdd(fd_set *, Client **, int);
 void clientRemove(fd_set *, Client **, int);
-void clientFree(fd_set *, Client **, int);
+void clientsFree(fd_set *, Client **, int);
 
 bool clientTimeout(Client *, int);
 

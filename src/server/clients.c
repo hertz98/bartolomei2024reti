@@ -7,7 +7,28 @@
 #include <errno.h>
 #include "clients.h"
 
-bool clientAdd(fd_set * master, Client ** clients, int socket)
+int clientsInit(ClientsContext **clientsContext, int max)
+{
+    if (max < 0 || max > 1024)
+        return 1;
+
+    *clientsContext = (ClientsContext *) malloc( sizeof(ClientsContext) );
+
+    if (!clientsContext)
+        return 1;
+
+    memset(*clientsContext, 0, sizeof(ClientsContext));
+
+    (*clientsContext)->nClients = 0;
+    (*clientsContext)->allocated = 0;
+    FD_ZERO(&(*clientsContext)->master);
+    (*clientsContext)->clients = malloc( sizeof(Client) * max);
+    (*clientsContext)->maxClients = max;
+
+    return 0;
+}
+
+bool clientAdd(fd_set *master, Client **clients, int socket)
 {
     Client * client = (Client *) malloc(sizeof(Client));
 
@@ -48,7 +69,7 @@ void clientRemove(fd_set * master, Client ** clients, int socket)
     return;
 }
 
-void clientFree(fd_set * master, Client ** clients, int max_clients)
+void clientsFree(fd_set * master, Client ** clients, int max_clients)
 {
     for (int i = 0; i < max_clients; i++)
         if (FD_ISSET(i, master))
