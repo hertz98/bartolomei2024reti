@@ -38,7 +38,7 @@ void socketclose()
 }
 
 int init(int, char **);
-bool clientHandler(struct Client **, int);
+bool clientHandler(ClientsContext * context, int socket);
 
 int main (int argc, char ** argv)
 {
@@ -88,12 +88,10 @@ int main (int argc, char ** argv)
                         continue;
                     }
                     clientAdd(clientsContext, newfd);
-                    printf("registering\n");
-                    if (newfd > clientsContext->fd_max)
-                        clientsContext->fd_max = newfd; // Update the max file descriptor          
+                    printf("registering\n");    
                 } 
                 else
-                    if (!clientHandler(&clientsContext->clients, i))
+                    if (!clientHandler(clientsContext, i))
                     {
                         clientRemove(clientsContext, i);
                         printf("removed\n");
@@ -157,9 +155,9 @@ int init(int argc, char ** argv)
 
 
 
-bool clientHandler(struct Client ** clients, int socket)
+bool clientHandler(ClientsContext * context, int socket)
 {
-    struct Client * client = clients[socket];
+    struct Client * client = context->clients[socket];
 
     if (client->operation != NULL)
         return (*client->operation)(client, NULL, false);
@@ -169,7 +167,7 @@ bool clientHandler(struct Client ** clients, int socket)
         if (recvCommand(client) == CMD_REGISTER)
         {
             sendCommand(client, CMD_OK);
-            return regPlayer(client, clients, true);
+            return regPlayer(client, context, true);
         }
         else
             return false;

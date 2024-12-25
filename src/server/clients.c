@@ -5,8 +5,8 @@
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#include <linux/limits.h>
 #include <errno.h>
+#include <linux/limits.h>
 #include "clients.h"
 #include "util.h"
 
@@ -45,14 +45,14 @@ bool clientAdd(ClientsContext * context, int socket)
         context->allocated += increment;
     }
 
-    Client ** client = &context->clients + socket;
-    *client = (Client *) malloc(sizeof(Client));
-    if (! client)
+    Client ** client = &context->clients[socket];
+    if (!( *client = (Client *) malloc(sizeof(Client)) ))
         return false;
+    memset(*client, 0, sizeof(Client));
 
     context->nClients++;
-    context->fd_max = socket;
-    memset(*client, 0, sizeof(Client));
+    if (socket > context->fd_max)
+        context->fd_max = socket;
 
     (*client)->socket = socket;
     (*client)->registered = false;
@@ -79,7 +79,7 @@ bool clientAdd(ClientsContext * context, int socket)
 
 void clientRemove(ClientsContext * context, int socket)
 {
-    Client ** client = &context->clients +socket;
+    Client ** client = &context->clients[socket];
 
     sendCommand(*client, CMD_STOP); // Prova a inviare e ignora eventuali errori
     close((*client)->socket);
@@ -103,7 +103,7 @@ void clientRemove(ClientsContext * context, int socket)
 
 void clientsFree(ClientsContext * context, int socket)
 {
-    for (int i = 0; i < context->fd_max; i++)
+    for (int i = 0; i <= context->fd_max; i++)
         if (FD_ISSET(i, &context->master))
             clientRemove(context, i);
     
@@ -282,7 +282,7 @@ bool recvString(Client * client, char ** buffer, int lenght)
 OperationStatus regPlayer(Client * client, void * p, bool init)
 {
 
-    Client **clients = p;
+    ClientsContext * context = p;
 
     if (init)
     {
@@ -331,7 +331,7 @@ bool nameValid(ClientsContext * context, char * name)
 
     for (int i = 0; i <= context->fd_max; i++)
         if (FD_ISSET(i, &context->master))
-            if (strcmp(name, context->clients[i].name) == 0)
+            if (strcmp(name, context->clients[i]->name) == 0)
                 return false;
     
     if (!isAlphaNumeric(name))

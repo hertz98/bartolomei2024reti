@@ -33,7 +33,7 @@ typedef struct ClientsContext {
     fd_set master;
     int fd_max; // Massimo intero nel set master
 
-    Client * clients;
+    Client ** clients;
     int allocated; // Numero di strutture allocate per i clients
 } ClientsContext;
 
