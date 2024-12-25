@@ -21,21 +21,12 @@ int listener;
 struct sockaddr_in my_addr;
 
 #define MAX_CLIENTs 32
-//struct Client * clients[MAX_CLIENTs];
-//int n_clients = 0;
 
 #define SLEEP_TIME 10
 
-void signalhandle(int signal)
-{
-    printf("\nCTRIL+C:\n");
-    exit(0);
-}
-
-void socketclose()
-{ 
-
-}
+void signalhandler(int signal);
+void exiting();
+void closeSockets(void * p);
 
 int init(int, char **);
 bool clientHandler(ClientsContext * context, int socket);
@@ -55,6 +46,7 @@ int main (int argc, char ** argv)
     if ((ret = clientsInit(&clientsContext, MAX_CLIENTs)))
             return ret;
     master = &clientsContext->master;
+    closeSockets(clientsContext);
 
     FD_ZERO(&read_fds);
 
@@ -145,8 +137,8 @@ int init(int argc, char ** argv)
 
 #endif
 
-    atexit(socketclose);
-    signal(SIGINT, signalhandle);
+    atexit(exiting);
+    signal(SIGINT, signalhandler);
 
     return 0;
 }
@@ -179,4 +171,31 @@ bool clientHandler(ClientsContext * context, int socket)
     printf("%s\n",client->name);
 
     return true;
+}
+
+void signalhandler(int signal)
+{
+    if (signal == SIGINT)
+    {
+        printf("\nCTRIL+C:\n");
+    }
+    exit(0);
+}
+
+void exiting()
+{
+    closeSockets(NULL);
+}
+
+void closeSockets(void * p)
+{
+    static ClientsContext * context = NULL;
+
+    if (p)
+    {
+        context = (ClientsContext *) p;
+        return;
+    }
+
+    clientsFree(context);
 }

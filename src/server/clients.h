@@ -45,7 +45,7 @@ int clientsInit(ClientsContext ** clientsContext, int max);
 
 bool clientAdd(ClientsContext * context, int socket);
 void clientRemove(ClientsContext * context, int socket);
-void clientsFree(ClientsContext *context, int socket);
+void clientsFree(ClientsContext *context);
 
 void setListener(ClientsContext *context, int socket);
 bool isClient(ClientsContext *context, int socket);

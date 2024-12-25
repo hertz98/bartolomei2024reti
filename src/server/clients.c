@@ -102,14 +102,21 @@ void clientRemove(ClientsContext * context, int socket)
     return;
 }
 
-void clientsFree(ClientsContext * context, int socket)
+void clientsFree(ClientsContext * context)
 {
+    if (!context) // Caso contesto non ancora inizializzato
+        return;
+
     for (int i = 0; i <= context->fd_max; i++)
-        if (FD_ISSET(i, &context->master))
+        if (isClient(context, i))
             clientRemove(context, i);
     
+    close(context->listener);
+
     free(context->clients);
     free(context);
+
+    printf("Socket chiusi\n");
 
     return;
 }
