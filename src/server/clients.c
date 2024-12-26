@@ -115,18 +115,9 @@ void clientsFree(ClientsContext * context)
     return;
 }
 
-void setListener(ClientsContext *context, int socket)
+inline bool isClient(ClientsContext *context, int socket)
 {
-    context->listener = socket;
-    if (socket > context->fd_max)
-        context->fd_max = socket;
-    FD_SET(socket, &context->master);
-}
-
-bool isClient(ClientsContext *context, int socket)
-{
-    if (FD_ISSET(socket, &context->master) &&
-        socket != context->listener)
+    if (FD_ISSET(socket, &context->master))
         return true;
     return false;
 }

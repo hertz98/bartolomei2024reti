@@ -14,6 +14,7 @@
 
 #include "topic.h"
 #include "clients.h"
+#include "util.h"
 
 #define DEBUG
 
@@ -27,6 +28,7 @@ void closeSockets(void * p);
 
 int init(int, char **);
 bool clientHandler(ClientsContext * context, int socket);
+void commandHandler();
 
 int listener;
 ClientsContext clientsContext;
@@ -49,14 +51,15 @@ int main (int argc, char ** argv)
     if (!topicsLoader(&topicsContext))
         return false;
 
-    // Add the listener to the master set
-    setListener(&clientsContext, listener);
+    clientsContext.fd_max = listener > STDIN_FILENO ? listener + 1 : STDIN_FILENO + 1;
 
     while(true)
     {
         struct timeval timeout = {SLEEP_TIME, 0};
 
         fd_set read_fds = clientsContext.master; // Copy the master set
+        FD_SET(listener, &read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
 
         // Use select to wait for activity on the sockets
         if (select(clientsContext.fd_max + 1, &read_fds, NULL, NULL, &timeout) == -1) {
@@ -80,6 +83,8 @@ int main (int argc, char ** argv)
                     clientAdd(&clientsContext, newfd);
                     printf("registering\n");    
                 } 
+                else if (i == STDIN_FILENO)
+                    commandHandler();
                 else
                     if (!clientHandler(&clientsContext, i))
                     {
@@ -172,6 +177,14 @@ bool clientHandler(ClientsContext * context, int socket)
     printf("%s\n",client->name);
 
     return true;
+}
+
+void commandHandler()
+{
+    char buffer[1024]; 
+    fgets(buffer, sizeof(buffer), stdin);
+    newlineReplace(buffer);
+    printf("%s\n", buffer);
 }
 
 void signalhandler(int signal)
