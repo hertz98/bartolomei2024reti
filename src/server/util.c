@@ -100,10 +100,12 @@ bool removeNumbering(char *string)
     int i = 0;
     while(string[i] != '\0')
     {
-        if ( (string[i] >= 'A' && string[i] <= 'Z') ||
-         (string[i] >= 'a' && string[i] <= 'z'))
+        if ((string[i] >= 'A' && string[i] <= 'Z') ||
+            (string[i] >= 'a' && string[i] <= 'z'))
         {
-            strcpy(string, string + i);
+            if( i == 0 )
+                return false;
+            memmove(string, string + i, strlen(string) - i + 1);
             return true;
         }
         i++;

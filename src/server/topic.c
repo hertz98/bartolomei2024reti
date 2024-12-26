@@ -65,6 +65,8 @@ bool topicsLoader(TopicsContext *context)
         }
         closedir(stream);
     }
+    else
+        return false;
 
     qsort(context->topics, context->nTopics, sizeof(Topic), topics_compare);
 
@@ -83,7 +85,7 @@ bool topicsLoader(TopicsContext *context)
         printf("directory: %s\n", context->directory); // DEBUG
     #endif
 
-    return false;
+    return true;
 }
 
 bool topicLoad(char * path, Topic * topic)
@@ -119,7 +121,7 @@ bool topicLoad(char * path, Topic * topic)
         newlineReplace(line);
 
         #ifdef DEBUG_QUESTION
-            printf("line %d/%d: _%s_\n", strlen(line), (int) alloc_len, line); // DEBUG
+            printf("line %d/%d: _%s_\n", (int) strlen(line), (int) alloc_len, line); // DEBUG
         #endif
 
         if (!new_question)
@@ -142,7 +144,7 @@ bool topicLoad(char * path, Topic * topic)
 
     path[endline] = '\0';
 
-    return false;
+    return true;
 }
 
 void topics_questionDestroy(void * data)
@@ -154,6 +156,7 @@ void topics_questionDestroy(void * data)
         free(question->question);
     if (question->answer)
         free(question->answer);
+    free(question);
 }
 
 void topic_name(char *name)

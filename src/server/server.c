@@ -17,10 +17,9 @@
 
 #define DEBUG
 
-int listener;
-
 #define MAX_CLIENTs 32
 #define SLEEP_TIME 1
+#define DATA_DIR "./data/"
 
 void signalhandler(int signal);
 void exiting();
@@ -29,6 +28,7 @@ void closeSockets(void * p);
 int init(int, char **);
 bool clientHandler(ClientsContext * context, int socket);
 
+int listener;
 ClientsContext clientsContext;
 TopicsContext topicsContext;
 
@@ -43,8 +43,11 @@ int main (int argc, char ** argv)
     if ((ret = clientsInit(&clientsContext, MAX_CLIENTs)))
         return ret;
 
-    if ((ret = topicsInit(&topicsContext, "./data/")))
+    if ((ret = topicsInit(&topicsContext, DATA_DIR)))
         return ret;
+
+    if (!topicsLoader(&topicsContext))
+        return false;
 
     // Add the listener to the master set
     setListener(&clientsContext, listener);
