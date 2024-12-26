@@ -17,7 +17,7 @@ int clientsInit(ClientsContext **context, int max)
 
     *context = (ClientsContext *) malloc( sizeof(ClientsContext) );
 
-    if (!context)
+    if (!*context)
         return 1;
 
     memset(*context, 0, sizeof(ClientsContext));
@@ -227,6 +227,9 @@ enum Command recvCommand(Client *client)
 
     if ((ret = recv(client->socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
+        if (!ret) // Client disconnesso
+            return false;
+
         if (errno)
             perror("recvCommand failed");
         return false;    
@@ -291,7 +294,7 @@ bool recvString(Client * client, char ** buffer, int lenght)
 {
     int ret;
 
-    *buffer = (char *) malloc(sizeof(char) * lenght);
+    *buffer = (char *) malloc(sizeof(char) * (lenght + 1));
     if (!buffer)
         return false;
 
@@ -299,10 +302,17 @@ bool recvString(Client * client, char ** buffer, int lenght)
     {
         free(*buffer);
         *buffer = NULL;
+        
+        if (!ret) // Client disconnesso
+            return false;
+
         if (errno)
             perror("recvString");
         return false;
     }
+
+    (*buffer)[ret] = '\0';
+    (*buffer)[lenght] = '\0';
 
     return true;
 }
@@ -375,6 +385,9 @@ int recvInteger(Client * client)
 
     if ((ret = recv(client->socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
+        if (!ret) // Client disconnesso
+            return false;
+        
         if (errno)
             perror("recvInteger failed");
         return false;    
