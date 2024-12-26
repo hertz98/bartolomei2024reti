@@ -41,7 +41,7 @@ struct ClientsContext {
     int allocated; // Numero di strutture allocate per i clients
 };
 
-int clientsInit(ClientsContext ** clientsContext, int max);
+int clientsInit(ClientsContext * clientsContext, int max);
 
 bool clientAdd(ClientsContext * context, int socket);
 void clientRemove(ClientsContext * context, int socket);

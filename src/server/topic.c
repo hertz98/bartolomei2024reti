@@ -22,10 +22,10 @@ bool topicsInit(TopicsContext *context, char * directory)
     context->topics = NULL;
 
     if (!(executablePath(context->directory)))
-        return false;
+        return true;
 
     if (!parentDirectory(context->directory))
-        return false;
+        return true;
 
     strcat(context->directory, directory);
 
@@ -33,7 +33,7 @@ bool topicsInit(TopicsContext *context, char * directory)
         printf("directory: %s\n", context->directory); // DEBUG
     #endif
 
-    return true;
+    return false;
 }
 
 bool topicsLoader(TopicsContext *context)

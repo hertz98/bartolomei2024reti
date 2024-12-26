@@ -10,23 +10,18 @@
 #include "clients.h"
 #include "util.h"
 
-int clientsInit(ClientsContext **context, int max)
+int clientsInit(ClientsContext *context, int max)
 {
     if (max < 0 || max > 1024)
         return 1;
 
-    *context = (ClientsContext *) malloc( sizeof(ClientsContext) );
+    memset(context, 0, sizeof(ClientsContext));
 
-    if (!*context)
-        return 1;
-
-    memset(*context, 0, sizeof(ClientsContext));
-
-    (*context)->nClients = 0;
-    (*context)->maxClients = max;
-    (*context)->clients = malloc( sizeof(Client *) * max);
-    (*context)->allocated = max;
-    FD_ZERO(&(*context)->master);
+    context->nClients = 0;
+    context->maxClients = max;
+    context->clients = malloc( sizeof(Client *) * max);
+    context->allocated = max;
+    FD_ZERO(&context->master);
 
     return 0;
 }
@@ -104,7 +99,7 @@ void clientRemove(ClientsContext * context, int socket)
 
 void clientsFree(ClientsContext * context)
 {
-    if (!context) // Caso contesto non ancora inizializzato
+    if (!context)
         return;
 
     for (int i = 0; i <= context->fd_max; i++)
@@ -114,7 +109,6 @@ void clientsFree(ClientsContext * context)
     close(context->listener);
 
     free(context->clients);
-    free(context);
 
     printf("Socket chiusi\n");
 

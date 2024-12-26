@@ -18,11 +18,9 @@
 #define DEBUG
 
 int listener;
-struct sockaddr_in my_addr;
 
 #define MAX_CLIENTs 32
-
-#define SLEEP_TIME 10
+#define SLEEP_TIME 1
 
 void signalhandler(int signal);
 void exiting();
@@ -31,59 +29,58 @@ void closeSockets(void * p);
 int init(int, char **);
 bool clientHandler(ClientsContext * context, int socket);
 
+ClientsContext clientsContext;
+TopicsContext topicsContext;
+
 int main (int argc, char ** argv)
 {
-    ClientsContext * clientsContext;
-
-    fd_set read_fds, *master;   // Set for reading
-    struct sockaddr_in cl_addr; // Client address
     int newfd;            // Newly accepted socket
-    int i, ret;
+    int ret;
 
     if ((ret = init(argc, argv)))
         return ret;
 
     if ((ret = clientsInit(&clientsContext, MAX_CLIENTs)))
-            return ret;
-    master = &clientsContext->master;
-    closeSockets(clientsContext);
+        return ret;
 
-    FD_ZERO(&read_fds);
+    if ((ret = topicsInit(&topicsContext, "./data/")))
+        return ret;
 
     // Add the listener to the master set
-    setListener(clientsContext, listener);
+    setListener(&clientsContext, listener);
 
     while(true)
     {
-        struct timeval timeout = {1, 0};
+        struct timeval timeout = {SLEEP_TIME, 0};
 
-        read_fds = *master; // Copy the master set
+        fd_set read_fds = clientsContext.master; // Copy the master set
 
         // Use select to wait for activity on the sockets
-        if (select(clientsContext->fd_max + 1, &read_fds, NULL, NULL, &timeout) == -1) {
+        if (select(clientsContext.fd_max + 1, &read_fds, NULL, NULL, &timeout) == -1) {
             perror("Select failed");
             exit(1);
         }
 
         // Loop through the file descriptors to check activity
-        for (i = 0; i <= clientsContext->fd_max; i++) 
+        for (int i = 0; i <= clientsContext.fd_max; i++) 
             if (FD_ISSET(i, &read_fds)) // Found a ready descriptor
             { 
                 if (i == listener) // Listener socket is ready
                 { 
+                    struct sockaddr_in cl_addr;
                     unsigned int addrlen = sizeof(cl_addr);
                     if ((newfd = accept(listener, (struct sockaddr *)&cl_addr, &addrlen)) < 0) 
                     {
                         perror("Accept fallita");
                         continue;
                     }
-                    clientAdd(clientsContext, newfd);
+                    clientAdd(&clientsContext, newfd);
                     printf("registering\n");    
                 } 
                 else
-                    if (!clientHandler(clientsContext, i))
+                    if (!clientHandler(&clientsContext, i))
                     {
-                        clientRemove(clientsContext, i);
+                        clientRemove(&clientsContext, i);
                         printf("removed\n");
                     }
             }
@@ -104,6 +101,7 @@ int init(int argc, char ** argv)
 
     listener = socket(AF_INET, SOCK_STREAM, 0);
 
+    struct sockaddr_in my_addr;
     memset(&my_addr, 0, sizeof(my_addr)); // Pulizia
     my_addr.sin_family = AF_INET ;
     my_addr.sin_port = atoi( argv[2] );
@@ -189,13 +187,6 @@ void exiting()
 
 void closeSockets(void * p)
 {
-    static ClientsContext * context = NULL;
-
-    if (p)
-    {
-        context = (ClientsContext *) p;
-        return;
-    }
-
-    clientsFree(context);
+    clientsFree(&clientsContext);
+    topicsFree(&topicsContext);
 }
