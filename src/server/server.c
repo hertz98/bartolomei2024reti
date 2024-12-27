@@ -29,6 +29,7 @@ void closeSockets(void * p);
 int init(int, char **);
 bool clientHandler(ClientsContext * context, int socket);
 void commandHandler();
+void printServer();
 
 int listener;
 ClientsContext clientsContext;
@@ -55,6 +56,8 @@ int main (int argc, char ** argv)
 
     while(true)
     {
+        printServer();
+
         struct timeval timeout = {SLEEP_TIME, 0};
 
         fd_set read_fds = clientsContext.master; // Copy the master set
@@ -185,6 +188,39 @@ void commandHandler()
     fgets(buffer, sizeof(buffer), stdin);
     newlineReplace(buffer);
     printf("%s\n", buffer);
+}
+
+void printServer()
+{
+    printf("\033[H\033[J"); // system("clear");
+    printf("Trivia Quiz\n+++++++++++++++++++++++++++++++\n");
+    
+    printf("Temi:\n");
+    for (int i = 0; i < topicsContext.nTopics; i++)
+        printf("%d - %s\n", i + 1, topicsContext.topics[i].name);
+
+    printf("+++++++++++++++++++++++++++++++\n\n");
+    
+    printf("Partecipanti (%d)\n", clientsContext.nClients);
+    for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
+        if (isClient(&clientsContext, i) && clientsContext.clients[i]->registered)
+        {
+            printf("- %s\n", clientsContext.clients[i]->name);
+            n++;
+        }
+    printf("\n");
+
+    for (int t = 0; t < topicsContext.nTopics; t++)
+    {
+        printf("Punteggio tema %d\n", t + 1);
+        printf("\n");
+    }
+    
+    for (int t = 0; t < topicsContext.nTopics; t++)
+    {
+        printf("Quiz tema %d completato\n", t + 1);
+        printf("\n");
+    }
 }
 
 void signalhandler(int signal)
