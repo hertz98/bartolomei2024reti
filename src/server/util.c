@@ -1,6 +1,7 @@
+#define _DEFAULT_SOURCE
 #include <string.h>
 #include <stdlib.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include <unistd.h>
 #include "util.h"
 

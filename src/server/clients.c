@@ -1,3 +1,4 @@
+#define _DEFAULT_SOURCE
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,7 +7,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include "clients.h"
 #include "util.h"
 

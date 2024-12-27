@@ -1,3 +1,4 @@
+#define _DEFAULT_SOURCE
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,11 +11,6 @@
 // #define DEBUG_PATH
 // #define DEBUG_TOPIC
 // #define DEBUG_QUESTION
-
-// Nel mio caso dirent.h non include alcune definizioni
-#ifndef DT_REG
-#define DT_REG 8    /* File regolare */
-#endif
 
 bool topicsInit(TopicsContext *context, char * directory)
 {

@@ -1,10 +1,6 @@
 #include <stdbool.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include "list.h"
-
-#ifndef PATH_BUFFER_SIZE
-#define PATH_BUFFER_SIZE 4096
-#endif
 
 typedef struct Question 
 {

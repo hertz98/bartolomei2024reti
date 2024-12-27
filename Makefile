@@ -11,7 +11,7 @@ client: ./src/client/client.c
 clean:
 	#find . -maxdepth 1 -type f -executable -delete
 	#find . -iname "*.o"
-	rm -f ./bin/server ./bin/client
+	rm -f ./bin/server ./bin/client ./bin/testing
 	rm -f ./bin/server.exe ./bin/client.exe ./bin/cygwin1.dll
 
 windows: ./src/client/client.c ./src/server/server.c
