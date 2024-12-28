@@ -41,20 +41,21 @@ bool clientAdd(ClientsContext * context, int socket)
         context->allocated += increment;
     }
 
-    Client ** client = &context->clients[socket];
-    if (!( *client = (Client *) malloc(sizeof(Client)) ))
+    context->clients[socket] = (Client *) malloc(sizeof(Client));
+    Client * client = context->clients[socket];
+    if (!client)
         return false;
-    memset(*client, 0, sizeof(Client));
-
+    memset(client, 0, sizeof(Client));
+    
     context->nClients++;
     if (socket > context->fd_max)
         context->fd_max = socket;
 
-    (*client)->name = NULL;
-    (*client)->socket = socket;
-    (*client)->registered = false;
-    (*client)->operation = NULL;
-    (*client)->step = 0;
+    client->name = NULL;
+    client->socket = socket;
+    client->registered = false;
+    client->operation = NULL;
+    client->step = 0;
 
     FD_SET(socket, &context->master);
 
