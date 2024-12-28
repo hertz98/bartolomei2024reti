@@ -65,13 +65,18 @@ int main (int argc, char ** argv)
         return ret;
 
     printf("%d\n", sendCommand(sd, CMD_REGISTER));
-    char * name = "provanome";
+    char * name = "provaNome";
     if (recvCommand(sd) == CMD_OK)
     {
         printf("registering\n");
         sendMessage(sd, name);
         if(recvCommand(sd) == CMD_OK)
             printf("registered\n");
+        else
+        {
+            printf("Rifiutato\n");
+            exit(1);
+        }
     }
 
     if (recvCommand(sd) == CMD_MESSAGE)

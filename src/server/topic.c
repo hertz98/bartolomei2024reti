@@ -58,6 +58,7 @@ bool topicsLoader(TopicsContext *context)
             memset(current, 0, sizeof(Topic));
             strncpy(current->name, file->d_name, NAME_MAX);
             current->questions = NULL;
+            current->nQuestions = 0;
         }
         closedir(stream);
     }
@@ -126,6 +127,7 @@ bool topicLoad(char * path, Topic * topic)
             list_append(&topic->questions, new_question);
             new_question->question = line;
             new_question->answer = NULL; // Nel caso la risposta non venisse caricata
+            topic->nQuestions++;
         }
         else
         {

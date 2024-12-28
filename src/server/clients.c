@@ -46,7 +46,7 @@ bool clientAdd(ClientsContext * context, int socket)
     if (!client)
         return false;
     memset(client, 0, sizeof(Client));
-    
+
     context->nClients++;
     if (socket > context->fd_max)
         context->fd_max = socket;
@@ -304,15 +304,17 @@ bool recvString(Client * client, char ** buffer, int lenght)
     return true;
 }
 
-OperationStatus regPlayer(ClientsContext *context, int socket, void *, bool init)
+OperationStatus regPlayer(ClientsContext *context, int socket, void * p, bool init)
 {
     Client * client = context->clients[socket];
+    TopicsContext * topicsContext = p;
 
     if (init)
     {
         client->tmp_p = &client->name;
         client->step = 0;
         client->operation = regPlayer;
+        client->tmp_p2 = p;
     }
     
     OperationStatus ret;
@@ -328,11 +330,14 @@ OperationStatus regPlayer(ClientsContext *context, int socket, void *, bool init
             client->operation = NULL;
             if (nameValid(context, socket, client->name))
                 {
-                    client->registered = true;
                     printf("%s\n",client->name); // DEBUG
-                    sendCommand(client, CMD_OK);
-                    sendMessage(context, socket, "provasendfromserver", true);
-                    return true;
+                    if (sendCommand(client, CMD_OK) && gameInit(context->clients[socket], topicsContext))
+                    {
+                        client->registered = true;   
+                        return true;
+                    }
+                    else
+                        return false;
                 }
                 else
                 {
@@ -399,3 +404,18 @@ bool sendCommand(Client * client, enum Command cmd)
     return true;
 }
 
+bool gameInit(Client * client, TopicsContext * topicsContext)
+{
+    client->game.playing = -1;
+    client->game.currentQuestion = -1;
+    client->game.playableTopics = topicsUnplayed(topicsContext, client->name);
+    client->game.questions = NULL;
+
+    client->game.score = malloc(sizeof (int) * topicsContext->nTopics);
+    if (!client->game.score)
+        return false;
+    for (int i = 0; i < topicsContext->nTopics; i++)
+        client->game.score[i] = -1;
+
+    return true;
+}

@@ -1,7 +1,9 @@
+#pragma once
 #include <time.h>
 #include <stdbool.h>
 #include <sys/select.h>
 #include "../shared/commands.h"
+#include "topic.h"
 
 typedef enum OperationStatus {
     OP_FAIL = false,
@@ -17,7 +19,6 @@ struct Client
     int socket; // ridondante
     bool registered;
     char * name;
-    int score;
 
     // Status
     OperationStatus (* operation)(ClientsContext *, int, void *, bool);
@@ -25,8 +26,16 @@ struct Client
 
     int tmp_i;
     void * tmp_p;
+    void * tmp_p2;
     
-    // Shuffle array
+    // Topics
+    struct Game{
+        int playing; // indice topic corrente
+        bool * playableTopics; // array di topic giocabili dal Client
+        int * score; // array di punteggi 
+        int currentQuestion; // indice domanda corrente
+        Question * questions; // array di domande (allo scopo di mischiarle)
+    } game;
 };
 
 struct ClientsContext {
@@ -63,3 +72,5 @@ bool recvString(Client *, char **, int);
 
 OperationStatus regPlayer(ClientsContext *context, int socket, void *, bool init);
 bool nameValid(ClientsContext * context, int socket, char * name);
+
+bool gameInit(Client * clientsContext, TopicsContext * topicsContext);

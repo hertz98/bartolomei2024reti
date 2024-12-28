@@ -160,14 +160,14 @@ bool clientHandler(ClientsContext * context, int socket)
     struct Client * client = context->clients[socket];
 
     if (client->operation != NULL)
-        return (*client->operation)(context, socket, NULL, false);
+        return (*client->operation)(context, socket, client->tmp_p2, false);
     
     if (!client->registered)
     {
         if (recvCommand(client) == CMD_REGISTER)
         {
             sendCommand(client, CMD_OK);
-            return regPlayer(context, socket, NULL, true);
+            return regPlayer(context, socket, &topicsContext, true);
         }
         else
             return false;
@@ -214,12 +214,29 @@ void printServer()
     for (int t = 0; t < topicsContext.nTopics; t++)
     {
         printf("Punteggio tema %d\n", t + 1);
+        for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
+            if (isClient(&clientsContext, i) &&
+                clientsContext.clients[i]->registered &&
+                clientsContext.clients[i]->game.playing == t &&
+                clientsContext.clients[i]->game.score[t] != -1)
+            {
+                printf("- %s %d\n", clientsContext.clients[i]->name, clientsContext.clients[i]->game.score[t]);
+                n++;
+            }
         printf("\n");
     }
     
     for (int t = 0; t < topicsContext.nTopics; t++)
     {
         printf("Quiz tema %d completato\n", t + 1);
+        for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
+            if (isClient(&clientsContext, i) &&
+                clientsContext.clients[i]->registered &&
+                clientsContext.clients[i]->game.playing != t &&
+                clientsContext.clients[i]->game.score[t] != -1)
+            {
+                printf("- %s\n", clientsContext.clients[i]->name);
+            }
         printf("\n");
     }
 }

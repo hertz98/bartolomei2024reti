@@ -1,3 +1,4 @@
+#pragma once
 #include <stdbool.h>
 #include <limits.h>
 #include "list.h"
@@ -11,6 +12,7 @@ typedef struct Question
 typedef struct Topic 
 {
     char name[NAME_MAX];
+    int nQuestions;
     Node * questions;
 } Topic;
 
