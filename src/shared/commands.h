@@ -12,4 +12,5 @@ enum Command
     CMD_STOP = false, // Terminate
     CMD_NOTVALID,
     CMD_EXISTING,
+    CMD_TOPICS,
 };

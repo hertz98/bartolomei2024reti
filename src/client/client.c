@@ -15,12 +15,14 @@
 void clear();
 bool mainMenu();
 bool signup();
+void topicsSelection();
+char * newlineReplace(char * string);
 
 struct sockaddr_in server_addr;
 int sd;
 
-#define BUFFER_SIZE 20
-char buffer[BUFFER_SIZE + 1];
+char ** topics;
+int nTopics;
 
 void socketclose()
 { 
@@ -36,8 +38,6 @@ int init(int argc, char ** argv)
         printf("Argomenti insufficienti\n");
         return(1);
     }
-
-    buffer[BUFFER_SIZE] = '\0';
 
     sd = socket(AF_INET, SOCK_STREAM, 0);
     
@@ -74,6 +74,8 @@ int main (int argc, char ** argv)
 
     if (!signup())
         return 1;
+
+    topicsSelection();
 
     while(1);
 
@@ -175,5 +177,41 @@ bool signup()
 
 void topicsSelection()
 {
+    if (!(sendCommand(sd, CMD_TOPICS) && recvCommand(sd) == CMD_OK))
+    {
+        printf("Errore nella comunicazione");
+        exit(1);
+    }
 
+    printf("Quiz disponibili\n");
+    if (!topics)
+    {
+        char * tmp, *topic;
+        recvMessage(sd, &tmp);
+
+        topics = (char **) malloc(sizeof(char*) * (++nTopics));
+        topics[0] = tmp;
+
+        for (int i = 1; (topic = newlineReplace(tmp)); i++)
+        {
+            topics = (char **) realloc(topics, sizeof(char*) * (++nTopics));
+            topics[i] = topic;
+        }
+    }
+
+    for (int i = 0; i < nTopics; i++)
+        printf("%s\n",topics[i]);
+}
+
+char * newlineReplace(char * string)
+{
+    for( ; *string != '\0'; string++)
+    {
+        if(*string == '\n')
+        {
+            *string = '\0';
+            return string + 1;
+        }
+    }
+    return NULL;
 }

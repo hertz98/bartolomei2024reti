@@ -82,6 +82,8 @@ bool topicsLoader(TopicsContext *context)
         printf("directory: %s\n", context->directory); // DEBUG
     #endif
 
+    topicsStringPrepare(context);
+
     return true;
 }
 
@@ -166,6 +168,28 @@ void topic_name(char *name)
 
     removeNumbering(name);
 
+    return;
+}
+
+void topicsStringPrepare(TopicsContext *context)
+{
+    context->topicsString = (char *) malloc(sizeof(char));
+
+    char * topicsString = context->topicsString;
+    topicsString[0] = '\0';
+    int size = 1;
+
+    for (int i = 0; i < context->nTopics; i++)
+    {
+        char * currentName = context->topics[i].name;
+        
+        size += + strlen(currentName) + 2;
+        topicsString = realloc(topicsString, size);
+
+        strcat(topicsString, context->topics[i].name);
+        if (i != context->nTopics - 1)
+            strcat(topicsString, "\n");
+    }
     return;
 }
 

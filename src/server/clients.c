@@ -348,7 +348,7 @@ OperationStatus regPlayer(ClientsContext *context, int socket, void * p, bool in
                     if (sendCommand(socket, CMD_OK) && gameInit(context->clients[socket], topicsContext))
                     {
                         client->registered = true;   
-                        return true;
+                        return OP_DONE;
                     }
                     else
                         return false;

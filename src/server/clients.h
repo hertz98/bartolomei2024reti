@@ -23,9 +23,8 @@ struct Client
     OperationStatus (* operation)(ClientsContext *, int, void *, bool);
     int step;
 
-    int tmp_i;
-    void * tmp_p;
-    void * tmp_p2;
+    int tmp_i, tmp_i2;
+    void * tmp_p, * tmp_p2;
     
     // Topics
     struct Game{
@@ -73,3 +72,5 @@ OperationStatus regPlayer(ClientsContext *context, int socket, void *, bool init
 bool nameValid(ClientsContext * context, int socket, char * name);
 
 bool gameInit(Client * clientsContext, TopicsContext * topicsContext);
+
+OperationStatus sendTopics(ClientsContext *context, int socket, void *, bool init);

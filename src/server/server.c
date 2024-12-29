@@ -172,7 +172,11 @@ bool clientHandler(ClientsContext * context, int socket)
     if (cmd == false) // false
         return false;
 
-    printf("%s\n",client->name);
+    if (cmd == CMD_TOPICS)
+    {
+        sendCommand(socket, CMD_OK);
+        sendMessage(context, socket, topicsContext.topicsString, true);
+    }
 
     return true;
 }

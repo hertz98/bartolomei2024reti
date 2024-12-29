@@ -21,6 +21,7 @@ typedef struct TopicsContext
     char directory[PATH_MAX];
     int nTopics;
     struct Topic * topics;
+    char * topicsString;
 } TopicsContext;
 
 /// @brief Inizializza le strutture dati inerrenti ai topic
@@ -76,3 +77,7 @@ void topics_questionDestroy(void * data);
 /// @brief Ottiene il nome del topic dal nome del file completo
 /// @param name Stringa contenente il nome del file con numerazione ed estensione
 void topic_name(char * name);
+
+/// @brief Prepara la stringa contentente la lista ordinata dei topics al fine di un invio rapido ai clients
+/// @param context Strutture dati inerenti ai topic inizializzate
+void topicsStringPrepare(TopicsContext * context);
