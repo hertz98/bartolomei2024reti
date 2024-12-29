@@ -119,7 +119,7 @@ void clientsFree(ClientsContext * context)
         return;
 
     for (int i = 0; i <= context->fd_max; i++)
-        if (isClient(context, i))
+        if (isClient(context, i, false))
             clientRemove(context, i);
     
     close(context->listener);
@@ -131,10 +131,11 @@ void clientsFree(ClientsContext * context)
     return;
 }
 
-inline bool isClient(ClientsContext *context, int socket)
+inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
 {
     if (FD_ISSET(socket, &context->master))
-        return true;
+        if (!onlyRegistered || context->clients[socket]->registered)
+            return true;
     return false;
 }
 
@@ -373,7 +374,7 @@ bool nameValid(ClientsContext * context, int socket, char * name)
         return false;
 
     for (int i = 0; i <= context->fd_max; i++)
-        if (i != socket && isClient(context, i))
+        if (i != socket && isClient(context, i, false))
             if (strcmp(name, context->clients[i]->name) == 0)
                 return false;
     

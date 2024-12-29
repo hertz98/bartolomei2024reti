@@ -56,7 +56,7 @@ bool clientAdd(ClientsContext * context, int socket);
 void clientRemove(ClientsContext * context, int socket);
 void clientsFree(ClientsContext *context);
 
-bool isClient(ClientsContext *context, int socket);
+bool isClient(ClientsContext *context, int socket, bool onlyRegistered);
 
 bool sendCommand(Client *, enum Command);
 enum Command recvCommand(Client *);

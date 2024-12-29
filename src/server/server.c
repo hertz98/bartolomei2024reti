@@ -204,7 +204,7 @@ void printServer()
     
     printf("Partecipanti (%d)\n", clientsContext.nClients);
     for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
-        if (isClient(&clientsContext, i) && clientsContext.clients[i]->registered)
+        if (isClient(&clientsContext, i, true))
         {
             printf("- %s\n", clientsContext.clients[i]->name);
             n++;
@@ -215,8 +215,7 @@ void printServer()
     {
         printf("Punteggio tema %d\n", t + 1);
         for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
-            if (isClient(&clientsContext, i) &&
-                clientsContext.clients[i]->registered &&
+            if (isClient(&clientsContext, i, true) &&
                 clientsContext.clients[i]->game.playing == t &&
                 clientsContext.clients[i]->game.score[t] != -1)
             {
@@ -230,8 +229,7 @@ void printServer()
     {
         printf("Quiz tema %d completato\n", t + 1);
         for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
-            if (isClient(&clientsContext, i) &&
-                clientsContext.clients[i]->registered &&
+            if (isClient(&clientsContext, i, true) &&
                 clientsContext.clients[i]->game.playing != t &&
                 clientsContext.clients[i]->game.score[t] != -1)
             {
