@@ -22,6 +22,7 @@ int clientsInit(ClientsContext *context, int max)
     context->maxClients = max;
     context->clients = malloc( sizeof(Client *) * max);
     context->allocated = max;
+    memset(context->clients, 0, context->allocated);
     FD_ZERO(&context->master);
 
     return 0;
@@ -38,6 +39,7 @@ bool clientAdd(ClientsContext * context, int socket)
     // ma non necessariamente coincide col numero di clients
     if (socket > context->allocated){
         context->clients = realloc(context->clients, sizeof(Client *) * (socket + increment));
+        memset(context->clients + context->allocated, 0, increment);
         context->allocated += increment;
     }
 
@@ -56,6 +58,9 @@ bool clientAdd(ClientsContext * context, int socket)
     client->registered = false;
     client->operation = NULL;
     client->step = 0;
+    client->game.playableTopics = NULL;
+    client->game.questions = NULL;
+    client->game.score = NULL;
 
     FD_SET(socket, &context->master);
 
@@ -77,22 +82,31 @@ bool clientAdd(ClientsContext * context, int socket)
 
 void clientRemove(ClientsContext * context, int socket)
 {
-    Client ** client = &context->clients[socket];
+    Client * client = context->clients[socket];
 
-    sendCommand(*client, CMD_STOP); // Prova a inviare e ignora eventuali errori
-    close((*client)->socket);
+    sendCommand(client, CMD_STOP); // Prova a inviare e ignora eventuali errori
+    
+    close(socket);
 
-    if (FD_ISSET(socket, &context->master))
+    if (client)
     {
-        if((*client)->registered)
-            free((*client)->name);
+        if (client->name)
+            free(client->name);
+        if (client->game.playableTopics)
+            free(client->game.playableTopics);
+        if (client->game.questions)
+            free(client->game.questions);
+        if (client->game.score)
+            free(client->game.questions);
 
-        free(*client);
+        free(client);
 
         context->nClients--;
         // if (context->fd_max == socket)
         //     context->fd_max--;
     }
+
+    context->clients[socket] = NULL;
     
     FD_CLR(socket, &context->master);
 
