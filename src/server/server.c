@@ -91,10 +91,7 @@ int main (int argc, char ** argv)
                     commandHandler();
                 else
                     if (!clientHandler(&clientsContext, i))
-                    {
                         clientRemove(&clientsContext, i);
-                        printf("removed\n");
-                    }
             }
 
     }

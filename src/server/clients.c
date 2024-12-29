@@ -355,8 +355,10 @@ OperationStatus regPlayer(ClientsContext *context, int socket, void * p, bool in
                 }
                 else
                 {
-                    sendCommand(socket, CMD_STOP);
-                    return false;
+                    free(client->name);
+                    client->name = NULL;
+                    sendCommand(socket, CMD_NOTVALID);
+                    return true;
                 }
             break;
 
