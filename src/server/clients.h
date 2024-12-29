@@ -16,7 +16,6 @@ typedef struct ClientsContext ClientsContext;
 
 struct Client
 {
-    int socket; // ridondante
     bool registered;
     char * name;
 
@@ -58,17 +57,17 @@ void clientsFree(ClientsContext *context);
 
 bool isClient(ClientsContext *context, int socket, bool onlyRegistered);
 
-bool sendCommand(Client *, enum Command);
-enum Command recvCommand(Client *);
+bool sendCommand(int socket, enum Command);
+enum Command recvCommand(int socket);
 
-bool sendInteger(Client *, int);
-int recvInteger(Client *);
+bool sendInteger(int socket, int);
+int recvInteger(int socket);
 
 OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, bool init);
-bool sendString(Client *, char *, int);
+bool sendString(int socket, char *, int);
 
 OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, bool init);
-bool recvString(Client *, char **, int);
+bool recvString(int socket, char **, int);
 
 OperationStatus regPlayer(ClientsContext *context, int socket, void *, bool init);
 bool nameValid(ClientsContext * context, int socket, char * name);

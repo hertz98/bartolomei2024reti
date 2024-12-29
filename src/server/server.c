@@ -164,16 +164,16 @@ bool clientHandler(ClientsContext * context, int socket)
     
     if (!client->registered)
     {
-        if (recvCommand(client) == CMD_REGISTER)
+        if (recvCommand(socket) == CMD_REGISTER)
         {
-            sendCommand(client, CMD_OK);
+            sendCommand(socket, CMD_OK);
             return regPlayer(context, socket, &topicsContext, true);
         }
         else
             return false;
     }
 
-    enum Command cmd = recvCommand(client);
+    enum Command cmd = recvCommand(socket);
 
     if (cmd == false) // false
         return false;

@@ -54,7 +54,6 @@ bool clientAdd(ClientsContext * context, int socket)
         context->fd_max = socket;
 
     client->name = NULL;
-    client->socket = socket;
     client->registered = false;
     client->operation = NULL;
     client->step = 0;
@@ -84,7 +83,7 @@ void clientRemove(ClientsContext * context, int socket)
 {
     Client * client = context->clients[socket];
 
-    sendCommand(client, CMD_STOP); // Prova a inviare e ignora eventuali errori
+    sendCommand(socket, CMD_STOP); // Prova a inviare e ignora eventuali errori
     
     close(socket);
 
@@ -155,24 +154,24 @@ OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, 
     switch (client->step++)
     {
         case 0:
-            if (sendCommand(client, CMD_MESSAGE))
+            if (sendCommand(socket, CMD_MESSAGE))
                 ret = OP_OK;
             break;
 
         case 1:
-            if (recvCommand(client) == CMD_SIZE &&
-             sendInteger(client, strlen(client->tmp_p)))
+            if (recvCommand(socket) == CMD_SIZE &&
+             sendInteger(socket, strlen(client->tmp_p)))
                 ret = OP_OK;
             break;
 
         case 2:
-            if (recvCommand(client) == CMD_STRING &&
-             sendString(client, client->tmp_p, strlen(client->tmp_p)))
+            if (recvCommand(socket) == CMD_STRING &&
+             sendString(socket, client->tmp_p, strlen(client->tmp_p)))
                 ret = OP_OK;
             break;
 
         case 3:
-            if (recvCommand(client) == CMD_OK)
+            if (recvCommand(socket) == CMD_OK)
                 ret = OP_DONE;
             break;
             
@@ -195,13 +194,13 @@ OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, 
     return ret;
 }
 
-bool sendInteger(Client * client, int i)
+bool sendInteger(int socket, int i)
 {
     int ret;
 
     u_int32_t tmp = htonl(i);
 
-    if ((ret = send(client->socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
+    if ((ret = send(socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
     {
         if (errno)
             perror("sendInteger failed");
@@ -211,23 +210,23 @@ bool sendInteger(Client * client, int i)
     return true;
 }
 
-bool sendString(Client * client, char * buffer, int lenght)
+bool sendString(int socket, char * buffer, int lenght)
 {
     int ret;
 
-    if ((ret = send(client->socket, buffer, lenght, 0)) != lenght)
+    if ((ret = send(socket, buffer, lenght, 0)) != lenght)
         return false;
 
     return true;
 }
 
-enum Command recvCommand(Client *client)
+enum Command recvCommand(int socket)
 {
     int ret;
 
     u_int8_t tmp;
 
-    if ((ret = recv(client->socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
+    if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
         if (!ret) // Client disconnesso
             return false;
@@ -256,20 +255,20 @@ OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, 
     switch (client->step++)
     {
         case 0: // Il client non invia mai una stringa senza preavviso
-            if (recvCommand(client) == CMD_MESSAGE &&
-             sendCommand(client, CMD_SIZE))
+            if (recvCommand(socket) == CMD_MESSAGE &&
+             sendCommand(socket, CMD_SIZE))
                 ret = OP_OK;
             break;
 
         case 1:
-            if ((client->tmp_i = recvInteger(client)) > 0 &&
-             sendCommand(client, CMD_STRING))
+            if ((client->tmp_i = recvInteger(socket)) > 0 &&
+             sendCommand(socket, CMD_STRING))
                 ret = OP_OK;
             break;
 
         case 2:
-            if (recvString(client, (char **) client->tmp_p, client->tmp_i) &&
-             sendCommand(client, CMD_OK))
+            if (recvString(socket, (char **) client->tmp_p, client->tmp_i) &&
+             sendCommand(socket, CMD_OK))
                 ret = OP_DONE;
             break;
 
@@ -292,7 +291,7 @@ OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, 
     return ret;
 }
 
-bool recvString(Client * client, char ** buffer, int lenght)
+bool recvString(int socket, char ** buffer, int lenght)
 {
     int ret;
 
@@ -300,7 +299,7 @@ bool recvString(Client * client, char ** buffer, int lenght)
     if (!buffer)
         return false;
 
-    if ((ret = recv(client->socket, *buffer, lenght, 0)) != lenght)
+    if ((ret = recv(socket, *buffer, lenght, 0)) != lenght)
     {
         free(*buffer);
         *buffer = NULL;
@@ -346,7 +345,7 @@ OperationStatus regPlayer(ClientsContext *context, int socket, void * p, bool in
             if (nameValid(context, socket, client->name))
                 {
                     printf("%s\n",client->name); // DEBUG
-                    if (sendCommand(client, CMD_OK) && gameInit(context->clients[socket], topicsContext))
+                    if (sendCommand(socket, CMD_OK) && gameInit(context->clients[socket], topicsContext))
                     {
                         client->registered = true;   
                         return true;
@@ -356,7 +355,7 @@ OperationStatus regPlayer(ClientsContext *context, int socket, void * p, bool in
                 }
                 else
                 {
-                    sendCommand(client, CMD_STOP);
+                    sendCommand(socket, CMD_STOP);
                     return false;
                 }
             break;
@@ -384,13 +383,13 @@ bool nameValid(ClientsContext * context, int socket, char * name)
     return true;
 }
 
-int recvInteger(Client * client)
+int recvInteger(int socket)
 {
     int ret;
 
     u_int32_t tmp;
 
-    if ((ret = recv(client->socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
+    if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
         if (!ret) // Client disconnesso
             return false;
@@ -403,13 +402,13 @@ int recvInteger(Client * client)
     return ntohl(tmp);
 }
 
-bool sendCommand(Client * client, enum Command cmd)
+bool sendCommand(int socket, enum Command cmd)
 {
     int ret;
 
     u_int8_t tmp = (u_int8_t) cmd;
 
-    if ((ret = send(client->socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
+    if ((ret = send(socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
     {
         if (errno)
             perror("sendCommand failed");
