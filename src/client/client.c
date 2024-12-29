@@ -12,6 +12,8 @@
 
 #include "server_comm.h"
 
+void clear();
+bool mainMenu();
 bool signup();
 
 struct sockaddr_in server_addr;
@@ -67,6 +69,9 @@ int main (int argc, char ** argv)
     if ((ret = init(argc, argv)))
         return ret;
 
+    if (!mainMenu())
+        return 0;
+
     if (!signup())
         return 1;
 
@@ -79,34 +84,78 @@ int main (int argc, char ** argv)
     return(0);
 }
 
+bool mainMenu()
+{
+    int ret;
+
+    while(true)
+    {
+        clear();
+
+        printf("Trivia Quiz\n+++++++++++++++++++++++++++++++\nMenù:\n");
+        printf("1 - Comincia una sessione di Trivia\n");
+        printf("2 - Esci\n");
+        printf("+++++++++++++++++++++++++++++++\nLa tua scelta: ");
+        fflush(stdout);
+
+        char buffer[10];
+        if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) <= 0)
+            continue;
+        buffer[ret - 1] = '\0';
+
+        if (!strncmp(buffer, "1", 1))
+            return true;
+        else if (!strncmp(buffer, "2", 1))
+            return false;
+    }
+
+}
+
+inline void clear()
+{
+    printf("\033[H\033[J"); // system("clear");
+}
+
 bool signup()
 {
     int ret;
     enum Command cmd = CMD_STOP;
 
+    clear();
+    char buffer[255];
+    printf("Trivia Quiz\n+++++++++++++++++++++++++++++++\n");
+
     while(true)
     {
-        char buffer[255];
-        printf("Nome del giocatore:\n");
+        printf("Scegli un nickname (deve essere univoco): ");
+        fflush(stdout);
 
         if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) <= 0)
             continue;
         buffer[ret - 1] = '\0';
 
-        printf("%d\n", sendCommand(sd, CMD_REGISTER));
+        if (!sendCommand(sd, CMD_REGISTER))
+        {
+            printf("Errore nella comunicazione");
+            return false;
+        }
+
         if ( recvCommand(sd) == CMD_OK)
         {
-            printf("registering\n");
             sendMessage(sd, buffer);
 
             if ((cmd = recvCommand(sd)) == CMD_OK)
             {
-                printf("Registrato!\n");
                 return true;
+            }
+            else if (cmd == CMD_EXISTING)
+            {
+                printf("Nome già utilizzato!\n\n");
+                continue;
             }
             else if (cmd == CMD_NOTVALID)
             {
-                printf("Nome non valido!\n");
+                printf("Nome non valido!\n\n");
                 continue;
             }
             else
@@ -124,7 +173,7 @@ bool signup()
     return false;
 }
 
-void printTopics()
+void topicsSelection()
 {
 
 }

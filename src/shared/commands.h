@@ -10,5 +10,6 @@ enum Command
     CMD_STRING, // Ask for string
     CMD_RANKING, // Client: ask for ranking
     CMD_STOP = false, // Terminate
-    CMD_NOTVALID
+    CMD_NOTVALID,
+    CMD_EXISTING,
 };
