@@ -12,6 +12,8 @@
 
 #include "server_comm.h"
 
+bool signup();
+
 struct sockaddr_in server_addr;
 int sd;
 
@@ -61,31 +63,12 @@ int init(int argc, char ** argv)
 int main (int argc, char ** argv)
 {
     int ret;
+
     if ((ret = init(argc, argv)))
         return ret;
 
-    printf("%d\n", sendCommand(sd, CMD_REGISTER));
-    char * name = "provaNome";
-    if (recvCommand(sd) == CMD_OK)
-    {
-        printf("registering\n");
-        sendMessage(sd, name);
-        if(recvCommand(sd) == CMD_OK)
-            printf("registered\n");
-        else
-        {
-            printf("Rifiutato\n");
-            exit(1);
-        }
-    }
-
-    if (recvCommand(sd) == CMD_MESSAGE)
-    {
-    char * prova;
-    recvMessage(sd, &prova);
-    printf("%s\n", prova);
-    free(prova);
-    }
+    if (!signup())
+        return 1;
 
     while(1);
 
@@ -94,4 +77,49 @@ int main (int argc, char ** argv)
     close(sd);
 
     return(0);
+}
+
+bool signup()
+{
+    int ret;
+    enum Command cmd = CMD_STOP;
+
+    while(true)
+    {
+        char buffer[255];
+        printf("Nome del giocatore:\n");
+
+        if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) <= 0)
+            continue;
+        buffer[ret - 1] = '\0';
+
+        printf("%d\n", sendCommand(sd, CMD_REGISTER));
+        if ( recvCommand(sd) == CMD_OK)
+        {
+            printf("registering\n");
+            sendMessage(sd, buffer);
+
+            if ((cmd = recvCommand(sd)) == CMD_OK)
+            {
+                printf("Registrato!\n");
+                return true;
+            }
+            else if (cmd == CMD_NOTVALID)
+            {
+                printf("Nome non valido!\n");
+                continue;
+            }
+            else
+            {
+                printf("Rifiutato dal server!");
+                return false;
+            }
+        }
+        else
+        {
+            printf("Rifiutato dal server!");
+            return false;
+        }
+    }
+    return false;
 }

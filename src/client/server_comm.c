@@ -62,7 +62,10 @@ enum Command recvCommand(int socket)
 
     if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
-        perror("recvCommand failed");
+        if (!ret)
+            return false;
+        if (errno)
+            perror("recvCommand failed");
         return false;    
     }
 
@@ -81,10 +84,7 @@ bool recvMessage(int socket, void * buffer)
         return false;
 
     if (!(recvString(socket, (char **) buffer, size)))
-    {
-        free(buffer);
         return false;
-    }
             
     return sendCommand(socket, CMD_OK);
 }
@@ -101,6 +101,13 @@ bool recvString(int socket, char ** buffer, int lenght)
     {
         free(*buffer);
         *buffer = NULL;
+
+        if (!ret)
+            return false;
+        
+        if (errno)
+            perror("recvString failed");
+
         return false;
     }
 
@@ -115,11 +122,13 @@ int recvInteger(int socket)
 
     if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
     {
-        perror("recvInteger failed");
+        if (!ret) // Sever disconnesso
+            return false;
+        
+        if (errno)
+            perror("recvInteger failed");
         return false;    
     }
-
-    //client->recv_timestamp = time(NULL);
 
     return ntohl(tmp);
 }
@@ -132,7 +141,8 @@ bool sendCommand(int socket, enum Command cmd)
 
     if ((ret = send(socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
     {
-        perror("sendCommand failed");
+        if (errno)
+            perror("sendCommand failed");
         return false;    
     }
     
