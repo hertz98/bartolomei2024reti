@@ -63,7 +63,6 @@ int main (int argc, char ** argv)
 
         fd_set read_fds = clientsContext.master; // Copy the master set
         FD_SET(listener, &read_fds);
-        FD_SET(STDIN_FILENO, &read_fds);
 
         // Use select to wait for activity on the sockets
         if (select(clientsContext.fd_max + 1, &read_fds, NULL, NULL, &timeout) == -1) {
@@ -87,8 +86,6 @@ int main (int argc, char ** argv)
                     clientAdd(&clientsContext, newfd);
                     printf("registering\n");    
                 } 
-                else if (i == STDIN_FILENO)
-                    commandHandler();
                 else
                     if (!clientHandler(&clientsContext, i))
                         clientRemove(&clientsContext, i);
@@ -178,14 +175,6 @@ bool clientHandler(ClientsContext * context, int socket)
     printf("%s\n",client->name);
 
     return true;
-}
-
-void commandHandler()
-{
-    char buffer[1024]; 
-    fgets(buffer, sizeof(buffer), stdin);
-    newlineReplace(buffer);
-    printf("%s\n", buffer);
 }
 
 void printServer()

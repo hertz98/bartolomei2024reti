@@ -123,3 +123,8 @@ bool signup()
     }
     return false;
 }
+
+void printTopics()
+{
+
+}
