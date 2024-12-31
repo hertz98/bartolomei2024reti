@@ -159,18 +159,13 @@ OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, 
             break;
 
         case 1:
-            if (recvCommand(socket) == CMD_SIZE &&
-             sendInteger(socket, strlen(client->tmp_p)))
-                ret = OP_OK;
-            break;
-
-        case 2:
-            if (recvCommand(socket) == CMD_STRING &&
+            if (recvCommand(socket) == CMD_RECVMESSAGE &&
+             sendInteger(socket, strlen(client->tmp_p)) &&
              sendString(socket, client->tmp_p, strlen(client->tmp_p)))
                 ret = OP_OK;
             break;
 
-        case 3:
+        case 2:
             if (recvCommand(socket) == CMD_OK)
                 ret = OP_DONE;
             break;
@@ -256,18 +251,13 @@ OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, 
     {
         case 0: // Il client non invia mai una stringa senza preavviso
             if (recvCommand(socket) == CMD_MESSAGE &&
-             sendCommand(socket, CMD_SIZE))
+             sendCommand(socket, CMD_RECVMESSAGE))
                 ret = OP_OK;
             break;
 
         case 1:
             if ((client->tmp_i = recvInteger(socket)) > 0 &&
-             sendCommand(socket, CMD_STRING))
-                ret = OP_OK;
-            break;
-
-        case 2:
-            if (recvString(socket, (char **) client->tmp_p, client->tmp_i) &&
+             recvString(socket, (char **) client->tmp_p, client->tmp_i) &&
              sendCommand(socket, CMD_OK))
                 ret = OP_DONE;
             break;

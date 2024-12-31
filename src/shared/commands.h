@@ -6,6 +6,7 @@ enum Command
     CMD_REGISTER, // Client: Ask register
     CMD_REQMESSAGE, // Request a message
     CMD_MESSAGE, // Ask to send a message
+    CMD_RECVMESSAGE,
     CMD_SIZE, // Ask for size
     CMD_STRING, // Ask for string
     CMD_RANKING, // Client: ask for ranking

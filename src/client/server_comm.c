@@ -11,13 +11,10 @@ bool sendMessage(int socket, void * buffer)
     if (!sendCommand(socket, CMD_MESSAGE))
         return false;
 
-    if (recvCommand(socket) != CMD_SIZE)
+    if (recvCommand(socket) != CMD_RECVMESSAGE)
         return false;
     
     if (!sendInteger(socket, strlen(buffer)))
-        return false;
-
-    if (recvCommand(socket) != CMD_STRING)
         return false;
     
     if (!sendString(socket, buffer, strlen(buffer)))
@@ -76,15 +73,10 @@ enum Command recvCommand(int socket)
 
 bool recvMessage(int socket, void * buffer)
 {
-    if (recvCommand(socket) != CMD_MESSAGE && sendCommand(socket, CMD_OK))
-        return false;
-
-    if (!sendCommand(socket, CMD_SIZE))
+    if (recvCommand(socket) != CMD_MESSAGE && sendCommand(socket, CMD_RECVMESSAGE))
         return false;
 
     int size = recvInteger(socket);
-    if (!sendCommand(socket, CMD_STRING))
-        return false;
 
     if (!(recvString(socket, (char **) buffer, size)))
         return false;
