@@ -153,8 +153,8 @@ bool clientHandler(ClientsContext * context, int socket)
 {
     struct Client * client = context->clients[socket];
 
-    if (client->operation != NULL)
-        return (*client->operation)(context, socket, client->tmp_p2, false);
+    if (client->longOperation != NULL)
+        return (*client->longOperation)(context, socket, client->tmp_p2, false);
     
     if (!client->registered)
     {

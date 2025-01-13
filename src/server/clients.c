@@ -55,7 +55,7 @@ bool clientAdd(ClientsContext * context, int socket)
 
     client->name = NULL;
     client->registered = false;
-    client->operation = NULL;
+    client->longOperation = NULL;
     client->step = 0;
     client->game.playableTopics = NULL;
     client->game.questions = NULL;
@@ -138,16 +138,31 @@ inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
     return false;
 }
 
-OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, bool init)
+Message *messageString(const char *string, bool toFree)
 {
-    OperationStatus ret = OP_FAIL;
+    if (!string)
+        return NULL;
+
+    Message * tmp = (Message *) malloc( sizeof(Message) );
+    tmp->data = string;
+    tmp->lenght = strlen(string) + 1;
+    tmp->sent = 0;
+    tmp->toFree = toFree;
+    tmp->next = NULL;
+    
+    return tmp;
+}
+
+OperationResult sendMessage(ClientsContext *context, int socket, void *buffer, bool init)
+{
+    OperationResult ret = OP_FAIL;
 
     Client * client = context->clients[socket];
 
     if (init)
     {
         client->step = 0;
-        client->operation = sendMessage;
+        client->longOperation = sendMessage;
         client->tmp_p = buffer;
     }
 
@@ -180,7 +195,7 @@ OperationStatus sendMessage(ClientsContext *context, int socket, void * buffer, 
             break;
         case OP_FAIL:
         case OP_DONE:
-            client->operation = NULL;
+            client->longOperation = NULL;
             break;
         default:
             return OP_FAIL;
@@ -234,9 +249,9 @@ enum Command recvCommand(int socket)
     return (enum Command) tmp;
 }
 
-OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, bool init)
+OperationResult recvMessage(ClientsContext *context, int socket, void * buffer, bool init)
 {
-    OperationStatus ret = OP_FAIL;
+    OperationResult ret = OP_FAIL;
 
     Client * client = context->clients[socket];
 
@@ -244,7 +259,7 @@ OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, 
     {
         client->tmp_p = buffer;
         client->step = 0;
-        client->operation = recvMessage;
+        client->longOperation = recvMessage;
     }
 
     switch (client->step++)
@@ -272,7 +287,7 @@ OperationStatus recvMessage(ClientsContext *context, int socket, void * buffer, 
             break;
         case OP_FAIL:
         case OP_DONE:
-            client->operation = NULL;
+            client->longOperation = NULL;
             break;
         default:
             return OP_FAIL;
@@ -308,7 +323,7 @@ bool recvString(int socket, char ** buffer, int lenght)
     return true;
 }
 
-OperationStatus regPlayer(ClientsContext *context, int socket, void * p, bool init)
+OperationResult regPlayer(ClientsContext *context, int socket, void * p, bool init)
 {
     Client * client = context->clients[socket];
     TopicsContext * topicsContext = p;
@@ -317,21 +332,21 @@ OperationStatus regPlayer(ClientsContext *context, int socket, void * p, bool in
     {
         client->tmp_p = &client->name;
         client->step = 0;
-        client->operation = regPlayer;
+        client->longOperation = regPlayer;
         client->tmp_p2 = p;
     }
     
-    OperationStatus ret;
+    OperationResult ret;
     switch( ret = recvMessage(context, socket, NULL, false) )
     {
         case OP_OK:
             break;
         case OP_FAIL:
-            client->operation = NULL;
+            client->longOperation = NULL;
             break;
 
         case OP_DONE:
-            client->operation = NULL;
+            client->longOperation = NULL;
             if (nameValid(context, socket, client->name))
                 {
                     printf("%s\n",client->name); // DEBUG
