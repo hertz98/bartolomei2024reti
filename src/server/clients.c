@@ -59,6 +59,7 @@ bool clientAdd(ClientsContext * context, int socket)
     client->registered = false;
     client->currentOperation = NULL;
     client->step = 0;
+    client->sending = NULL;
     client->game.playableTopics = NULL;
     client->game.questions = NULL;
     client->game.score = NULL;
@@ -163,7 +164,8 @@ bool sendMessageHandler(ClientsContext *context, int socket)
         return false;
     
     //int ret;
-    Message * msg = client->sending;
+    Node * node = client->sending;
+    Message * msg = node->data;
 
     sendInteger(socket, msg->lenght);
 
@@ -199,7 +201,7 @@ bool sendMessageHandler(ClientsContext *context, int socket)
     return true;
 }
 
-OperationResult sendMessage(ClientsContext *context, int socket, void *buffer, bool init)
+OperationResult sendMessage(ClientsContext *context, int socket, void * message, bool init)
 {
     OperationResult ret = OP_FAIL;
 
@@ -215,7 +217,8 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *buffer, b
     {
         case 0:
             if (sendCommand(socket, CMD_MESSAGE) &&
-             (client->sending = messageString(buffer, false) ))
+                list_append(&client->sending, message)
+                )
             {
                 FD_SET(socket, &context->writeSet);
                 ret = OP_OK;

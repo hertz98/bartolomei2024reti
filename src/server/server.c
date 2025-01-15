@@ -185,7 +185,7 @@ bool clientHandler(ClientsContext * context, int socket)
     if (cmd == CMD_TOPICS)
     {
         sendCommand(socket, CMD_OK);
-        sendMessage(context, socket, topicsContext.topicsString, true);
+        sendMessage(context, socket, messageString(topicsContext.topicsString, false), true);
     }
 
     return true;
