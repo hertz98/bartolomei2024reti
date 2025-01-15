@@ -57,7 +57,7 @@ bool clientAdd(ClientsContext * context, int socket)
 
     client->name = NULL;
     client->registered = false;
-    client->longOperation = NULL;
+    client->currentOperation = NULL;
     client->step = 0;
     client->game.playableTopics = NULL;
     client->game.questions = NULL;
@@ -148,16 +148,21 @@ Message *messageString(char *string, bool toFree)
     Message * tmp = (Message *) malloc( sizeof(Message) );
     tmp->data = string;
     tmp->lenght = strlen(string) + 1;
-    tmp->sent = 0;
+    tmp->transmitted = 0;
     tmp->toFree = toFree;
     tmp->next = NULL;
     
     return tmp;
 }
 
-bool sendHandler_String(Client *client, int socket)
+bool sendMessageHandler(ClientsContext *context, int socket)
 {
-    int ret;
+    Client * client = context->clients[socket];
+
+    if (!client->sending)
+        return false;
+    
+    //int ret;
     Message * msg = client->sending;
 
     sendInteger(socket, msg->lenght);
@@ -203,7 +208,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *buffer, b
     if (init)
     {
         client->step = 0;
-        client->longOperation = sendMessage;
+        client->currentOperation = sendMessage;
     }
 
     switch (client->step++)
@@ -212,7 +217,6 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *buffer, b
             if (sendCommand(socket, CMD_MESSAGE) &&
              (client->sending = messageString(buffer, false) ))
             {
-                client->messageHandler = sendHandler_String;
                 FD_SET(socket, &context->writeSet);
                 ret = OP_OK;
             }
@@ -233,7 +237,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *buffer, b
             break;
         case OP_FAIL:
         case OP_DONE:
-            client->longOperation = NULL;
+            client->currentOperation = NULL;
             break;
         default:
             return OP_FAIL;
@@ -297,7 +301,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void * buffer, 
     {
         client->tmp_p = buffer;
         client->step = 0;
-        client->longOperation = recvMessage;
+        client->currentOperation = recvMessage;
     }
 
     switch (client->step++)
@@ -325,7 +329,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void * buffer, 
             break;
         case OP_FAIL:
         case OP_DONE:
-            client->longOperation = NULL;
+            client->currentOperation = NULL;
             break;
         default:
             return OP_FAIL;
@@ -370,7 +374,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void * p, bool in
     {
         client->tmp_p = &client->name;
         client->step = 0;
-        client->longOperation = regPlayer;
+        client->currentOperation = regPlayer;
         client->tmp_p2 = p;
     }
     
@@ -380,11 +384,11 @@ OperationResult regPlayer(ClientsContext *context, int socket, void * p, bool in
         case OP_OK:
             break;
         case OP_FAIL:
-            client->longOperation = NULL;
+            client->currentOperation = NULL;
             break;
 
         case OP_DONE:
-            client->longOperation = NULL;
+            client->currentOperation = NULL;
             if (nameValid(context, socket, client->name))
                 {
                     printf("%s\n",client->name); // DEBUG

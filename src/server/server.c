@@ -95,10 +95,9 @@ int main (int argc, char ** argv)
         for (int i = 0; i <= clientsContext.fd_max; i++) 
             if (FD_ISSET(i, &clientsContext.writeSet)) // Found a ready descriptor
                 if(!isClient(&clientsContext, i, true) ||
-                    sendHandler(&clientsContext, i))
+                    sendMessageHandler(&clientsContext, i))
                     {
                         clientsContext.clients[i]->sending = NULL; // TODO: free
-                        clientsContext.clients[i]->messageHandler = NULL;
                         FD_CLR(i, &clientsContext.writeSet);
                     }
     }
@@ -157,8 +156,6 @@ int init(int argc, char ** argv)
     return 0;
 }
 
-
-
 bool clientHandler(ClientsContext * context, int socket)
 {
     struct Client * client = context->clients[socket];
@@ -166,8 +163,8 @@ bool clientHandler(ClientsContext * context, int socket)
     if (client->sending != NULL)
         return true;
 
-    if (client->longOperation != NULL)
-        return (*client->longOperation)(context, socket, client->tmp_p2, false);
+    if (client->currentOperation != NULL)
+        return (*client->currentOperation)(context, socket, client->tmp_p2, false);
     
     if (!client->registered)
     {
@@ -192,16 +189,6 @@ bool clientHandler(ClientsContext * context, int socket)
     }
 
     return true;
-}
-
-bool sendHandler(ClientsContext * context, int socket)
-{
-    Client * client = context->clients[socket];
-
-    if (!client->sending || !client->messageHandler) // Non dovrebbe succedere
-        return false;
-
-    return (*client->messageHandler)(client, socket);
 }
 
 void printServer()
