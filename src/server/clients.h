@@ -28,7 +28,7 @@ struct Client
     void * tmp_p, * tmp_p2;
     
     Message * sending; // Puntatore al messaggio da inviare
-    void (* sendHandler)(ClientsContext * context, int socket);
+    bool (* messageHandler)(Client * client, int socket);
 
     // Topics
     struct Game{
@@ -80,7 +80,9 @@ int recvInteger(int socket);
 /// @param string Stringa con carattere di terminazione nullo
 /// @param toFree se true, la stringa deve essere deallocata alla distruzione della lista
 /// @return Ritorna un nodo di una lista di messaggi
-Message * messageString(const char * string, bool toFree);
+Message * messageString(char * string, bool toFree);
+
+bool sendHandler_String(Client * client, int socket);
 
 OperationResult sendMessage(ClientsContext *context, int socket, void * buffer, bool init);
 bool sendString(int socket, char *, int);

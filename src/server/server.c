@@ -29,6 +29,7 @@ void closeSockets(void * p);
 
 int init(int, char **);
 bool clientHandler(ClientsContext * context, int socket);
+bool sendHandler(ClientsContext * context, int socket);
 void commandHandler();
 void printServer();
 
@@ -65,7 +66,7 @@ int main (int argc, char ** argv)
         FD_SET(listener, &read_fds);
 
         // Use select to wait for activity on the sockets
-        if (select(clientsContext.fd_max + 1, &read_fds, NULL, NULL, &timeout) == -1) {
+        if (select(clientsContext.fd_max + 1, &read_fds, &clientsContext.writeSet, NULL, &timeout) == -1) {
             perror("Select failed");
             exit(1);
         }
@@ -91,6 +92,15 @@ int main (int argc, char ** argv)
                         clientRemove(&clientsContext, i);
             }
 
+        for (int i = 0; i <= clientsContext.fd_max; i++) 
+            if (FD_ISSET(i, &clientsContext.writeSet)) // Found a ready descriptor
+                if(!isClient(&clientsContext, i, true) ||
+                    sendHandler(&clientsContext, i))
+                    {
+                        clientsContext.clients[i]->sending = NULL; // TODO: free
+                        clientsContext.clients[i]->messageHandler = NULL;
+                        FD_CLR(i, &clientsContext.writeSet);
+                    }
     }
 
 }
@@ -153,6 +163,9 @@ bool clientHandler(ClientsContext * context, int socket)
 {
     struct Client * client = context->clients[socket];
 
+    if (client->sending != NULL)
+        return true;
+
     if (client->longOperation != NULL)
         return (*client->longOperation)(context, socket, client->tmp_p2, false);
     
@@ -179,6 +192,16 @@ bool clientHandler(ClientsContext * context, int socket)
     }
 
     return true;
+}
+
+bool sendHandler(ClientsContext * context, int socket)
+{
+    Client * client = context->clients[socket];
+
+    if (!client->sending || !client->messageHandler) // Non dovrebbe succedere
+        return false;
+
+    return (*client->messageHandler)(client, socket);
 }
 
 void printServer()

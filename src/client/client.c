@@ -182,8 +182,16 @@ void topicsSelection()
         printf("Errore nella comunicazione");
         exit(1);
     }
+    recvCommand(sd);
 
     printf("Quiz disponibili\n");
+    int size = recvInteger(sd);
+    char * t = (char *) malloc(sizeof(char) * size);
+    recvString(sd, &t, size);
+    printf("%s\n", t);
+    sendCommand(sd, CMD_OK);
+    return;
+
     if (!topics)
     {
         char * tmp, *topic;

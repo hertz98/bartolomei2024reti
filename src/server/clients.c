@@ -24,6 +24,8 @@ int clientsInit(ClientsContext *context, int max)
     context->allocated = max;
     memset(context->clients, 0, context->allocated);
     FD_ZERO(&context->master);
+    FD_ZERO(&context->readSet);
+    FD_ZERO(&context->writeSet);
 
     return 0;
 }
@@ -138,7 +140,7 @@ inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
     return false;
 }
 
-Message *messageString(const char *string, bool toFree)
+Message *messageString(char *string, bool toFree)
 {
     if (!string)
         return NULL;
@@ -153,6 +155,45 @@ Message *messageString(const char *string, bool toFree)
     return tmp;
 }
 
+bool sendHandler_String(Client *client, int socket)
+{
+    int ret;
+    Message * msg = client->sending;
+
+    sendInteger(socket, msg->lenght);
+
+    sendString(socket, msg->data, msg->lenght);
+
+    // if (msg->sent < sizeof(msg->lenght))
+    //     if((ret = send(socket, &msg->lenght + msg->sent, sizeof(msg->lenght) - msg->sent, 0)) == 0)
+    //         return false;
+    
+    // if ((ret = send(socket, msg->data + msg->sent - sizeof(msg->lenght), msg->lenght, 0)) == 0)
+    //     return false;
+    
+    // return true;
+    
+    // if (ret < 0)
+    //     return true;
+
+    // msg->sent += ret;
+
+    // if (msg->sent > msg->lenght)
+    // {
+    //     printf("Errore nella sendHandler: connessione abortita\n");
+    //     return false;
+    // }
+    // else if (msg->sent == msg->lenght)
+    // {
+    //     client->sendHandler = NULL;
+    //     if (msg->toFree)
+    //         free(msg->data);
+    //     free(msg);
+    // }
+
+    return true;
+}
+
 OperationResult sendMessage(ClientsContext *context, int socket, void *buffer, bool init)
 {
     OperationResult ret = OP_FAIL;
@@ -163,24 +204,21 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *buffer, b
     {
         client->step = 0;
         client->longOperation = sendMessage;
-        client->tmp_p = buffer;
     }
 
     switch (client->step++)
     {
         case 0:
-            if (sendCommand(socket, CMD_MESSAGE))
+            if (sendCommand(socket, CMD_MESSAGE) &&
+             (client->sending = messageString(buffer, false) ))
+            {
+                client->messageHandler = sendHandler_String;
+                FD_SET(socket, &context->writeSet);
                 ret = OP_OK;
+            }
             break;
 
         case 1:
-            if (recvCommand(socket) == CMD_RECVMESSAGE &&
-             sendInteger(socket, strlen(client->tmp_p)) &&
-             sendString(socket, client->tmp_p, strlen(client->tmp_p)))
-                ret = OP_OK;
-            break;
-
-        case 2:
             if (recvCommand(socket) == CMD_OK)
                 ret = OP_DONE;
             break;
