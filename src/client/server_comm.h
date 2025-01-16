@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <sys/select.h>
 #include "../shared/commands.h"
+#include "../shared/list.h"
 
 bool serverTimeout(int, int);
 
@@ -14,5 +15,5 @@ int recvInteger(int);
 bool sendMessage(int, void *);
 bool sendString(int, char *, int);
 
-bool recvMessage(int, void **);
+Node * recvMessage(int);
 bool recvString(int , char **, int);

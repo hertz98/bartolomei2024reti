@@ -97,7 +97,7 @@ int main (int argc, char ** argv)
                 if(!isClient(&clientsContext, i, true) ||
                     sendMessageHandler(&clientsContext, i))
                     {
-                        clientsContext.clients[i]->sending = NULL; // TODO: free
+                        clientsContext.clients[i]->toSend = NULL; // TODO: free
                         FD_CLR(i, &clientsContext.writeSet);
                     }
     }
@@ -160,7 +160,7 @@ bool clientHandler(ClientsContext * context, int socket)
 {
     struct Client * client = context->clients[socket];
 
-    if (client->sending != NULL)
+    if (client->toSend != NULL)
         return true;
 
     if (client->currentOperation != NULL)

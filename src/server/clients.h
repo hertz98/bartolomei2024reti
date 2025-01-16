@@ -27,8 +27,8 @@ struct Client
     int tmp_i, tmp_i2;
     void * tmp_p, * tmp_p2;
     
-    Node * sending; // Puntatore alla lista di messaggi da inviare
-    int toSend;
+    Node * toSend; // Puntatore alla lista di messaggi da inviare
+    bool sending;
 
     // Topics
     struct Game{

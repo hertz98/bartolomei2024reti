@@ -59,7 +59,8 @@ bool clientAdd(ClientsContext * context, int socket)
     client->registered = false;
     client->currentOperation = NULL;
     client->step = 0;
-    client->sending = NULL;
+    client->toSend = NULL;
+    client->sending = false;
     client->game.playableTopics = NULL;
     client->game.questions = NULL;
     client->game.score = NULL;
@@ -159,7 +160,7 @@ Message *messageString(char *string, bool toFree)
 Message *emptyMessage()
 {
     static Message emptyMessage;
-    emptyMessage.data = 0;
+    emptyMessage.data = NULL;
     emptyMessage.lenght = 0;
     emptyMessage.transmitted = 0;
     emptyMessage.toFree = false;
@@ -171,26 +172,25 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
 {
     Client * client = context->clients[socket];
 
-    if (!client->sending)
+    if (!client->toSend)
         return false;
     
-    if (!client->toSend)
+    if (!client->sending)
     {
-        client->toSend = list_count(client->sending);
-        client->sending = list_insertHead(&client->sending, emptyMessage());
-        ((Message *) client->sending->data)->lenght = client->toSend;
+        list_append(&client->toSend, emptyMessage());
+        client->sending = true;
     }
 
     OperationResult ret;
-    for (Node * node = client->sending; node; node = node->next)
+    for (Node * node = client->toSend; node; node = node->next)
     {
         Message * msg = node->data;
 
-        msg->lenght = htonl(msg->lenght);
+        int lenght = htonl(msg->lenght);
         int lenght_size = sizeof(msg->lenght);
 
         if (msg->transmitted < lenght_size)
-            if ((ret = sendData(socket, &msg->lenght, lenght_size, &msg->transmitted)) != OP_DONE)
+            if ((ret = sendData(socket, &lenght, lenght_size, &msg->transmitted)) != OP_DONE)
                 return ret;
 
         if (msg->data)
@@ -201,10 +201,11 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
                 return ret;
         }
 
-        list_extractHead(&client->sending); // TODO: distruggi l'elemento appena estratto
+        list_extractHead(&client->toSend); // TODO: distruggi l'elemento appena estratto
     }
 
-    client->toSend = 0;
+    client->sending = false;
+    client->toSend = NULL;
     return OP_DONE;
 }
 
@@ -246,7 +247,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void * message,
     {
         case 0:
             if (sendCommand(socket, CMD_MESSAGE) &&
-                list_append(&client->sending, message) // Il messaggio vuoto indica la fine della 
+                list_append(&client->toSend, message) // Il messaggio vuoto indica la fine della 
                 )
             {
                 FD_SET(socket, &context->writeSet);
