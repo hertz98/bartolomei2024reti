@@ -62,11 +62,12 @@ int main (int argc, char ** argv)
 
         struct timeval timeout = {SLEEP_TIME, 0};
 
-        fd_set read_fds = clientsContext.master; // Copy the master set
+        fd_set read_fds = clientsContext.master_fds, // Copy the master set
+               write_fds = clientsContext.write_fds;
         FD_SET(listener, &read_fds);
-
+        
         // Use select to wait for activity on the sockets
-        if (select(clientsContext.fd_max + 1, &read_fds, &clientsContext.writeSet, NULL, &timeout) == -1) {
+        if (select(clientsContext.fd_max + 1, &read_fds, &write_fds, NULL, &timeout) == -1) {
             perror("Select failed");
             exit(1);
         }
@@ -93,12 +94,12 @@ int main (int argc, char ** argv)
             }
 
         for (int i = 0; i <= clientsContext.fd_max; i++) 
-            if (FD_ISSET(i, &clientsContext.writeSet)) // Found a ready descriptor
+            if (FD_ISSET(i, &write_fds)) // Found a ready descriptor
                 if(!isClient(&clientsContext, i, true) ||
-                    sendMessageHandler(&clientsContext, i))
+                    sendMessageHandler(&clientsContext, i) != OP_OK)
                     {
                         clientsContext.clients[i]->toSend = NULL; // TODO: free
-                        FD_CLR(i, &clientsContext.writeSet);
+                        FD_CLR(i, &clientsContext.write_fds);
                     }
     }
 
@@ -152,6 +153,7 @@ int init(int argc, char ** argv)
 
     atexit(exiting);
     signal(SIGINT, signalhandler);
+    signal(SIGPIPE, SIG_IGN);
 
     return 0;
 }

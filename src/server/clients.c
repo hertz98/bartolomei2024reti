@@ -23,9 +23,9 @@ int clientsInit(ClientsContext *context, int max)
     context->clients = malloc( sizeof(Client *) * max);
     context->allocated = max;
     memset(context->clients, 0, context->allocated);
-    FD_ZERO(&context->master);
-    FD_ZERO(&context->readSet);
-    FD_ZERO(&context->writeSet);
+    FD_ZERO(&context->master_fds);
+    FD_ZERO(&context->read_fds);
+    FD_ZERO(&context->write_fds);
 
     return 0;
 }
@@ -65,7 +65,7 @@ bool clientAdd(ClientsContext * context, int socket)
     client->game.questions = NULL;
     client->game.score = NULL;
 
-    FD_SET(socket, &context->master);
+    FD_SET(socket, &context->master_fds);
 
     int keepalive = 1;
     int keepidle = 60; // Tempo di inattività per testare la connessione
@@ -111,7 +111,7 @@ void clientRemove(ClientsContext * context, int socket)
 
     context->clients[socket] = NULL;
     
-    FD_CLR(socket, &context->master);
+    FD_CLR(socket, &context->master_fds);
 
     return;
 }
@@ -136,7 +136,7 @@ void clientsFree(ClientsContext * context)
 
 inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
 {
-    if (FD_ISSET(socket, &context->master))
+    if (FD_ISSET(socket, &context->master_fds))
         if (!onlyRegistered || context->clients[socket]->registered)
             return true;
     return false;
@@ -195,7 +195,7 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
 
         if (msg->data)
         {
-            int sent = msg->transmitted - lenght_size;
+            unsigned int sent = msg->transmitted - lenght_size;
 
             if ((ret = sendData(socket, msg->data, msg->lenght, &sent)) != OP_DONE)
                 return ret;
@@ -209,7 +209,7 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
     return OP_DONE;
 }
 
-OperationResult sendData(int socket, void *buffer, int lenght, int *sent)
+OperationResult sendData(int socket, void *buffer, unsigned int lenght, unsigned int *sent)
 {          
     int ret;
 
@@ -250,7 +250,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void * message,
                 list_append(&client->toSend, message) // Il messaggio vuoto indica la fine della 
                 )
             {
-                FD_SET(socket, &context->writeSet);
+                FD_SET(socket, &context->write_fds);
                 ret = OP_OK;
             }
             break;

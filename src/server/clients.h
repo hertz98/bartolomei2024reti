@@ -44,9 +44,9 @@ struct ClientsContext {
     int nClients; // Numero di clients attuali
     int maxClients; // Numero massimo di clients servibili
 
-    fd_set master,
-           readSet,
-           writeSet;
+    fd_set master_fds,
+           read_fds,
+           write_fds;
     int fd_max; // Massimo intero nel set master
     int listener;
 
@@ -57,7 +57,7 @@ struct ClientsContext {
 struct Message {
     void * data; // Puntatore al contenuto del messaggio da inviare
     uint32_t lenght; // Dimensione del messaggio (compreso di caratteri speciali)
-    int transmitted; // Numero di bytes inviati
+    uint32_t transmitted; // Numero di bytes inviati
     bool toFree; // Indica se data deve essere deallocato dopo l'invio
     struct Message *next; // Prossimo messaggio (se esiste)
 };
@@ -86,7 +86,7 @@ Message * emptyMessage();
 
 OperationResult sendMessageHandler(ClientsContext * context, int socket);
 
-OperationResult sendData(int socket, void * buffer, int lenght, int * sent);
+OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
 
 OperationResult sendMessage(ClientsContext *context, int socket, void * buffer, bool init);
 bool sendString(int socket, char *, int);
