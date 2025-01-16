@@ -1,40 +1,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "../server/util.h"
-
-#define DATA_DIR "./data/"
-
-#include "../server/topic.h"
-
-
-struct TopicsContext topics_context;
+#include <inttypes.h>
+#include <arpa/inet.h>
 
 int main(int argc, char ** argv)
 {
-    topicsInit(&topics_context, DATA_DIR);
+    uint32_t host = 41,
+    network, host2;
 
-    topicsLoader(&topics_context);
+    host = htonl(host);
+    host2 = ntohl(host);
 
-    bool * played = topicsUnplayed(&topics_context, "gabriele");
-
-    for (int i = 0; i < topics_context.nTopics; i++)
-        printf("%d", played[i]);
-    printf("\n");
-
-    printf("%d %d\n", stricmp("stringa","stringA"), strcmp("stringa","stringA"));
-
-    return 0;
-
-    topicPlayed(&topics_context, "gabriele", 3);
-    topicPlayed(&topics_context, "gabriele", 4);
-
-    played = topicsUnplayed(&topics_context, "gabriele");
-
-    for (int i = 0; i < topics_context.nTopics; i++)
-        printf("%d", played[i]);
-    printf("\n");
-
-    topicsFree(&topics_context);
-    return 0;
+    printf("%d -> %d\n", host, host2);
 }

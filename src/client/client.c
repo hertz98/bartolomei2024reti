@@ -11,6 +11,8 @@
 #include <time.h>
 
 #include "server_comm.h"
+#include "message.h"
+#include "../shared/list.h"
 
 void clear();
 bool mainMenu();
@@ -185,27 +187,27 @@ void topicsSelection()
     recvCommand(sd);
 
     printf("Quiz disponibili\n");
-    int size = recvInteger(sd);
-    char * t = (char *) malloc(sizeof(char) * size);
-    recvString(sd, &t, size);
-    printf("%s\n", t);
-    sendCommand(sd, CMD_OK);
+
+    Message * t;
+    recvMessage(sd, (void**) &t);
+    printf("%s\n", (char *) t[0].data);
+
     return;
 
-    if (!topics)
-    {
-        char * tmp, *topic;
-        recvMessage(sd, &tmp);
+    // if (!topics)
+    // {
+    //     char * tmp, *topic;
+    //     recvMessage(sd, &tmp);
 
-        topics = (char **) malloc(sizeof(char*) * (++nTopics));
-        topics[0] = tmp;
+    //     topics = (char **) malloc(sizeof(char*) * (++nTopics));
+    //     topics[0] = tmp;
 
-        for (int i = 1; (topic = newlineReplace(tmp)); i++)
-        {
-            topics = (char **) realloc(topics, sizeof(char*) * (++nTopics));
-            topics[i] = topic;
-        }
-    }
+    //     for (int i = 1; (topic = newlineReplace(tmp)); i++)
+    //     {
+    //         topics = (char **) realloc(topics, sizeof(char*) * (++nTopics));
+    //         topics[i] = topic;
+    //     }
+    // }
 
     for (int i = 0; i < nTopics; i++)
         printf("%s\n",topics[i]);

@@ -1,7 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <limits.h>
-#include "list.h"
+#include "../shared/list.h"
 
 typedef struct Question 
 {

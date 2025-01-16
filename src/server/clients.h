@@ -28,6 +28,7 @@ struct Client
     void * tmp_p, * tmp_p2;
     
     Node * sending; // Puntatore alla lista di messaggi da inviare
+    int toSend;
 
     // Topics
     struct Game{
@@ -55,7 +56,7 @@ struct ClientsContext {
 
 struct Message {
     void * data; // Puntatore al contenuto del messaggio da inviare
-    int lenght; // Dimensione del messaggio (compreso di caratteri speciali)
+    uint32_t lenght; // Dimensione del messaggio (compreso di caratteri speciali)
     int transmitted; // Numero di bytes inviati
     bool toFree; // Indica se data deve essere deallocato dopo l'invio
     struct Message *next; // Prossimo messaggio (se esiste)
@@ -81,7 +82,11 @@ int recvInteger(int socket);
 /// @return Ritorna un nodo di una lista di messaggi
 Message * messageString(char * string, bool toFree);
 
-bool sendMessageHandler(ClientsContext * context, int socket);
+Message * emptyMessage();
+
+OperationResult sendMessageHandler(ClientsContext * context, int socket);
+
+OperationResult sendData(int socket, void * buffer, int lenght, int * sent);
 
 OperationResult sendMessage(ClientsContext *context, int socket, void * buffer, bool init);
 bool sendString(int socket, char *, int);

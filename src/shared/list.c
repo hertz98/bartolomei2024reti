@@ -36,6 +36,39 @@ Node * list_append(Node ** head, void *data)
     return tmp;
 }
 
+Node *list_insertHead(Node ** head, void * data)
+{
+    Node *tmp = list_create_node(data);
+    if (!tmp)
+        return NULL;
+
+    Node *next = *head;
+    *head = tmp;
+    (*head)->next = next;
+
+    return tmp;
+}
+
+Node *list_extractHead(Node ** head)
+{
+    if (!*head)
+        return NULL;
+
+    Node *tmp = *head;
+    *head = tmp;
+    *head = (*head)->next;
+
+    return tmp;
+}
+
+int inline list_count(Node * head)
+{
+    int n = 0;
+    for (Node * tmp = head; tmp; tmp = tmp->next)
+        n++;
+    return n;
+}
+
 void list_print_string(void *data) {
     printf("%s\n", (char *) data);
 }

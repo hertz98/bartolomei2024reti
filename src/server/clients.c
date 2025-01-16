@@ -156,49 +156,78 @@ Message *messageString(char *string, bool toFree)
     return tmp;
 }
 
-bool sendMessageHandler(ClientsContext *context, int socket)
+Message *emptyMessage()
+{
+    static Message emptyMessage;
+    emptyMessage.data = 0;
+    emptyMessage.lenght = 0;
+    emptyMessage.transmitted = 0;
+    emptyMessage.toFree = false;
+    emptyMessage.next = NULL;
+    return &emptyMessage;
+}
+
+OperationResult sendMessageHandler(ClientsContext *context, int socket)
 {
     Client * client = context->clients[socket];
 
     if (!client->sending)
         return false;
     
-    //int ret;
-    Node * node = client->sending;
-    Message * msg = node->data;
+    if (!client->toSend)
+    {
+        client->toSend = list_count(client->sending);
+        client->sending = list_insertHead(&client->sending, emptyMessage());
+        ((Message *) client->sending->data)->lenght = client->toSend;
+    }
 
-    sendInteger(socket, msg->lenght);
+    OperationResult ret;
+    for (Node * node = client->sending; node; node = node->next)
+    {
+        Message * msg = node->data;
 
-    sendString(socket, msg->data, msg->lenght);
+        msg->lenght = htonl(msg->lenght);
+        int lenght_size = sizeof(msg->lenght);
 
-    // if (msg->sent < sizeof(msg->lenght))
-    //     if((ret = send(socket, &msg->lenght + msg->sent, sizeof(msg->lenght) - msg->sent, 0)) == 0)
-    //         return false;
+        if (msg->transmitted < lenght_size)
+            if ((ret = sendData(socket, &msg->lenght, lenght_size, &msg->transmitted)) != OP_DONE)
+                return ret;
+
+        if (msg->data)
+        {
+            int sent = msg->transmitted - lenght_size;
+
+            if ((ret = sendData(socket, msg->data, msg->lenght, &sent)) != OP_DONE)
+                return ret;
+        }
+
+        list_extractHead(&client->sending); // TODO: distruggi l'elemento appena estratto
+    }
+
+    client->toSend = 0;
+    return OP_DONE;
+}
+
+OperationResult sendData(int socket, void *buffer, int lenght, int *sent)
+{          
+    int ret;
+
+    ret = send(socket, buffer + *sent, lenght - *sent, 0);
+
+    if (ret >= 0)
+        *sent += ret;
+    else
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) // Ripeti l'operazione, socket non pronto
+            return OP_OK; 
+        else 
+            return OP_FAIL;
+    }
     
-    // if ((ret = send(socket, msg->data + msg->sent - sizeof(msg->lenght), msg->lenght, 0)) == 0)
-    //     return false;
-    
-    // return true;
-    
-    // if (ret < 0)
-    //     return true;
-
-    // msg->sent += ret;
-
-    // if (msg->sent > msg->lenght)
-    // {
-    //     printf("Errore nella sendHandler: connessione abortita\n");
-    //     return false;
-    // }
-    // else if (msg->sent == msg->lenght)
-    // {
-    //     client->sendHandler = NULL;
-    //     if (msg->toFree)
-    //         free(msg->data);
-    //     free(msg);
-    // }
-
-    return true;
+    if (lenght == *sent)
+        return OP_DONE;
+    else
+        return OP_OK;
 }
 
 OperationResult sendMessage(ClientsContext *context, int socket, void * message, bool init)
@@ -217,7 +246,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void * message,
     {
         case 0:
             if (sendCommand(socket, CMD_MESSAGE) &&
-                list_append(&client->sending, message)
+                list_append(&client->sending, message) // Il messaggio vuoto indica la fine della 
                 )
             {
                 FD_SET(socket, &context->writeSet);
