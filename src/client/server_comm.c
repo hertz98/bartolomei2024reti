@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include "server_comm.h"
-#include "message.h"
+#include "../shared/message.h"
 
 bool sendMessage(int socket, void * buffer)
 {

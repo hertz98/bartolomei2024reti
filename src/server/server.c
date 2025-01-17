@@ -16,6 +16,7 @@
 #include "topic.h"
 #include "clients.h"
 #include "util.h"
+#include "../shared/message.h"
 
 #define DEBUG
 

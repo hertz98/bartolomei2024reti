@@ -11,7 +11,7 @@
 #include <time.h>
 
 #include "server_comm.h"
-#include "message.h"
+#include "../shared/message.h"
 #include "../shared/list.h"
 
 void clear();

@@ -62,14 +62,6 @@ struct ClientsContext {
     int allocated; // Numero di strutture allocate per i clients
 };
 
-struct Message {
-    void * data; // Puntatore al contenuto del messaggio da inviare
-    uint32_t lenght; // Dimensione del messaggio (compreso di caratteri speciali)
-    uint32_t transmitted; // Numero di bytes inviati
-    bool toFree; // Indica se data deve essere deallocato dopo l'invio
-    struct Message *next; // Prossimo messaggio (se esiste)
-};
-
 int clientsInit(ClientsContext * clientsContext, int max);
 
 bool clientAdd(ClientsContext * context, int socket);
@@ -83,14 +75,6 @@ enum Command recvCommand(int socket);
 
 bool sendInteger(int socket, int);
 int recvInteger(int socket);
-
-/// @brief Prepara la struttura dati di un messaggio contenente una stringa
-/// @param string Stringa con carattere di terminazione nullo
-/// @param toFree se true, la stringa deve essere deallocata alla distruzione della lista
-/// @return Ritorna un nodo di una lista di messaggi
-Message * messageString(char * string, bool toFree);
-
-Message * emptyMessage();
 
 OperationResult sendMessageHandler(ClientsContext * context, int socket);
 

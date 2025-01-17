@@ -10,6 +10,7 @@
 #include <limits.h>
 #include "clients.h"
 #include "util.h"
+#include "../shared/message.h"
 
 int clientsInit(ClientsContext *context, int max)
 {
@@ -140,32 +141,6 @@ inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
         if (!onlyRegistered || context->clients[socket]->registered)
             return true;
     return false;
-}
-
-Message *messageString(char *string, bool toFree)
-{
-    if (!string)
-        return NULL;
-
-    Message * tmp = (Message *) malloc( sizeof(Message) );
-    tmp->data = string;
-    tmp->lenght = strlen(string) + 1;
-    tmp->transmitted = 0;
-    tmp->toFree = toFree;
-    tmp->next = NULL;
-    
-    return tmp;
-}
-
-Message *emptyMessage()
-{
-    static Message emptyMessage;
-    emptyMessage.data = NULL;
-    emptyMessage.lenght = 0;
-    emptyMessage.transmitted = 0;
-    emptyMessage.toFree = false;
-    emptyMessage.next = NULL;
-    return &emptyMessage;
 }
 
 OperationResult sendMessageHandler(ClientsContext *context, int socket)
