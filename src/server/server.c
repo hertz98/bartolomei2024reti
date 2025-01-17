@@ -162,10 +162,13 @@ bool clientHandler(ClientsContext * context, int socket)
 {
     struct Client * client = context->clients[socket];
 
-    if (client->toSend != NULL)
-        return true;
+    if (client->toSend != NULL) // Il client non è in sync con quello del server, termina
+        return false;
 
-    if (client->currentOperation != NULL)
+    if (client->operation.operationHandler)
+        return client->operation.operationHandler(context, socket, client->operation.tmp, NULL);
+
+    if (client->currentOperation != NULL) // TODO: Remove LEGACY
         return (*client->currentOperation)(context, socket, client->tmp_p2, false);
     
     if (!client->registered)
@@ -187,7 +190,8 @@ bool clientHandler(ClientsContext * context, int socket)
     if (cmd == CMD_TOPICS)
     {
         sendCommand(socket, CMD_OK);
-        sendMessage(context, socket, messageString(topicsContext.topicsString, false), true);
+        confirmedOperation(context, socket, (void *) messageString(topicsContext.topicsString, false), sendMessage);
+        //legacysendMessage(context, socket, messageString(topicsContext.topicsString, false), true);
     }
 
     return true;

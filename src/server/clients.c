@@ -231,7 +231,7 @@ OperationResult sendData(int socket, void *buffer, unsigned int lenght, unsigned
         return OP_OK;
 }
 
-OperationResult sendMessage(ClientsContext *context, int socket, void * message, bool init)
+OperationResult legacysendMessage(ClientsContext *context, int socket, void * message, bool init)
 {
     OperationResult ret = OP_FAIL;
 
@@ -240,7 +240,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void * message,
     if (init)
     {
         client->step = 0;
-        client->currentOperation = sendMessage;
+        client->currentOperation = legacysendMessage;
     }
 
     switch (client->step++)
@@ -324,7 +324,7 @@ enum Command recvCommand(int socket)
     return (enum Command) tmp;
 }
 
-OperationResult recvMessage(ClientsContext *context, int socket, void * buffer, bool init)
+OperationResult legacyrecvMessage(ClientsContext *context, int socket, void * buffer, bool init)
 {
     OperationResult ret = OP_FAIL;
 
@@ -334,7 +334,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void * buffer, 
     {
         client->tmp_p = buffer;
         client->step = 0;
-        client->currentOperation = recvMessage;
+        client->currentOperation = legacyrecvMessage;
     }
 
     switch (client->step++)
@@ -412,7 +412,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void * p, bool in
     }
     
     OperationResult ret;
-    switch( ret = recvMessage(context, socket, NULL, false) )
+    switch( ret = legacyrecvMessage(context, socket, NULL, false) )
     {
         case OP_OK:
             break;
@@ -514,4 +514,67 @@ bool gameInit(Client * client, TopicsContext * topicsContext)
         client->game.score[i] = -1;
 
     return true;
+}
+
+OperationResult confirmedOperation(ClientsContext *context, int socket, void * p, OperationResult (*operation)(ClientsContext *context, int socket, void *buffer))
+{
+    OperationResult ret = OP_FAIL;
+
+    Client * client = context->clients[socket];
+
+    if (operation) // Se è definita una funzione inizializza
+    {
+        client->operation.operationHandler = confirmedOperation;
+        client->operation.operation = operation;
+        client->operation.step = 0;
+        client->operation.tmp = p;
+    }
+
+    switch (client->operation.step++)
+    {
+        case 0:
+            if (operation(context, socket, p))
+                ret = OP_OK;
+            break;
+
+        case 1:
+            if (recvCommand(socket) == CMD_OK)
+                ret = OP_DONE;
+            break;
+            
+        default:
+            return false;
+    }
+
+    switch(ret)
+    {
+        case OP_OK:
+            break;
+        case OP_FAIL:
+        case OP_DONE:
+            memset(&client->operation, 0, sizeof(client->operation));
+            break;
+        default:
+            return OP_FAIL;
+    }
+
+    return ret;
+}
+
+OperationResult sendMessage(ClientsContext *context, int socket, void *message)
+{
+    Client *client = context->clients[socket];
+    Message *msg = (Message *) message;
+
+    OperationResult ret = OP_FAIL;
+
+    if (sendCommand(socket, CMD_MESSAGE) &&
+        list_append(&client->toSend, msg)
+        )
+    {
+        FD_SET(socket, &context->write_fds);   
+        ret = OP_DONE;
+    }
+
+    return ret;
 }

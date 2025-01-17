@@ -20,12 +20,20 @@ struct Client
     bool registered;
     char * name;
 
-    // Status
+    // Status // LEGACY
     OperationResult (* currentOperation)(ClientsContext * client, int socket, void *, bool init);
     int step;
 
     int tmp_i, tmp_i2;
     void * tmp_p, * tmp_p2;
+
+    struct Operation
+    {
+        OperationResult (* operationHandler)(ClientsContext *context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
+        OperationResult (* operation)(ClientsContext *context, int socket, void *);
+        int step;
+        void * tmp;
+    } operation;
     
     Node * toSend; // Puntatore alla lista di messaggi da inviare
     bool sending;
@@ -88,10 +96,10 @@ OperationResult sendMessageHandler(ClientsContext * context, int socket);
 
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
 
-OperationResult sendMessage(ClientsContext *context, int socket, void * buffer, bool init);
+OperationResult legacysendMessage(ClientsContext *context, int socket, void * buffer, bool init);
 bool sendString(int socket, char *, int);
 
-OperationResult recvMessage(ClientsContext *context, int socket, void * buffer, bool init);
+OperationResult legacyrecvMessage(ClientsContext *context, int socket, void * buffer, bool init);
 bool recvString(int socket, char **, int);
 
 OperationResult regPlayer(ClientsContext *context, int socket, void *, bool init);
@@ -100,3 +108,13 @@ bool nameValid(ClientsContext * context, int socket, char * name);
 bool gameInit(Client * clientsContext, TopicsContext * topicsContext);
 
 OperationResult sendTopics(ClientsContext *context, int socket, void *, bool init);
+
+// OperationHandlers
+
+OperationResult confirmedOperation(ClientsContext * context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
+
+// Operations
+
+OperationResult sendMessage(ClientsContext * context, int socket, void * message);
+
+OperationResult recvMessage(ClientsContext * context, int socket, void * pointer);
