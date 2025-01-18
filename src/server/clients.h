@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <sys/select.h>
 #include "../shared/commands.h"
+#include "../shared/message.h"
 #include "topic.h"
 
 typedef enum OperationResult {
@@ -31,12 +32,14 @@ struct Client
     {
         OperationResult (* operationHandler)(ClientsContext *context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
         OperationResult (* operation)(ClientsContext *context, int socket, void *);
+        // Parametri con cui verrà richiamata la funzione operationHandler
         int step;
-        void * tmp;
+        void * p;
     } operation;
     
-    Node * toSend; // Puntatore alla lista di messaggi da inviare
-    bool sending;
+    MessageArray * toSend; // Messaggi
+    MessageArray * toReceive;
+    int transferring;
 
     // Topics
     struct Game{

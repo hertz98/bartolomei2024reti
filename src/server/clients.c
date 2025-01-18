@@ -10,7 +10,6 @@
 #include <limits.h>
 #include "clients.h"
 #include "util.h"
-#include "../shared/message.h"
 
 int clientsInit(ClientsContext *context, int max)
 {
@@ -61,7 +60,7 @@ bool clientAdd(ClientsContext * context, int socket)
     client->currentOperation = NULL;
     client->step = 0;
     client->toSend = NULL;
-    client->sending = false;
+    client->transferring = false;
     client->game.playableTopics = NULL;
     client->game.questions = NULL;
     client->game.score = NULL;
@@ -150,16 +149,15 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
     if (!client->toSend)
         return false;
     
-    if (!client->sending)
-    {
-        list_append(&client->toSend, emptyMessage());
-        client->sending = true;
-    }
 
     OperationResult ret;
-    for (Node * node = client->toSend; node; node = node->next)
+    while (client->transferring < client->toSend->size)
     {
-        Message * msg = node->data;
+        Message * msg;
+        if (client->transferring == -1)
+            msg = &client->toSend->messages[client->toSend->size];
+        else
+            msg = &client->toSend->messages[client->transferring];
 
         int lenght = htonl(msg->lenght);
         int lenght_size = sizeof(msg->lenght);
@@ -176,10 +174,11 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
                 return ret;
         }
 
-        list_extractHead(&client->toSend); // TODO: distruggi l'elemento appena estratto
+        client->transferring++;
     }
 
-    client->sending = false;
+    client->transferring = false;
+    // TODO: Dealloco client->toSend
     client->toSend = NULL;
     return OP_DONE;
 }
@@ -204,54 +203,6 @@ OperationResult sendData(int socket, void *buffer, unsigned int lenght, unsigned
         return OP_DONE;
     else
         return OP_OK;
-}
-
-OperationResult legacysendMessage(ClientsContext *context, int socket, void * message, bool init)
-{
-    OperationResult ret = OP_FAIL;
-
-    Client * client = context->clients[socket];
-
-    if (init)
-    {
-        client->step = 0;
-        client->currentOperation = legacysendMessage;
-    }
-
-    switch (client->step++)
-    {
-        case 0:
-            if (sendCommand(socket, CMD_MESSAGE) &&
-                list_append(&client->toSend, message) // Il messaggio vuoto indica la fine della 
-                )
-            {
-                FD_SET(socket, &context->write_fds);
-                ret = OP_OK;
-            }
-            break;
-
-        case 1:
-            if (recvCommand(socket) == CMD_OK)
-                ret = OP_DONE;
-            break;
-            
-        default:
-            return false;
-    }
-
-    switch(ret)
-    {
-        case OP_OK:
-            break;
-        case OP_FAIL:
-        case OP_DONE:
-            client->currentOperation = NULL;
-            break;
-        default:
-            return OP_FAIL;
-    }
-
-    return ret;
 }
 
 bool sendInteger(int socket, int i)
@@ -502,7 +453,7 @@ OperationResult confirmedOperation(ClientsContext *context, int socket, void * p
         client->operation.operationHandler = confirmedOperation;
         client->operation.operation = operation;
         client->operation.step = 0;
-        client->operation.tmp = p;
+        client->operation.p = p;
     }
 
     switch (client->operation.step++)
@@ -536,17 +487,17 @@ OperationResult confirmedOperation(ClientsContext *context, int socket, void * p
     return ret;
 }
 
-OperationResult sendMessage(ClientsContext *context, int socket, void *message)
+OperationResult sendMessage(ClientsContext *context, int socket, void *message_array)
 {
     Client *client = context->clients[socket];
-    Message *msg = (Message *) message;
+    MessageArray *msgs = (MessageArray *) message_array;
 
     OperationResult ret = OP_FAIL;
 
-    if (sendCommand(socket, CMD_MESSAGE) &&
-        list_append(&client->toSend, msg)
-        )
+    if (sendCommand(socket, CMD_MESSAGE))
     {
+        client->toSend = msgs;
+        client->transferring = -1;
         FD_SET(socket, &context->write_fds);   
         ret = OP_DONE;
     }

@@ -167,7 +167,7 @@ bool clientHandler(ClientsContext * context, int socket)
         return false;
 
     if (client->operation.operationHandler)
-        return client->operation.operationHandler(context, socket, client->operation.tmp, NULL);
+        return client->operation.operationHandler(context, socket, client->operation.p, NULL);
 
     if (client->currentOperation != NULL) // TODO: Remove LEGACY
         return (*client->currentOperation)(context, socket, client->tmp_p2, false);
@@ -191,7 +191,9 @@ bool clientHandler(ClientsContext * context, int socket)
     if (cmd == CMD_TOPICS)
     {
         sendCommand(socket, CMD_OK);
-        confirmedOperation(context, socket, (void *) messageString(topicsContext.topicsString, false), sendMessage);
+        MessageArray * msgs = messageArray(1);
+        messageString(&msgs->messages[0], topicsContext.topicsString, false);
+        confirmedOperation(context, socket, (void *) msgs, sendMessage);
         //legacysendMessage(context, socket, messageString(topicsContext.topicsString, false), true);
     }
 

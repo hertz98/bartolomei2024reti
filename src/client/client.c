@@ -188,9 +188,9 @@ void topicsSelection()
 
     printf("Quiz disponibili\n");
 
-    Node * messages = recvMessage(sd);
-    for (Node *tmp = messages; tmp; tmp = tmp->next)
-        printf("%s\n", (char *) ((Message *) tmp->data)->data);
+    MessageArray * messages = recvMessage(sd);
+    for (int i = 0; i < messages->size; i++)
+        printf("%s\n", (char*) messages->messages[i].data);
 
     return;
 

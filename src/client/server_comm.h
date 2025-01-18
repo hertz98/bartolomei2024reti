@@ -3,6 +3,7 @@
 #include <sys/select.h>
 #include "../shared/commands.h"
 #include "../shared/list.h"
+#include "../shared/message.h"
 
 bool serverTimeout(int, int);
 
@@ -15,5 +16,5 @@ int recvInteger(int);
 bool sendMessage(int, void *);
 bool sendString(int, char *, int);
 
-Node * recvMessage(int);
+MessageArray * recvMessage(int);
 bool recvString(int , char **, int);

@@ -5,7 +5,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include "server_comm.h"
-#include "../shared/message.h"
 
 bool sendMessage(int socket, void * buffer)
 {
@@ -72,35 +71,39 @@ enum Command recvCommand(int socket)
     return (enum Command) tmp;
 }
 
-Node * recvMessage(int socket)
+MessageArray * recvMessage(int socket)
 {
     int ret;
-    int n = 0;
 
-    Node * head = NULL;
+    MessageArray * tmp;
 
-    while(true)
+    ret = 0;
+    int lenght;
+    while(ret < sizeof(uint32_t))
     {
+        ret += recv(socket, &lenght + ret, sizeof(uint32_t) - ret, 0);
+        if (!ret)
+            return false;
+    }
+    lenght = ntohl(lenght);
+    tmp = messageArray(lenght);
+
+    for (int i = 0; i < tmp->size; i++)
+    {
+        Message * msg = &tmp->messages[i];
+
         ret = 0;
-        int lenght;
-        while(ret < sizeof(uint32_t))
+        while(ret < sizeof(msg->lenght))
         {
-            ret += recv(socket, &lenght + ret, sizeof(uint32_t) - ret, 0);
+            ret += recv(socket, &msg->lenght + ret, sizeof(msg->lenght) - ret, 0);
             if (!ret)
                 return false;
         }
-        lenght = ntohl(lenght);
+        msg->lenght = ntohl(msg->lenght);
 
-        if (!lenght)
+        if (!msg->lenght)
             break;
-
-        Message * msg = malloc(sizeof(Node));
-        memset(msg, 0, sizeof(Node));
-        if (!msg)
-            break;
-        list_append(&head, msg);
         
-        msg->lenght = lenght;
         msg->data = (void *) malloc(msg->lenght);
 
         ret = 0;
@@ -110,12 +113,11 @@ Node * recvMessage(int socket)
             if (!ret)
                 return false;
         }
-        n++;
     }
 
     sendCommand(socket, CMD_OK);
 
-    return head;
+    return tmp;
 }
 
 bool recvString(int socket, char ** buffer, int lenght)

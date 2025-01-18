@@ -3,29 +3,41 @@
 #include <string.h>
 #include "message.h"
 
-Message *messageString(char *string, bool toFree)
+MessageArray *messageArray(int size)
 {
-    if (!string)
+    MessageArray * tmp = (MessageArray *) malloc(sizeof(MessageArray));
+    if (!tmp)
         return NULL;
-
-    Message * tmp = (Message *) malloc( sizeof(Message) );
-    tmp->data = string;
-    tmp->lenght = strlen(string) + 1;
-    tmp->transmitted = 0;
-    tmp->toFree = toFree;
-    tmp->next = NULL;
-    
+    tmp->size = size;
+    tmp->messages = (Message *) malloc(sizeof(Message) * (size + 1));
+    if (!tmp->messages)
+    {
+        free(tmp);
+        return NULL;
+    }
+    tmp->messages[size].lenght = size;
     return tmp;
 }
 
-Message *emptyMessage()
+void messageString(Message *message, char *string, bool toFree)
 {
-    Message * tmp = (Message *) malloc( sizeof(Message) );
-    tmp->data = NULL;
-    tmp->lenght = 0;
-    tmp->transmitted = 0;
-    tmp->toFree = false;
-    tmp->next = NULL;
+    if (!string)
+        return;
 
-    return tmp;
+    message->data = string;
+    message->lenght = strlen(string) + 1;
+    message->transmitted = 0;
+    message->toFree = toFree;
+    
+    return;
+}
+
+void emptyMessage(Message *message)
+{
+    message->data = NULL;
+    message->lenght = 0;
+    message->transmitted = 0;
+    message->toFree = false;
+
+    return;
 }
