@@ -177,7 +177,8 @@ bool clientHandler(ClientsContext * context, int socket)
         if (recvCommand(socket) == CMD_REGISTER)
         {
             sendCommand(socket, CMD_OK);
-            return regPlayer(context, socket, &topicsContext, true);
+            return confirmedOperation(context, socket, &client->name, recvMessage);
+            //return regPlayer(context, socket, &topicsContext, true);
         }
         else
             return false;

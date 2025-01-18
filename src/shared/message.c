@@ -5,6 +5,8 @@
 
 MessageArray *messageArray(int size)
 {
+    if (size < 0)
+        return NULL;
     MessageArray * tmp = (MessageArray *) malloc(sizeof(MessageArray));
     if (!tmp)
         return NULL;
@@ -15,6 +17,7 @@ MessageArray *messageArray(int size)
         free(tmp);
         return NULL;
     }
+    memset(tmp->messages, 0, sizeof(Message) * (size + 1));
     tmp->messages[size].lenght = size;
     return tmp;
 }

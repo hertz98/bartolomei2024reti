@@ -149,7 +149,6 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
     if (!client->toSend)
         return false;
     
-
     OperationResult ret;
     while (client->transferring < client->toSend->size)
     {
@@ -456,14 +455,22 @@ OperationResult confirmedOperation(ClientsContext *context, int socket, void * p
         client->operation.p = p;
     }
 
-    switch (client->operation.step++)
+    switch (client->operation.step)
     {
         case 0:
-            if (operation(context, socket, p))
-                ret = OP_OK;
+            switch (client->operation.operation(context, socket, p))
+            {
+                case OP_DONE:
+                    client->operation.step++;
+                case OP_OK:
+                    ret = OP_OK;
+                case OP_FAIL:
+                    break;
+            }
             break;
 
         case 1:
+            client->operation.step++;
             if (recvCommand(socket) == CMD_OK)
                 ret = OP_DONE;
             break;
@@ -503,4 +510,86 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
     }
 
     return ret;
+}
+
+OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
+{
+    Client * client = context->clients[socket];
+
+    OperationResult ret = OP_OK;
+
+    MessageArray ** msgs = (MessageArray **) pointer;
+
+    if (!client->transferring)
+    {
+        *msgs = messageArray(0);
+        client->transferring++;
+    }
+
+    if (client->transferring == 1)
+    {
+        Message *tmp = &(*msgs)->messages[0];
+        if ((ret = recvData(socket, &tmp->lenght, sizeof(tmp->lenght), &tmp->transmitted)) == OP_DONE)
+        {
+            (*msgs)->size = ntohl(tmp->lenght);
+            (*msgs)->messages = realloc((*msgs)->messages, sizeof(Message) * (*msgs)->size);
+            memset((*msgs)->messages, 0, sizeof(Message) * (*msgs)->size);
+            client->transferring = 2;
+        }
+        return ret ? OP_OK : OP_FAIL;
+    }
+    
+    while (client->transferring - 2 < (*msgs)->size)
+    {
+        Message * msg = &(*msgs)->messages[client->transferring - 2];
+
+        if (msg->transmitted < sizeof(msg->lenght))
+        {
+            if ((ret = recvData(socket, &msg->lenght, sizeof(msg->lenght), &msg->transmitted)) == OP_DONE)
+                msg->lenght = ntohl(msg->lenght);
+            else
+                return ret ? OP_OK : OP_FAIL;
+        }
+
+        if (msg->lenght)
+        {
+            msg->data = (void *) malloc(msg->lenght);
+
+            unsigned int sent = msg->transmitted - sizeof(msg->lenght);
+
+            if ((ret = recvData(socket, msg->data, msg->lenght, &sent)) != OP_DONE)
+                return ret ? OP_OK : OP_FAIL;
+
+        }
+
+        client->transferring++;
+    }
+
+    client->transferring = false;
+
+    return sendCommand(socket, CMD_OK) ? OP_DONE : OP_FAIL;
+}
+
+OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int *received)
+{
+    int ret;
+
+    ret = recv(socket, buffer + *received, lenght - *received, 0);
+
+    if (ret > 0)
+        *received += ret;
+    else if (ret == 0)
+        return OP_FAIL;
+    else // ret < 0
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) // Ripeti l'operazione
+            return OP_OK;
+        else
+            return OP_FAIL;
+    }
+
+    if (lenght == *received)
+        return OP_DONE;
+    else
+        return OP_OK;
 }

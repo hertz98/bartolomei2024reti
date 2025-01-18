@@ -6,22 +6,42 @@
 #include <errno.h>
 #include "server_comm.h"
 
-bool sendMessage(int socket, void * buffer)
+bool sendMessage(int socket, MessageArray * msgs)
 {
-    if (!sendCommand(socket, CMD_MESSAGE))
-        return false;
-
-    if (recvCommand(socket) != CMD_RECVMESSAGE)
+    if (!msgs)
         return false;
     
-    if (!sendInteger(socket, strlen(buffer)))
-        return false;
-    
-    if (!sendString(socket, buffer, strlen(buffer)))
-        return false;
+    for (int i = -1; i < msgs->size; i++)
+    {
+        Message *msg;
+        if (i == -1)
+            msg = &msgs->messages[msgs->size];
+        else
+            msg = &msgs->messages[i];
+        
+        uint32_t lenght = htonl(msg->lenght);
 
-    if (recvCommand(socket) != CMD_OK)
-        return false;
+        sendData(socket, &lenght, sizeof(lenght));
+
+        if (msg->lenght && msg->data)
+            sendData(socket, msg->data, msg->lenght);
+    }
+
+    return recvCommand(socket) == CMD_OK;
+}
+
+bool sendData(int socket, void * buffer, unsigned int lenght)
+{
+    int ret;
+    unsigned int sent = 0;
+    
+    while(sent < lenght)
+    {
+        if ((ret = send(socket, buffer + sent, lenght - sent, 0)) >= 0)
+            sent += ret;
+        else
+            return false;
+    }
 
     return true;
 }

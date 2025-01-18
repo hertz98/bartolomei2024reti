@@ -13,8 +13,10 @@ enum Command recvCommand(int);
 bool sendInteger(int, int);
 int recvInteger(int);
 
-bool sendMessage(int, void *);
+bool sendMessage(int socket, MessageArray * msgs);
 bool sendString(int, char *, int);
 
 MessageArray * recvMessage(int);
 bool recvString(int , char **, int);
+
+bool sendData(int socket, void * buffer, unsigned int lenght);

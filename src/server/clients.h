@@ -38,7 +38,6 @@ struct Client
     } operation;
     
     MessageArray * toSend; // Messaggi
-    MessageArray * toReceive;
     int transferring;
 
     // Topics
@@ -82,6 +81,7 @@ int recvInteger(int socket);
 OperationResult sendMessageHandler(ClientsContext * context, int socket);
 
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
+OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int * received);
 
 OperationResult legacysendMessage(ClientsContext *context, int socket, void * buffer, bool init);
 bool sendString(int socket, char *, int);

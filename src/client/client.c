@@ -146,7 +146,9 @@ bool signup()
 
         if ( recvCommand(sd) == CMD_OK)
         {
-            sendMessage(sd, buffer);
+            MessageArray *tmp = messageArray(1);
+            messageString(&tmp->messages[0], buffer, false);
+            sendMessage(sd, tmp);
 
             if ((cmd = recvCommand(sd)) == CMD_OK)
             {
