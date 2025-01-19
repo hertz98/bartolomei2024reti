@@ -168,6 +168,8 @@ bool clientHandler(ClientsContext * context, int socket)
 
     if (client->operation.operationHandler)
         return client->operation.operationHandler(context, socket, client->operation.p, NULL);
+    else if (client->operation.operation)
+        return client->operation.operation(context, socket, client->operation.p);
 
     if (!client->registered)
     {
@@ -191,8 +193,7 @@ bool clientHandler(ClientsContext * context, int socket)
         sendCommand(socket, CMD_OK);
         MessageArray * msgs = messageArray(1);
         messageString(&msgs->messages[0], topicsContext.topicsString, false);
-        confirmedOperation(context, socket, (void *) msgs, sendMessage);
-        //legacysendMessage(context, socket, messageString(topicsContext.topicsString, false), true);
+        sendMessage(context, socket, (void *) msgs);
     }
 
     return true;

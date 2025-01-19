@@ -324,11 +324,6 @@ OperationResult confirmedOperation(ClientsContext *context, int socket, void * p
     return ret;
 }
 
-OperationResult giveConfirmOperation(ClientsContext *context, int socket, void *, OperationResult (*operation)(ClientsContext *context, int socket, void *buffer))
-{
-    return OP_FAIL;
-}
-
 OperationResult sendMessage(ClientsContext *context, int socket, void *message_array)
 {
     Client *client = context->clients[socket];
@@ -354,16 +349,14 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
 OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
 {
     Client * client = context->clients[socket];
-
-    if (!client->operation.operationHandler) // In questo modo posso chiamare direttamente recvMessage invece dello handler
-        return confirmedOperation(context, socket, pointer, recvMessage); // TODO: use giveConfirm
-
     OperationResult ret = OP_OK;
 
     MessageArray ** msgs = (MessageArray **) pointer;
 
     if (!client->transferring)
     {
+        client->operation.operation = recvMessage;
+        client->operation.p = pointer;
         *msgs = messageArray(0);
         client->transferring++;
     }
@@ -408,6 +401,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
     }
 
     client->transferring = false;
+    memset(&client->operation, 0, sizeof(client->operation));
 
     return sendCommand(socket, CMD_OK) ? OP_DONE : OP_FAIL;
 }

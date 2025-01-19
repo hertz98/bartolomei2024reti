@@ -83,8 +83,6 @@ OperationResult sendTopics(ClientsContext *context, int socket, void *, bool ini
 
 OperationResult confirmedOperation(ClientsContext * context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
 
-OperationResult giveConfirmOperation(ClientsContext * context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
-
 // Operations
 
 OperationResult sendMessage(ClientsContext * context, int socket, void * message);
