@@ -68,32 +68,19 @@ enum Command recvCommand(int socket)
 
 MessageArray * recvMessage(int socket)
 {
-    int ret;
+    uint32_t lenght;
+    if (!recvData(socket, &lenght, sizeof(lenght)))
+        return false;
 
-    MessageArray * tmp;
-
-    ret = 0;
-    int lenght;
-    while(ret < sizeof(uint32_t))
-    {
-        ret += recv(socket, &lenght + ret, sizeof(uint32_t) - ret, 0);
-        if (!ret)
-            return false;
-    }
     lenght = ntohl(lenght);
-    tmp = messageArray(lenght);
+    MessageArray *tmp = messageArray(lenght);
 
     for (int i = 0; i < tmp->size; i++)
     {
         Message * msg = &tmp->messages[i];
 
-        ret = 0;
-        while(ret < sizeof(msg->lenght))
-        {
-            ret += recv(socket, &msg->lenght + ret, sizeof(msg->lenght) - ret, 0);
-            if (!ret)
-                return false;
-        }
+        if (!recvData(socket, &msg->lenght, sizeof(msg->lenght)))
+            return false;
         msg->lenght = ntohl(msg->lenght);
 
         if (!msg->lenght)
@@ -101,18 +88,29 @@ MessageArray * recvMessage(int socket)
         
         msg->data = (void *) malloc(msg->lenght);
 
-        ret = 0;
-        while(ret < msg->lenght)
-        {
-            ret += recv(socket, msg->data + ret, msg->lenght - ret, 0);
-            if (!ret)
-                return false;
-        }
+        if (!recvData(socket, &msg->data, msg->lenght))
+            return false;
     }
 
     sendCommand(socket, CMD_OK);
 
     return tmp;
+}
+
+bool recvData(int socket, void * buffer, unsigned int lenght)
+{
+    int ret;
+    unsigned int received = 0;
+    
+    while(received < lenght)
+    {
+        if ((ret = recv(socket, buffer + received, lenght - received, 0)) > 0)
+            received += ret;
+        else
+            return false;
+    }
+
+    return true;
 }
 
 bool sendCommand(int socket, enum Command cmd)

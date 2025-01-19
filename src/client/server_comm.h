@@ -14,3 +14,4 @@ bool sendMessage(int socket, MessageArray * msgs);
 MessageArray * recvMessage(int);
 
 bool sendData(int socket, void * buffer, unsigned int lenght);
+bool recvData(int socket, void * buffer, unsigned int lenght);
