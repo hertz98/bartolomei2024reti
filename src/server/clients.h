@@ -23,9 +23,8 @@ struct Client
 
     struct Operation
     {
-        OperationResult (* operationHandler)(ClientsContext *context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
-        OperationResult (* operation)(ClientsContext *context, int socket, void *);
-        // Parametri con cui verrà richiamata la funzione operationHandler
+        OperationResult (* operation)(ClientsContext *context, int socket, void *, bool init);
+        // Parametri con cui verrà richiamata la funzione operation
         int step;
         void * p;
     } operation;
@@ -79,14 +78,11 @@ bool gameInit(Client * clientsContext, TopicsContext * topicsContext);
 
 OperationResult sendTopics(ClientsContext *context, int socket, void *, bool init);
 
-// OperationHandlers
-
-OperationResult confirmedOperation(ClientsContext * context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
-
-OperationResult regPlayer(ClientsContext * context, int socket, void * topics, OperationResult (* null)(ClientsContext * context, int socket, void * buffer));
 
 // Operations
 
-OperationResult sendMessage(ClientsContext * context, int socket, void * message);
+OperationResult sendMessage(ClientsContext * context, int socket, void * message, bool init);
 
-OperationResult recvMessage(ClientsContext * context, int socket, void * pointer);
+OperationResult recvMessage(ClientsContext * context, int socket, void * pointer, bool init);
+
+OperationResult regPlayer(ClientsContext * context, int socket, void * topicsContext, bool init);

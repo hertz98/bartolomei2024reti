@@ -271,102 +271,64 @@ bool gameInit(Client * client, TopicsContext * topicsContext)
     return true;
 }
 
-OperationResult confirmedOperation(ClientsContext *context, int socket, void * p, OperationResult (*operation)(ClientsContext *context, int socket, void *buffer))
+OperationResult regPlayer(ClientsContext *context, int socket, void *topicsContext, bool init)
 {
-    OperationResult ret = OP_FAIL;
-
-    Client * client = context->clients[socket];
-
-    if (operation) // Se è definita una funzione inizializza
-    {
-        client->operation.operationHandler = confirmedOperation;
-        client->operation.operation = operation;
-        client->operation.step = 0;
-        client->operation.p = p;
-    }
-
-    switch (client->operation.step)
-    {
-        case 0:
-            switch (client->operation.operation(context, socket, p))
-            {
-                case OP_DONE:
-                    client->operation.step++;
-                case OP_OK:
-                    ret = OP_OK;
-                case OP_FAIL:
-                    break;
-            }
-            break;
-
-        case 1:
-            client->operation.step++;
-            if (recvCommand(socket) == CMD_OK)
-                ret = OP_DONE;
-            break;
-            
-        default:
-            return false;
-    }
-
-    switch(ret)
-    {
-        case OP_OK:
-            break;
-        case OP_FAIL:
-        case OP_DONE:
-            memset(&client->operation, 0, sizeof(client->operation));
-            break;
-        default:
-            return OP_FAIL;
-    }
-
-    return ret;
+    
 }
 
-OperationResult regPlayer(ClientsContext *context, int socket, void *topics, OperationResult (*null)(ClientsContext *context, int socket, void *buffer))
-{
-    return 0;
-}
-
-OperationResult sendMessage(ClientsContext *context, int socket, void *message_array)
+OperationResult sendMessage(ClientsContext *context, int socket, void *message_array, bool init)
 {
     Client *client = context->clients[socket];
 
-    if (!client->operation.operationHandler) // In questo modo posso chiamare direttamente sendMessage invece dello handler
-        return confirmedOperation(context, socket, message_array, sendMessage);
+    if (init)
+    {
+        client->operation.operation = sendMessage;
+        client->operation.step = 0;
+        client->operation.p = message_array;
+    }
 
     MessageArray *msgs = (MessageArray *) message_array;
-
     OperationResult ret = OP_FAIL;
 
-    if (sendCommand(socket, CMD_MESSAGE))
+    switch (client->operation.step++)
     {
-        client->toSend = msgs;
-        client->transferring = -1;
-        FD_SET(socket, &context->write_fds);   
-        ret = OP_DONE;
+        case 0:
+            if (sendCommand(socket, CMD_MESSAGE))
+            {
+                client->toSend = msgs;
+                client->transferring = -1;
+                FD_SET(socket, &context->write_fds);   
+                ret = OP_OK;
+            }
+            break;
+        case 1:
+            if (recvCommand(socket) == CMD_OK)
+                ret = OP_DONE;
+            break;
     }
+
+    if (ret == OP_DONE)
+        memset(&client->operation, 0, sizeof(client->operation));
 
     return ret;
 }
 
-OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
+OperationResult recvMessage(ClientsContext *context, int socket, void *pointer, bool init)
 {
     Client * client = context->clients[socket];
     OperationResult ret = OP_OK;
 
     MessageArray ** msgs = (MessageArray **) pointer;
 
-    if (!client->transferring)
+    if (init)
     {
         client->operation.operation = recvMessage;
         client->operation.p = pointer;
         *msgs = messageArray(0);
-        client->transferring++;
+        client->transferring = -1;
     }
 
-    if (client->transferring == 1)
+    if (client->transferring == -1)
     {
         Message *tmp = &(*msgs)->messages[0];
         if ((ret = recvData(socket, &tmp->lenght, sizeof(tmp->lenght), &tmp->transmitted)) == OP_DONE)
@@ -374,21 +336,21 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
             (*msgs)->size = ntohl(tmp->lenght);
             (*msgs)->messages = realloc((*msgs)->messages, sizeof(Message) * (*msgs)->size);
             memset((*msgs)->messages, 0, sizeof(Message) * (*msgs)->size);
-            client->transferring = 2;
+            client->transferring = 0;
         }
-        return ret ? OP_OK : OP_FAIL;
+        return (bool) ret;
     }
     
-    while (client->transferring - 2 < (*msgs)->size)
+    while (client->transferring < (*msgs)->size)
     {
-        Message * msg = &(*msgs)->messages[client->transferring - 2];
+        Message * msg = &(*msgs)->messages[client->transferring];
 
         if (msg->transmitted < sizeof(msg->lenght))
         {
             if ((ret = recvData(socket, &msg->lenght, sizeof(msg->lenght), &msg->transmitted)) == OP_DONE)
                 msg->lenght = ntohl(msg->lenght);
             else
-                return ret ? OP_OK : OP_FAIL;
+                return (bool) ret;
         }
 
         if (msg->lenght)
@@ -398,7 +360,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
             unsigned int sent = msg->transmitted - sizeof(msg->lenght);
 
             if ((ret = recvData(socket, msg->data, msg->lenght, &sent)) != OP_DONE)
-                return ret ? OP_OK : OP_FAIL;
+                return (bool) ret;
 
         }
 
