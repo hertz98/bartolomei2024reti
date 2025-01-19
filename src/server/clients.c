@@ -110,6 +110,8 @@ void clientRemove(ClientsContext * context, int socket)
     context->clients[socket] = NULL;
     
     FD_CLR(socket, &context->master_fds);
+    FD_CLR(socket, &context->write_fds);
+    FD_CLR(socket, &context->read_fds);
 
     return;
 }
@@ -322,9 +324,18 @@ OperationResult confirmedOperation(ClientsContext *context, int socket, void * p
     return ret;
 }
 
+OperationResult giveConfirmOperation(ClientsContext *context, int socket, void *, OperationResult (*operation)(ClientsContext *context, int socket, void *buffer))
+{
+    return OP_FAIL;
+}
+
 OperationResult sendMessage(ClientsContext *context, int socket, void *message_array)
 {
     Client *client = context->clients[socket];
+
+    if (!client->operation.operationHandler) // In questo modo posso chiamare direttamente sendMessage invece dello handler
+        return confirmedOperation(context, socket, message_array, sendMessage);
+
     MessageArray *msgs = (MessageArray *) message_array;
 
     OperationResult ret = OP_FAIL;
@@ -343,6 +354,9 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
 OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
 {
     Client * client = context->clients[socket];
+
+    if (!client->operation.operationHandler) // In questo modo posso chiamare direttamente recvMessage invece dello handler
+        return confirmedOperation(context, socket, pointer, recvMessage); // TODO: use giveConfirm
 
     OperationResult ret = OP_OK;
 

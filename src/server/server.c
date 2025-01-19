@@ -96,7 +96,7 @@ int main (int argc, char ** argv)
 
         for (int i = 0; i <= clientsContext.fd_max; i++) 
             if (FD_ISSET(i, &write_fds)) // Found a ready descriptor
-                if(!isClient(&clientsContext, i, true) ||
+                if(isClient(&clientsContext, i, false) &&
                     sendMessageHandler(&clientsContext, i) != OP_OK)
                     {
                         clientsContext.clients[i]->toSend = NULL; // TODO: free
@@ -174,7 +174,7 @@ bool clientHandler(ClientsContext * context, int socket)
         if (recvCommand(socket) == CMD_REGISTER)
         {
             sendCommand(socket, CMD_OK);
-            return confirmedOperation(context, socket, &client->name, recvMessage);
+            return recvMessage(context, socket, &client->name);
             //return regPlayer(context, socket, &topicsContext, true);
         }
         else

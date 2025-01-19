@@ -71,7 +71,7 @@ enum Command recvCommand(int socket);
 OperationResult sendMessageHandler(ClientsContext * context, int socket);
 
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
-OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int * received);
+OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int *received);
 
 bool nameValid(ClientsContext * context, int socket, char * name);
 
@@ -82,6 +82,8 @@ OperationResult sendTopics(ClientsContext *context, int socket, void *, bool ini
 // OperationHandlers
 
 OperationResult confirmedOperation(ClientsContext * context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
+
+OperationResult giveConfirmOperation(ClientsContext * context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
 
 // Operations
 
