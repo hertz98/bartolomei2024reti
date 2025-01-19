@@ -57,8 +57,6 @@ bool clientAdd(ClientsContext * context, int socket)
 
     client->name = NULL;
     client->registered = false;
-    client->currentOperation = NULL;
-    client->step = 0;
     client->toSend = NULL;
     client->transferring = false;
     client->game.playableTopics = NULL;
@@ -204,32 +202,6 @@ OperationResult sendData(int socket, void *buffer, unsigned int lenght, unsigned
         return OP_OK;
 }
 
-bool sendInteger(int socket, int i)
-{
-    int ret;
-
-    u_int32_t tmp = htonl(i);
-
-    if ((ret = send(socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
-    {
-        if (errno)
-            perror("sendInteger failed");
-        return false;    
-    }
-    
-    return true;
-}
-
-bool sendString(int socket, char * buffer, int lenght)
-{
-    int ret;
-
-    if ((ret = send(socket, buffer, lenght, 0)) != lenght)
-        return false;
-
-    return true;
-}
-
 enum Command recvCommand(int socket)
 {
     int ret;
@@ -249,130 +221,6 @@ enum Command recvCommand(int socket)
     return (enum Command) tmp;
 }
 
-OperationResult legacyrecvMessage(ClientsContext *context, int socket, void * buffer, bool init)
-{
-    OperationResult ret = OP_FAIL;
-
-    Client * client = context->clients[socket];
-
-    if (init)
-    {
-        client->tmp_p = buffer;
-        client->step = 0;
-        client->currentOperation = legacyrecvMessage;
-    }
-
-    switch (client->step++)
-    {
-        case 0: // Il client non invia mai una stringa senza preavviso
-            if (recvCommand(socket) == CMD_MESSAGE &&
-             sendCommand(socket, CMD_RECVMESSAGE))
-                ret = OP_OK;
-            break;
-
-        case 1:
-            if ((client->tmp_i = recvInteger(socket)) > 0 &&
-             recvString(socket, (char **) client->tmp_p, client->tmp_i) &&
-             sendCommand(socket, CMD_OK))
-                ret = OP_DONE;
-            break;
-
-        default:
-            return false;
-    }
-
-    switch(ret)
-    {
-        case OP_OK:
-            break;
-        case OP_FAIL:
-        case OP_DONE:
-            client->currentOperation = NULL;
-            break;
-        default:
-            return OP_FAIL;
-    }
-
-    return ret;
-}
-
-bool recvString(int socket, char ** buffer, int lenght)
-{
-    int ret;
-
-    *buffer = (char *) malloc(sizeof(char) * (lenght + 1));
-    if (!buffer)
-        return false;
-
-    if ((ret = recv(socket, *buffer, lenght, 0)) != lenght)
-    {
-        free(*buffer);
-        *buffer = NULL;
-        
-        if (!ret) // Client disconnesso
-            return false;
-
-        if (errno)
-            perror("recvString");
-        return false;
-    }
-
-    (*buffer)[ret] = '\0';
-    (*buffer)[lenght] = '\0';
-
-    return true;
-}
-
-OperationResult regPlayer(ClientsContext *context, int socket, void * p, bool init)
-{
-    Client * client = context->clients[socket];
-    TopicsContext * topicsContext = p;
-
-    if (init)
-    {
-        client->tmp_p = &client->name;
-        client->step = 0;
-        client->currentOperation = regPlayer;
-        client->tmp_p2 = p;
-    }
-    
-    OperationResult ret;
-    switch( ret = legacyrecvMessage(context, socket, NULL, false) )
-    {
-        case OP_OK:
-            break;
-        case OP_FAIL:
-            client->currentOperation = NULL;
-            break;
-
-        case OP_DONE:
-            client->currentOperation = NULL;
-            if (nameValid(context, socket, client->name))
-                {
-                    printf("%s\n",client->name); // DEBUG
-                    if (sendCommand(socket, CMD_OK) && gameInit(context->clients[socket], topicsContext))
-                    {
-                        client->registered = true;   
-                        return OP_DONE;
-                    }
-                    else
-                        return false;
-                }
-                else
-                {
-                    free(client->name);
-                    client->name = NULL;
-                    sendCommand(socket, CMD_NOTVALID);
-                    return true;
-                }
-            break;
-
-        default:
-            return OP_FAIL;
-    }
-    return (bool) ret;
-}
-
 bool nameValid(ClientsContext * context, int socket, char * name)
 {
     // Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
@@ -389,26 +237,6 @@ bool nameValid(ClientsContext * context, int socket, char * name)
 
     return true;
 }
-
-int recvInteger(int socket)
-{
-    int ret;
-
-    u_int32_t tmp;
-
-    if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
-    {
-        if (!ret) // Client disconnesso
-            return false;
-        
-        if (errno)
-            perror("recvInteger failed");
-        return false;    
-    }
-
-    return ntohl(tmp);
-}
-
 bool sendCommand(int socket, enum Command cmd)
 {
     int ret;

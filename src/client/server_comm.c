@@ -46,31 +46,6 @@ bool sendData(int socket, void * buffer, unsigned int lenght)
     return true;
 }
 
-bool sendInteger(int socket, int i)
-{
-    int ret;
-
-    u_int32_t tmp = htonl(i);
-
-    if ((ret = send(socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
-    {
-        perror("sendInteger failed");
-        return false;    
-    }
-    
-    return true;
-}
-
-bool sendString(int socket, char * buffer, int lenght)
-{
-    int ret;
-
-    if ((ret = send(socket, buffer, lenght, 0)) != lenght)
-        return false;
-
-    return true;
-}
-
 enum Command recvCommand(int socket)
 {
     int ret;
@@ -138,50 +113,6 @@ MessageArray * recvMessage(int socket)
     sendCommand(socket, CMD_OK);
 
     return tmp;
-}
-
-bool recvString(int socket, char ** buffer, int lenght)
-{
-    int ret;
-
-    *buffer = (char *) malloc(sizeof(char) * lenght);
-    if (!buffer)
-        return false;
-
-    if ((ret = recv(socket, *buffer, lenght, 0)) != lenght)
-    {
-        free(*buffer);
-        *buffer = NULL;
-
-        if (!ret)
-            return false;
-        
-        if (errno)
-            perror("recvString failed");
-
-        return false;
-    }
-
-    return true;
-}
-
-int recvInteger(int socket)
-{
-    int ret;
-
-    u_int32_t tmp;
-
-    if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
-    {
-        if (!ret) // Sever disconnesso
-            return false;
-        
-        if (errno)
-            perror("recvInteger failed");
-        return false;    
-    }
-
-    return ntohl(tmp);
 }
 
 bool sendCommand(int socket, enum Command cmd)

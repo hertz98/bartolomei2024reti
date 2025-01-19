@@ -169,9 +169,6 @@ bool clientHandler(ClientsContext * context, int socket)
     if (client->operation.operationHandler)
         return client->operation.operationHandler(context, socket, client->operation.p, NULL);
 
-    if (client->currentOperation != NULL) // TODO: Remove LEGACY
-        return (*client->currentOperation)(context, socket, client->tmp_p2, false);
-    
     if (!client->registered)
     {
         if (recvCommand(socket) == CMD_REGISTER)

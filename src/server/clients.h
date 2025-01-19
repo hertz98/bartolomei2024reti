@@ -21,13 +21,6 @@ struct Client
     bool registered;
     char * name;
 
-    // Status // LEGACY
-    OperationResult (* currentOperation)(ClientsContext * client, int socket, void *, bool init);
-    int step;
-
-    int tmp_i, tmp_i2;
-    void * tmp_p, * tmp_p2;
-
     struct Operation
     {
         OperationResult (* operationHandler)(ClientsContext *context, int socket, void *, OperationResult (* operation)(ClientsContext * context, int socket, void * buffer));
@@ -75,21 +68,11 @@ bool isClient(ClientsContext *context, int socket, bool onlyRegistered);
 bool sendCommand(int socket, enum Command);
 enum Command recvCommand(int socket);
 
-bool sendInteger(int socket, int);
-int recvInteger(int socket);
-
 OperationResult sendMessageHandler(ClientsContext * context, int socket);
 
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
 OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int * received);
 
-OperationResult legacysendMessage(ClientsContext *context, int socket, void * buffer, bool init);
-bool sendString(int socket, char *, int);
-
-OperationResult legacyrecvMessage(ClientsContext *context, int socket, void * buffer, bool init);
-bool recvString(int socket, char **, int);
-
-OperationResult regPlayer(ClientsContext *context, int socket, void *, bool init);
 bool nameValid(ClientsContext * context, int socket, char * name);
 
 bool gameInit(Client * clientsContext, TopicsContext * topicsContext);
