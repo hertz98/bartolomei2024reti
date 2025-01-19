@@ -3,6 +3,30 @@
 #include <string.h>
 #include "message.h"
 
+void messageArrayDestroy(MessageArray *messageArray, void (*destroyer)(void *payload))
+{
+    if (!messageArray)
+        return;
+
+    if (messageArray->messages)
+    {
+        for (int i = 0; i <= messageArray->size; i++)
+        {
+            Message *msg = &messageArray->messages[i];
+            if (msg->toFree)
+            {
+                if (destroyer)
+                    destroyer(msg->data);
+                else
+                    free(msg->data);
+            }
+        }
+        free(messageArray->messages);
+    }
+
+    free(messageArray);
+}
+
 MessageArray *messageArray(int size)
 {
     if (size < 0)

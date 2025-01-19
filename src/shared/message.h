@@ -20,6 +20,11 @@ typedef struct MessageArray {
     Message * messages;
 } MessageArray;
 
+/// @brief Dealloca un MessageArray e il suo contenuto
+/// @param messageArray Indirizzo del messageArray 
+/// @param destroyer funzione per deallocare il payload dei messaggi in caso di strutture complicate
+void messageArrayDestroy(MessageArray *messageArray, void (* destroyer)(void * payload));
+
 /// @brief Prepara un nuovo MessageArray contenente lo spazio per `size + 1` messaggi
 /// @param size Numero di messaggi
 /// @return l'indirizzo del nuovo MessageArray appena allocato o NULL in caso di fallimento

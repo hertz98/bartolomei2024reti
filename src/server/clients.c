@@ -324,6 +324,11 @@ OperationResult confirmedOperation(ClientsContext *context, int socket, void * p
     return ret;
 }
 
+OperationResult regPlayer(ClientsContext *context, int socket, void *topics, OperationResult (*null)(ClientsContext *context, int socket, void *buffer))
+{
+    return 0;
+}
+
 OperationResult sendMessage(ClientsContext *context, int socket, void *message_array)
 {
     Client *client = context->clients[socket];
