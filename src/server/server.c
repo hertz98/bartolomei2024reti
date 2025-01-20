@@ -130,6 +130,16 @@ int init(int argc, char ** argv)
         return 1;
     }
 
+#ifdef DEBUG
+    
+    int opt = 1;
+    if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt failed");
+        exit(EXIT_FAILURE);
+    }
+
+#endif
+
     if (bind(listener, (struct sockaddr*)&my_addr, sizeof(my_addr)) == -1)
     {
         perror("Errore nella bind");
@@ -142,16 +152,6 @@ int init(int argc, char ** argv)
         return 1;
     }
 
-#ifdef DEBUG
-    
-    int opt = 1;
-    if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        perror("setsockopt failed");
-        exit(EXIT_FAILURE);
-    }
-
-#endif
-
     atexit(exiting);
     signal(SIGINT, signalhandler);
     signal(SIGPIPE, SIG_IGN);
@@ -161,21 +161,29 @@ int init(int argc, char ** argv)
 
 bool clientHandler(ClientsContext * context, int socket)
 {
+    OperationResult ret;
+
     struct Client * client = context->clients[socket];
 
     if (client->toSend != NULL) // Il client non è in sync con quello del server, termina
         return false;
     
     if (client->operation[0].function)
-        return client->operation[0].function(context, socket, client->operation[0].p);
+        switch ((ret = client->operation[0].function(context, socket, client->operation[0].p)))
+        {
+            case OP_DONE:
+            case OP_FAIL:
+                memset(client->operation, 0, sizeof(struct Operation) * MAX_STACKABLE_OPERATIONS);
+            case OP_OK:
+                return ret;
+        }
 
     if (!client->registered)
     {
         if (recvCommand(socket) == CMD_REGISTER)
         {
             sendCommand(socket, CMD_OK);
-            return recvMessage(context, socket, &client->name);
-            //return regPlayer(context, socket, &topicsContext, true);
+            return regPlayer(context, socket, &topicsContext);
         }
         else
             return false;
@@ -208,7 +216,7 @@ void printServer()
 
     printf("+++++++++++++++++++++++++++++++\n\n");
     
-    printf("Partecipanti (%d)\n", clientsContext.nClients);
+    printf("Partecipanti (%d)\n", clientsContext.registered);
     for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
         if (isClient(&clientsContext, i, true))
         {

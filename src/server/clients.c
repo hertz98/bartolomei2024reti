@@ -103,6 +103,7 @@ void clientRemove(ClientsContext * context, int socket)
         free(client);
 
         context->nClients--;
+        context->registered--;
         // if (context->fd_max == socket)
         //     context->fd_max--;
     }
@@ -273,10 +274,51 @@ bool gameInit(Client * client, TopicsContext * topicsContext)
 
 OperationResult regPlayer(ClientsContext *context, int socket, void *topicsContext)
 {
-    
+    Client *client = context->clients[socket];
+    TopicsContext * topics = topicsContext;
+
+    struct Operation *currentOperation = getOperation(client, regPlayer);
+    if (!currentOperation)
+        return OP_FAIL;
+
+    if (!currentOperation->function)
+    {
+        currentOperation->function = regPlayer;
+        currentOperation->step = 0;
+        currentOperation->p = topics;
+    }
+
+    OperationResult ret = OP_FAIL;
+
+    if((ret = recvMessage(context, socket, &client->name)) != OP_DONE)
+        return ret;
+
+    MessageArray * tmp = (void*) client->name;
+    client->name = (char*) ((MessageArray *) client->name)->messages->data;
+    messageArrayDestroy(tmp, NULL);
+
+    if (nameValid(context, socket, client->name))
+    {
+        if (gameInit(client, topics) && sendCommand(socket, CMD_OK))
+        {
+            context->registered++;
+            client->registered = true;
+            ret = OP_DONE;
+        }
+    }
+    else
+    {
+        sendCommand(socket, CMD_NOTVALID);
+        currentOperation->step = 0;
+    }
+
+    if (ret == OP_DONE)
+        memset(currentOperation, 0, sizeof(struct Operation));
+
+    return ret;
 }
 
-Operation *getOperation(Client * client, void * function)
+struct Operation *getOperation(Client * client, void * function)
 {
     for(int i = 0; i < MAX_STACKABLE_OPERATIONS; i++)
     {
@@ -290,7 +332,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
 {
     Client *client = context->clients[socket];
 
-    Operation *currentOperation = getOperation(client, sendMessage);
+    struct Operation *currentOperation = getOperation(client, sendMessage);
     if (!currentOperation)
         return OP_FAIL;
 
@@ -332,7 +374,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
     Client * client = context->clients[socket];
     OperationResult ret = OP_OK;
 
-    Operation *currentOperation = getOperation(client, recvMessage);
+    struct Operation *currentOperation = getOperation(client, recvMessage);
     if (!currentOperation)
         return OP_FAIL;
 
@@ -351,9 +393,9 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
         Message *tmp = &(*msgs)->messages[0];
         if ((ret = recvData(socket, &tmp->lenght, sizeof(tmp->lenght), &tmp->transmitted)) == OP_DONE)
         {
-            (*msgs)->size = ntohl(tmp->lenght);
-            (*msgs)->messages = realloc((*msgs)->messages, sizeof(Message) * (*msgs)->size);
-            memset((*msgs)->messages, 0, sizeof(Message) * (*msgs)->size);
+            int size = ntohl(tmp->lenght);
+            messageArrayDestroy(*msgs, NULL);
+            *msgs = messageArray(size);
             client->transferring = 0;
         }
         return (bool) ret;

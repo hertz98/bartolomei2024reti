@@ -47,6 +47,7 @@ struct Client
 
 struct ClientsContext {
     int nClients; // Numero di clients attuali
+    int registered; // Numero di client attualmente registrati
     int maxClients; // Numero massimo di clients servibili
 
     fd_set master_fds,
