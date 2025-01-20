@@ -17,7 +17,7 @@
 void clear();
 bool mainMenu();
 bool signup();
-void topicsSelection();
+bool topicsSelection();
 char * newlineReplace(char * string);
 
 struct sockaddr_in server_addr;
@@ -179,39 +179,33 @@ bool signup()
     return false;
 }
 
-void topicsSelection()
+bool topicsSelection()
 {
+    clear();
+
     if (!(sendCommand(sd, CMD_TOPICS) && recvCommand(sd) == CMD_OK))
     {
         printf("Errore nella comunicazione");
         exit(1);
     }
-
-    printf("Quiz disponibili\n");
+    
+    printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
 
     MessageArray * messages = recvMessage(sd);
+
+    if (!messages)
+        return false;
+
     for (int i = 0; i < messages->size; i++)
-        printf("%s\n", (char*) messages->messages[i].data);
+    {
+        messages->messages[i].toFree = true;
+        printf("%d - %s\n", i, (char*) messages->messages[i].data);
+    }
 
-    return;
+    printf("+++++++++++++++++++++++++++++++\nLa tua scelta: ");
+    fflush(stdout);
 
-    // if (!topics)
-    // {
-    //     char * tmp, *topic;
-    //     recvMessage(sd, &tmp);
-
-    //     topics = (char **) malloc(sizeof(char*) * (++nTopics));
-    //     topics[0] = tmp;
-
-    //     for (int i = 1; (topic = newlineReplace(tmp)); i++)
-    //     {
-    //         topics = (char **) realloc(topics, sizeof(char*) * (++nTopics));
-    //         topics[i] = topic;
-    //     }
-    // }
-
-    for (int i = 0; i < nTopics; i++)
-        printf("%s\n",topics[i]);
+    return true;
 }
 
 char * newlineReplace(char * string)

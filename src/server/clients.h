@@ -30,6 +30,8 @@ struct Client
         // Parametri con cui verrà richiamata la funzione
         int step;
         void * p;
+
+        void *tmp;
     } operation[MAX_STACKABLE_OPERATIONS]; // Si possono accavallare al più due operazioni
     
     MessageArray * toSend; // Messaggi
@@ -80,8 +82,6 @@ bool nameValid(ClientsContext * context, int socket, char * name);
 
 bool gameInit(Client * clientsContext, TopicsContext * topicsContext);
 
-OperationResult sendTopics(ClientsContext *context, int socket, void *, bool init);
-
 // Operations
 
 Operation *getOperation(Client * client, void * function);
@@ -91,3 +91,5 @@ OperationResult sendMessage(ClientsContext * context, int socket, void * message
 OperationResult recvMessage(ClientsContext * context, int socket, void * pointer);
 
 OperationResult regPlayer(ClientsContext * context, int socket, void * topicsContext);
+
+OperationResult sendTopics(ClientsContext *context, int socket, void * topicsContext);

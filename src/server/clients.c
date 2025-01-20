@@ -320,6 +320,46 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
     return ret;
 }
 
+OperationResult sendTopics(ClientsContext *context, int socket, void * topicsContext)
+{
+    Client *client = context->clients[socket];
+    TopicsContext * topics = topicsContext;
+
+    struct Operation *currentOperation = getOperation(client, sendTopics);
+    if (!currentOperation)
+        return OP_FAIL;
+
+    OperationResult ret = OP_FAIL;
+
+    if (!currentOperation->function)
+    {
+        currentOperation->function = sendTopics;
+        currentOperation->step = 0;
+        currentOperation->p = topics;
+
+        int count = 0;
+        for (int i = 0; i < topics->nTopics; i++)
+            if (client->game.playableTopics[i])
+                count++;
+        
+        currentOperation->tmp = messageArray(count);
+        for (int t = 0, m = 0; t < topics->nTopics; t++)
+            if (client->game.playableTopics[t])
+                messageString( &( ((MessageArray *)currentOperation->tmp)->messages[m++] ), topics->topics[t].name, false);
+    }
+
+    if((ret = sendMessage(context, socket, currentOperation->tmp)) != OP_DONE)
+        return ret;
+
+    if (ret == OP_DONE)
+    {
+        messageArrayDestroy(currentOperation->tmp, NULL);
+        memset(currentOperation, 0, sizeof(struct Operation));
+    }
+
+    return ret;
+}
+
 struct Operation *getOperation(Client * client, void * function)
 {
     for(int i = 0; i < MAX_STACKABLE_OPERATIONS; i++)
