@@ -271,26 +271,40 @@ bool gameInit(Client * client, TopicsContext * topicsContext)
     return true;
 }
 
-OperationResult regPlayer(ClientsContext *context, int socket, void *topicsContext, bool init)
+OperationResult regPlayer(ClientsContext *context, int socket, void *topicsContext)
 {
     
 }
 
-OperationResult sendMessage(ClientsContext *context, int socket, void *message_array, bool init)
+Operation *getOperation(Client * client, void * function)
+{
+    for(int i = 0; i < MAX_STACKABLE_OPERATIONS; i++)
+    {
+        if (client->operation[i].function == function || client->operation[i].function == NULL)
+            return &client->operation[i];
+    }
+    return NULL;
+}
+
+OperationResult sendMessage(ClientsContext *context, int socket, void *message_array)
 {
     Client *client = context->clients[socket];
 
-    if (init)
+    Operation *currentOperation = getOperation(client, sendMessage);
+    if (!currentOperation)
+        return OP_FAIL;
+
+    if (!currentOperation->function)
     {
-        client->operation.operation = sendMessage;
-        client->operation.step = 0;
-        client->operation.p = message_array;
+        currentOperation->function = sendMessage;
+        currentOperation->step = 0;
+        currentOperation->p = message_array;
     }
 
     MessageArray *msgs = (MessageArray *) message_array;
     OperationResult ret = OP_FAIL;
 
-    switch (client->operation.step++)
+    switch (currentOperation->step++)
     {
         case 0:
             if (sendCommand(socket, CMD_MESSAGE))
@@ -313,17 +327,21 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
     return ret;
 }
 
-OperationResult recvMessage(ClientsContext *context, int socket, void *pointer, bool init)
+OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
 {
     Client * client = context->clients[socket];
     OperationResult ret = OP_OK;
 
+    Operation *currentOperation = getOperation(client, recvMessage);
+    if (!currentOperation)
+        return OP_FAIL;
+
     MessageArray ** msgs = (MessageArray **) pointer;
 
-    if (init)
+    if (!currentOperation->function)
     {
-        client->operation.operation = recvMessage;
-        client->operation.p = pointer;
+        currentOperation->function = recvMessage;
+        currentOperation->p = pointer;
         *msgs = messageArray(0);
         client->transferring = -1;
     }

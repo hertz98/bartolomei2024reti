@@ -6,6 +6,8 @@
 #include "../shared/message.h"
 #include "topic.h"
 
+#define MAX_STACKABLE_OPERATIONS 2
+
 typedef enum OperationResult {
     OP_FAIL = false, // L'operazione non ha avuto successo
     OP_OK = true, // L'operazione sta procedendo
@@ -15,6 +17,7 @@ typedef enum OperationResult {
 typedef struct Client Client;
 typedef struct ClientsContext ClientsContext;
 typedef struct Message Message;
+typedef struct Operation Operation;
 
 struct Client
 {
@@ -23,11 +26,11 @@ struct Client
 
     struct Operation
     {
-        OperationResult (* operation)(ClientsContext *context, int socket, void *, bool init);
-        // Parametri con cui verrà richiamata la funzione operation
+        OperationResult (* function)(ClientsContext *context, int socket, void *);
+        // Parametri con cui verrà richiamata la funzione
         int step;
         void * p;
-    } operation;
+    } operation[MAX_STACKABLE_OPERATIONS]; // Si possono accavallare al più due operazioni
     
     MessageArray * toSend; // Messaggi
     int transferring;
@@ -78,11 +81,12 @@ bool gameInit(Client * clientsContext, TopicsContext * topicsContext);
 
 OperationResult sendTopics(ClientsContext *context, int socket, void *, bool init);
 
-
 // Operations
 
-OperationResult sendMessage(ClientsContext * context, int socket, void * message, bool init);
+Operation *getOperation(Client * client, void * function);
 
-OperationResult recvMessage(ClientsContext * context, int socket, void * pointer, bool init);
+OperationResult sendMessage(ClientsContext * context, int socket, void * message);
 
-OperationResult regPlayer(ClientsContext * context, int socket, void * topicsContext, bool init);
+OperationResult recvMessage(ClientsContext * context, int socket, void * pointer);
+
+OperationResult regPlayer(ClientsContext * context, int socket, void * topicsContext);

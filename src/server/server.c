@@ -165,16 +165,16 @@ bool clientHandler(ClientsContext * context, int socket)
 
     if (client->toSend != NULL) // Il client non è in sync con quello del server, termina
         return false;
-
-    if (client->operation.operation)
-        return client->operation.operation(context, socket, client->operation.p, false);
+    
+    if (client->operation[0].function)
+        return client->operation[0].function(context, socket, client->operation[0].p);
 
     if (!client->registered)
     {
         if (recvCommand(socket) == CMD_REGISTER)
         {
             sendCommand(socket, CMD_OK);
-            return recvMessage(context, socket, &client->name, true);
+            return recvMessage(context, socket, &client->name);
             //return regPlayer(context, socket, &topicsContext, true);
         }
         else
@@ -191,7 +191,7 @@ bool clientHandler(ClientsContext * context, int socket)
         sendCommand(socket, CMD_OK);
         MessageArray * msgs = messageArray(1);
         messageString(&msgs->messages[0], topicsContext.topicsString, false);
-        sendMessage(context, socket, (void *) msgs, true);
+        sendMessage(context, socket, (void *) msgs);
     }
 
     return true;
