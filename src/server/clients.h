@@ -41,6 +41,7 @@ struct Client
     struct Game{
         int playing; // indice topic corrente
         bool * playableTopics; // array di topic giocabili dal Client
+        int nPlayable;
         int * score; // array di punteggi 
         int currentQuestion; // indice domanda corrente
         Question * questions; // array di domande (allo scopo di mischiarle)
@@ -81,6 +82,7 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
 bool nameValid(ClientsContext * context, int socket, char * name);
 
 bool gameInit(Client * clientsContext, TopicsContext * topicsContext);
+int setPlayed(Client * ClientsContext, TopicsContext * topics, int playable);
 
 // Operations
 

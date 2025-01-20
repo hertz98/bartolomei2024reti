@@ -241,6 +241,7 @@ bool nameValid(ClientsContext * context, int socket, char * name)
 
     return true;
 }
+
 bool sendCommand(int socket, enum Command cmd)
 {
     int ret;
@@ -262,15 +263,38 @@ bool gameInit(Client * client, TopicsContext * topicsContext)
     client->game.playing = -1;
     client->game.currentQuestion = -1;
     client->game.playableTopics = topicsUnplayed(topicsContext, client->name);
+    client->game.nPlayable = 0;
+    for (int i = 0; i < topicsContext->nTopics; i++)
+        if (client->game.playableTopics[i])
+            client->game.nPlayable++;
+
     client->game.questions = NULL;
 
-    client->game.score = malloc(sizeof (int) * topicsContext->nTopics);
+    client->game.score = malloc(sizeof(int) * topicsContext->nTopics);
     if (!client->game.score)
         return false;
     for (int i = 0; i < topicsContext->nTopics; i++)
         client->game.score[i] = -1;
 
     return true;
+}
+
+int setPlayed(Client *client, TopicsContext * topics, int playable)
+{
+    if (playable < 0 || playable >= topics->nTopics)
+        return -1;
+    
+    for (int i = 0, n = 0; i < topics->nTopics; i++)
+        if (client->game.playableTopics[i])
+            if (n++ == playable)
+            {
+                if (client->game.nPlayable)
+                    client->game.nPlayable--;
+                client->game.playableTopics[i] = false;
+                if (topicPlayed(topics, client->name, i))
+                    return i;
+            }
+    return -1;
 }
 
 OperationResult regPlayer(ClientsContext *context, int socket, void *topicsContext)
@@ -332,16 +356,16 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
 
     if (!currentOperation->function)
     {
+        if (!client->game.nPlayable)
+        {
+            // TODO: Comando topics finiti
+        }
+
         currentOperation->function = selectTopic;
         currentOperation->step = 0;
         currentOperation->p = topics;
 
-        int count = 0;
-        for (int i = 0; i < topics->nTopics; i++)
-            if (client->game.playableTopics[i])
-                count++;
-        
-        currentOperation->tmp = messageArray(count);
+        currentOperation->tmp = messageArray(client->game.nPlayable);
         for (int t = 0, m = 0; t < topics->nTopics; t++)
             if (client->game.playableTopics[t])
                 messageString( &( ((MessageArray *)currentOperation->tmp)->messages[m++] ), topics->topics[t].name, false);
@@ -363,18 +387,18 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         break;
     
     case 1:
+
         switch((ret = recvMessage(context, socket, &currentOperation->tmp)))
         {
         case OP_DONE:
-            client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].data);
-            if (client->game.playing < 0 || client->game.playing >= topics->nTopics)
+            client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].data); //TODO: Free()???
+            client->game.playing = setPlayed(client, topics, client->game.playing);
+            if (client->game.playing < 0)
             {
                 sendCommand(socket, CMD_NOTVALID);
                 ret = OP_FAIL;
                 break;
             }
-            client->game.playableTopics[client->game.playing] = false;
-            topicPlayed(topics, client->name, client->game.playing );
         case OP_FAIL:
             messageArrayDestroy(currentOperation->tmp, NULL);
         default:
