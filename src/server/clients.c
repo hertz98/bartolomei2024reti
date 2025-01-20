@@ -180,7 +180,6 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
     }
 
     client->transferring = false;
-    // TODO: Dealloco client->toSend
     client->toSend = NULL;
     return OP_DONE;
 }
@@ -315,17 +314,17 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
     }
 
     if (ret == OP_DONE)
-        memset(currentOperation, 0, sizeof(struct Operation));
+        memset(currentOperation, 0, sizeof(Operation));
 
     return ret;
 }
 
-OperationResult sendTopics(ClientsContext *context, int socket, void * topicsContext)
+OperationResult selectTopic(ClientsContext *context, int socket, void * topicsContext)
 {
     Client *client = context->clients[socket];
     TopicsContext * topics = topicsContext;
 
-    struct Operation *currentOperation = getOperation(client, sendTopics);
+    struct Operation *currentOperation = getOperation(client, selectTopic);
     if (!currentOperation)
         return OP_FAIL;
 
@@ -333,7 +332,7 @@ OperationResult sendTopics(ClientsContext *context, int socket, void * topicsCon
 
     if (!currentOperation->function)
     {
-        currentOperation->function = sendTopics;
+        currentOperation->function = selectTopic;
         currentOperation->step = 0;
         currentOperation->p = topics;
 
@@ -348,13 +347,48 @@ OperationResult sendTopics(ClientsContext *context, int socket, void * topicsCon
                 messageString( &( ((MessageArray *)currentOperation->tmp)->messages[m++] ), topics->topics[t].name, false);
     }
 
-    if((ret = sendMessage(context, socket, currentOperation->tmp)) != OP_DONE)
-        return ret;
-
-    if (ret == OP_DONE)
+    switch (currentOperation->step)
     {
-        messageArrayDestroy(currentOperation->tmp, NULL);
-        memset(currentOperation, 0, sizeof(struct Operation));
+    case 0:
+        switch (ret = (sendMessage(context, socket, currentOperation->tmp)))
+        {
+        case OP_DONE:
+            currentOperation->step++;
+        case OP_FAIL:
+            messageArrayDestroy(currentOperation->tmp, NULL);
+        default:
+            ret = (bool) ret;
+            break;
+        }
+        break;
+    
+    case 1:
+        switch((ret = recvMessage(context, socket, &currentOperation->tmp)))
+        {
+        case OP_DONE:
+            client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].data);
+            if (client->game.playing < 0 || client->game.playing >= topics->nTopics)
+            {
+                sendCommand(socket, CMD_NOTVALID);
+                ret = OP_FAIL;
+                break;
+            }
+            client->game.playableTopics[client->game.playing] = false;
+            topicPlayed(topics, client->name, client->game.playing );
+        case OP_FAIL:
+            messageArrayDestroy(currentOperation->tmp, NULL);
+        default:
+            break;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    if (ret == OP_DONE || ret == OP_FAIL)
+    {
+        memset(currentOperation, 0, sizeof(Operation));
     }
 
     return ret;
@@ -406,7 +440,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
     }
 
     if (ret == OP_DONE)
-        memset(&client->operation, 0, sizeof(client->operation));
+        memset(currentOperation, 0, sizeof(Operation));
 
     return ret;
 }
@@ -470,7 +504,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
     }
 
     client->transferring = false;
-    memset(&client->operation, 0, sizeof(client->operation));
+    memset(currentOperation, 0, sizeof(Operation));
 
     return sendCommand(socket, CMD_OK) ? OP_DONE : OP_FAIL;
 }

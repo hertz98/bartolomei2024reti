@@ -197,7 +197,7 @@ bool clientHandler(ClientsContext * context, int socket)
     if (cmd == CMD_TOPICS)
     {
         sendCommand(socket, CMD_OK);
-        sendTopics(context, socket, &topicsContext);
+        selectTopic(context, socket, &topicsContext);
     }
 
     return true;

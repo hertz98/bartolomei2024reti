@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include "message.h"
 
 void messageArrayDestroy(MessageArray *messageArray, void (*destroyer)(void *payload))
@@ -57,6 +58,23 @@ void messageString(Message *message, char *string, bool toFree)
     message->toFree = toFree;
     
     return;
+}
+
+void messageInteger(Message *message, int32_t number)
+{
+    if (!message)
+        return;
+    
+    message->data = malloc(sizeof(number));
+    if (!message->data)
+    {
+        printf("Error allocating space");
+        exit(EXIT_FAILURE);
+    }
+    *(int32_t *) message->data = htonl(number);
+    message->lenght = sizeof(number);
+    message->transmitted = 0;
+    message->toFree = true;
 }
 
 void emptyMessage(Message *message)

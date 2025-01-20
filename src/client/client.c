@@ -205,6 +205,11 @@ bool topicsSelection()
     printf("+++++++++++++++++++++++++++++++\nLa tua scelta: ");
     fflush(stdout);
 
+    MessageArray * selected = messageArray(1);
+    messageInteger(&selected->messages[0], 0);
+    sendMessage(sd, selected);
+    messageArrayDestroy(selected, NULL);
+
     return true;
 }
 

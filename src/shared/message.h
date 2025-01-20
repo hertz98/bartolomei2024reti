@@ -36,4 +36,6 @@ MessageArray * messageArray(int size);
 /// @param toFree se true, la stringa deve essere deallocata alla distruzione della lista
 void messageString(Message *message, char *string, bool toFree);
 
+void messageInteger(Message * message, int32_t number);
+
 void emptyMessage(Message *message);
