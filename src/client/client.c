@@ -186,7 +186,6 @@ void topicsSelection()
         printf("Errore nella comunicazione");
         exit(1);
     }
-    recvCommand(sd);
 
     printf("Quiz disponibili\n");
 

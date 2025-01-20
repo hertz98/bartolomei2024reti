@@ -69,6 +69,9 @@ enum Command recvCommand(int socket)
 MessageArray * recvMessage(int socket)
 {
     uint32_t lenght;
+    if (recvCommand(socket) != CMD_MESSAGE)
+        return false;
+
     if (!recvData(socket, &lenght, sizeof(lenght)))
         return false;
 
@@ -88,7 +91,7 @@ MessageArray * recvMessage(int socket)
         
         msg->data = (void *) malloc(msg->lenght);
 
-        if (!recvData(socket, &msg->data, msg->lenght))
+        if (!recvData(socket, msg->data, msg->lenght))
             return false;
     }
 

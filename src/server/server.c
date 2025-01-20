@@ -175,7 +175,7 @@ bool clientHandler(ClientsContext * context, int socket)
             case OP_FAIL:
                 memset(client->operation, 0, sizeof(struct Operation) * MAX_STACKABLE_OPERATIONS);
             case OP_OK:
-                return ret;
+                return (bool) ret;
         }
 
     if (!client->registered)

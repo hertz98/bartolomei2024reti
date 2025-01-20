@@ -91,6 +91,10 @@ void clientRemove(ClientsContext * context, int socket)
 
     if (client)
     {
+        context->nClients--;
+        if (client->registered)
+            context->registered--;
+
         if (client->name)
             free(client->name);
         if (client->game.playableTopics)
@@ -102,8 +106,6 @@ void clientRemove(ClientsContext * context, int socket)
 
         free(client);
 
-        context->nClients--;
-        context->registered--;
         // if (context->fd_max == socket)
         //     context->fd_max--;
     }
