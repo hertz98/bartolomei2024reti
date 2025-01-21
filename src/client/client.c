@@ -19,12 +19,17 @@ bool mainMenu();
 bool signup();
 bool topicsSelection();
 char * newlineReplace(char * string);
+bool readUser_int(int * number);
 
 struct sockaddr_in server_addr;
 int sd;
 
-char ** topics;
-int nTopics;
+struct Context
+{
+    char name[255];
+    MessageArray * topics;
+} context;
+
 
 void socketclose()
 { 
@@ -90,26 +95,24 @@ int main (int argc, char ** argv)
 
 bool mainMenu()
 {
-    int ret;
+    clear();
+    printf("Trivia Quiz\n+++++++++++++++++++++++++++++++\nMenù:\n");
+    printf("1 - Comincia una sessione di Trivia\n");
+    printf("2 - Esci\n");
+    printf("+++++++++++++++++++++++++++++++\n");
 
     while(true)
     {
-        clear();
-
-        printf("Trivia Quiz\n+++++++++++++++++++++++++++++++\nMenù:\n");
-        printf("1 - Comincia una sessione di Trivia\n");
-        printf("2 - Esci\n");
-        printf("+++++++++++++++++++++++++++++++\nLa tua scelta: ");
+        printf("La tua scelta: ");
         fflush(stdout);
 
-        char buffer[10];
-        if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) <= 0)
+        int selection;
+        if (!readUser_int(&selection))
             continue;
-        buffer[ret - 1] = '\0';
 
-        if (!strncmp(buffer, "1", 1))
+        if (selection == 1)
             return true;
-        else if (!strncmp(buffer, "2", 1))
+        else if (selection == 2)
             return false;
     }
 
@@ -124,9 +127,8 @@ bool signup()
 {
     int ret;
     enum Command cmd = CMD_STOP;
-
+    
     clear();
-    char buffer[255];
     printf("Trivia Quiz\n+++++++++++++++++++++++++++++++\n");
 
     while(true)
@@ -134,9 +136,9 @@ bool signup()
         printf("Scegli un nickname (deve essere univoco): ");
         fflush(stdout);
 
-        if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) <= 0)
+        if ((ret = read(STDIN_FILENO, context.name, sizeof(context.name))) <= 0)
             continue;
-        buffer[ret - 1] = '\0';
+        context.name[ret - 1] = '\0';
 
         if (!sendCommand(sd, CMD_REGISTER))
         {
@@ -147,7 +149,7 @@ bool signup()
         if ( recvCommand(sd) == CMD_OK)
         {
             MessageArray *tmp = messageArray(1);
-            messageString(&tmp->messages[0], buffer, false);
+            messageString(&tmp->messages[0], context.name, false);
             sendMessage(sd, tmp);
 
             if ((cmd = recvCommand(sd)) == CMD_OK)
@@ -189,26 +191,44 @@ bool topicsSelection()
         exit(1);
     }
     
-    printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
 
-    MessageArray * messages = recvMessage(sd);
+    MessageArray * topics = recvMessage(sd);
 
-    if (!messages)
+    if (!topics)
         return false;
 
-    for (int i = 0; i < messages->size; i++)
+    if (!topics->size)
     {
-        messages->messages[i].toFree = true;
-        printf("%d - %s\n", i, (char*) messages->messages[i].data);
+        printf("Nessun quiz disponibile per l'utente %s\n", context.name);
+        exit(0);
     }
 
-    printf("+++++++++++++++++++++++++++++++\nLa tua scelta: ");
-    fflush(stdout);
+    printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
 
-    MessageArray * selected = messageArray(1);
-    messageInteger(&selected->messages[0], 0);
-    sendMessage(sd, selected);
-    messageArrayDestroy(selected, NULL);
+    for (int i = 0; i < topics->size; i++)
+    {
+        topics->messages[i].toFree = true;
+        printf("%d - %s\n", i + 1, (char*) topics->messages[i].data);
+    }
+
+    printf("+++++++++++++++++++++++++++++++\n");
+
+    int selection;
+    while(true)
+    {
+        printf("La tua scelta: ");
+        fflush(stdout);
+        
+        if (readUser_int(&selection) && selection >= 1 && selection <= topics->size)
+            break;
+    }
+
+    MessageArray * message_sel = messageArray(1);
+    messageInteger(&message_sel->messages[0], selection - 1);
+    sendMessage(sd, message_sel);
+
+    messageArrayDestroy(topics, NULL);
+    messageArrayDestroy(message_sel, NULL);
 
     return true;
 }
@@ -224,4 +244,28 @@ char * newlineReplace(char * string)
         }
     }
     return NULL;
+}
+
+bool readUser_int(int * number)
+{
+    char buffer[32];
+    if (fgets(buffer, sizeof(buffer), stdin)) 
+    {
+        if (!strncmp(buffer, "quit", sizeof(buffer)) ||
+             !strncmp(buffer, "exit", sizeof(buffer)) )
+            exit(0);
+        if (sscanf(buffer, "%d", number) > 0)
+            return true;
+        else
+            return false;
+    }
+    else
+    {
+        if (feof(stdin))
+        {
+            printf("EOF rilevato, uscita...\n");
+            exit(0);
+        }
+        return false;
+    }
 }
