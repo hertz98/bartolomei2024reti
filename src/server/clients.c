@@ -524,20 +524,23 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
         if (msg->transmitted < sizeof(msg->lenght))
         {
             if ((ret = recvData(socket, &msg->lenght, sizeof(msg->lenght), &msg->transmitted)) == OP_DONE)
-                msg->lenght = ntohl(msg->lenght);
+                {
+                    msg->lenght = ntohl(msg->lenght);
+                    msg->payload = (void *) malloc(msg->lenght + 1);
+                }
             else
                 return (bool) ret;
         }
 
         if (msg->lenght)
         {
-            msg->payload = (void *) malloc(msg->lenght);
 
             unsigned int sent = msg->transmitted - sizeof(msg->lenght);
 
-            if ((ret = recvData(socket, msg->payload, msg->lenght, &sent)) != OP_DONE)
+            if ((ret = recvData(socket, msg->payload, msg->lenght, &sent)) == OP_DONE)
+                *(char*) (msg->payload + msg->lenght) = '\0'; // Proteggo le stringhe ponendo il byte (in più) nullo
+            else
                 return (bool) ret;
-
         }
 
         client->transferring++;
