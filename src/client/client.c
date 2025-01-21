@@ -86,10 +86,8 @@ int main (int argc, char ** argv)
 
     topicsSelection();
 
+    //sendCommand(sd, CMD_STOP);
     while(1);
-
-    sendCommand(sd, CMD_STOP);
-
     close(sd);
 
     return(0);
@@ -194,7 +192,7 @@ bool topicsSelection() // TODO: attenersi alle specifiche
     }
 
     if (context.topics)
-        messageArrayDestroy(context.topics, NULL);
+        messageArrayDestroy(&context.topics);
 
     context.topics = recvMessage(sd);
 
@@ -214,7 +212,7 @@ bool topicsSelection() // TODO: attenersi alle specifiche
     for (int i = 0; i < context.topics->size; i++)
     {
         context.topics->messages[i].toFree = true;
-        printf("%d - %s\n", i + 1, (char*) context.topics->messages[i].data);
+        printf("%d - %s\n", i + 1, (char*) context.topics->messages[i].payload);
     }
 
     printf("+++++++++++++++++++++++++++++++\n");
@@ -234,7 +232,7 @@ bool topicsSelection() // TODO: attenersi alle specifiche
     sendMessage(sd, message_sel);
 
     //messageArrayDestroy(topics, NULL);
-    messageArrayDestroy(message_sel, NULL);
+    messageArrayDestroy(&message_sel);
 
     return true;
 }

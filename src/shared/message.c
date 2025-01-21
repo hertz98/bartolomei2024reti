@@ -4,28 +4,25 @@
 #include <arpa/inet.h>
 #include "message.h"
 
-void messageArrayDestroy(MessageArray *messageArray, void (*destroyer)(void *payload))
+void messageArrayDestroy(MessageArray **messageArray)
 {
-    if (!messageArray)
+    if (!messageArray || !*messageArray)
         return;
 
-    if (messageArray->messages)
+    if ((*messageArray)->messages)
     {
-        for (int i = 0; i <= messageArray->size; i++)
+        for (int i = 0; i <= (*messageArray)->size; i++)
         {
-            Message *msg = &messageArray->messages[i];
+            Message *msg = &(*messageArray)->messages[i];
             if (msg->toFree)
-            {
-                if (destroyer)
-                    destroyer(msg->data);
-                else
-                    free(msg->data);
-            }
+                free(msg->payload);
         }
-        free(messageArray->messages);
+        free((*messageArray)->messages);
     }
 
-    free(messageArray);
+    free(*messageArray);
+
+    *messageArray = NULL; // Lascio il puntatore a NULL per evitare altre deallocazioni indesiderate
 }
 
 MessageArray *messageArray(int size)
@@ -52,7 +49,7 @@ void messageString(Message *message, char *string, bool toFree)
     if (!string)
         return;
 
-    message->data = string;
+    message->payload = string;
     message->lenght = strlen(string) + 1;
     message->transmitted = 0;
     message->toFree = toFree;
@@ -65,13 +62,13 @@ void messageInteger(Message *message, int32_t number)
     if (!message)
         return;
     
-    message->data = malloc(sizeof(number));
-    if (!message->data)
+    message->payload = malloc(sizeof(number));
+    if (!message->payload)
     {
         printf("Error allocating space");
         exit(EXIT_FAILURE);
     }
-    *(int32_t *) message->data = htonl(number);
+    *(int32_t *) message->payload = htonl(number);
     message->lenght = sizeof(number);
     message->transmitted = 0;
     message->toFree = true;
@@ -79,7 +76,7 @@ void messageInteger(Message *message, int32_t number)
 
 void emptyMessage(Message *message)
 {
-    message->data = NULL;
+    message->payload = NULL;
     message->lenght = 0;
     message->transmitted = 0;
     message->toFree = false;

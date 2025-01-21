@@ -23,8 +23,8 @@ bool sendMessage(int socket, MessageArray * msgs)
 
         sendData(socket, &lenght, sizeof(lenght));
 
-        if (msg->lenght && msg->data)
-            sendData(socket, msg->data, msg->lenght);
+        if (msg->lenght && msg->payload)
+            sendData(socket, msg->payload, msg->lenght);
     }
 
     return recvCommand(socket) == CMD_OK;
@@ -89,9 +89,9 @@ MessageArray * recvMessage(int socket)
         if (!msg->lenght)
             break;
         
-        msg->data = (void *) malloc(msg->lenght);
+        msg->payload = (void *) malloc(msg->lenght);
 
-        if (!recvData(socket, msg->data, msg->lenght))
+        if (!recvData(socket, msg->payload, msg->lenght))
             return false;
     }
 

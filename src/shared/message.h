@@ -4,7 +4,7 @@
 
 /// @brief Un Message è una struttura che contiene i dati grezzi e il loro stato di trasmissione
 typedef struct Message {
-    void * data; // Puntatore al contenuto del messaggio da inviare
+    void * payload; // Puntatore al contenuto del messaggio da inviare
     uint32_t lenght; // Dimensione del messaggio (compreso di caratteri speciali)
     uint32_t transmitted; // Numero di bytes inviati
     bool toFree; // Indica se data deve essere deallocato dopo l'invio
@@ -23,7 +23,7 @@ typedef struct MessageArray {
 /// @brief Dealloca un MessageArray e il suo contenuto
 /// @param messageArray Indirizzo del messageArray 
 /// @param destroyer funzione per deallocare il payload dei messaggi in caso di strutture complicate
-void messageArrayDestroy(MessageArray *messageArray, void (* destroyer)(void * payload));
+void messageArrayDestroy(MessageArray **messageArray);
 
 /// @brief Prepara un nuovo MessageArray contenente lo spazio per `size + 1` messaggi
 /// @param size Numero di messaggi

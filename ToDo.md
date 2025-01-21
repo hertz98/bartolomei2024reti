@@ -1,1 +1,2 @@
-Attenersi alle specifiche
+- Attenersi alle specifiche
+- recvCommand e sendCommand

@@ -168,11 +168,11 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
             if ((ret = sendData(socket, &lenght, lenght_size, &msg->transmitted)) != OP_DONE)
                 return ret;
 
-        if (msg->data)
+        if (msg->payload)
         {
             unsigned int sent = msg->transmitted - lenght_size;
 
-            if ((ret = sendData(socket, msg->data, msg->lenght, &sent)) != OP_DONE)
+            if ((ret = sendData(socket, msg->payload, msg->lenght, &sent)) != OP_DONE)
                 return ret;
         }
 
@@ -318,7 +318,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
     Client *client = context->clients[socket];
     TopicsContext * topics = topicsContext;
 
-    struct Operation *currentOperation = getOperation(client, regPlayer);
+    Operation *currentOperation = getOperation(client, regPlayer);
     if (!currentOperation)
         return OP_FAIL;
 
@@ -335,8 +335,8 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
         return ret;
 
     MessageArray * tmp = (void*) client->name;
-    client->name = (char*) ((MessageArray *) client->name)->messages->data;
-    messageArrayDestroy(tmp, NULL);
+    client->name = (char*) ((MessageArray *) client->name)->messages->payload;
+    messageArrayDestroy(&tmp);
 
     if (nameValid(context, socket, client->name))
     {
@@ -364,7 +364,7 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
     Client *client = context->clients[socket];
     TopicsContext * topics = topicsContext;
 
-    struct Operation *currentOperation = getOperation(client, selectTopic);
+    Operation *currentOperation = getOperation(client, selectTopic);
     if (!currentOperation)
         return OP_FAIL;
 
@@ -395,7 +395,7 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         case OP_DONE:
             currentOperation->step++;
         case OP_FAIL:
-            messageArrayDestroy(currentOperation->tmp, NULL);
+            messageArrayDestroy((MessageArray **) &currentOperation->tmp);
         default:
             ret = (bool) ret;
             break;
@@ -407,7 +407,7 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         switch((ret = recvMessage(context, socket, &currentOperation->tmp)))
         {
         case OP_DONE:
-            client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].data); //TODO: Free()???
+            client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload); //TODO: Free()???
             client->game.playing = client_playableIndex(client, topics, client->game.playing);
             if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // TODO: Distinzione errore nel server da input scorretto
             {
@@ -416,7 +416,7 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
                 break;
             }
         case OP_FAIL:
-            messageArrayDestroy(currentOperation->tmp, NULL);
+            messageArrayDestroy((MessageArray **) &currentOperation->tmp);
         default:
             break;
         }
@@ -448,7 +448,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
 {
     Client *client = context->clients[socket];
 
-    struct Operation *currentOperation = getOperation(client, sendMessage);
+    Operation *currentOperation = getOperation(client, sendMessage);
     if (!currentOperation)
         return OP_FAIL;
 
@@ -490,7 +490,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
     Client * client = context->clients[socket];
     OperationResult ret = OP_OK;
 
-    struct Operation *currentOperation = getOperation(client, recvMessage);
+    Operation *currentOperation = getOperation(client, recvMessage);
     if (!currentOperation)
         return OP_FAIL;
 
@@ -510,7 +510,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
         if ((ret = recvData(socket, &tmp->lenght, sizeof(tmp->lenght), &tmp->transmitted)) == OP_DONE)
         {
             int size = ntohl(tmp->lenght);
-            messageArrayDestroy(*msgs, NULL);
+            messageArrayDestroy((MessageArray **) msgs);
             *msgs = messageArray(size);
             client->transferring = 0;
         }
@@ -531,11 +531,11 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
 
         if (msg->lenght)
         {
-            msg->data = (void *) malloc(msg->lenght);
+            msg->payload = (void *) malloc(msg->lenght);
 
             unsigned int sent = msg->transmitted - sizeof(msg->lenght);
 
-            if ((ret = recvData(socket, msg->data, msg->lenght, &sent)) != OP_DONE)
+            if ((ret = recvData(socket, msg->payload, msg->lenght, &sent)) != OP_DONE)
                 return (bool) ret;
 
         }

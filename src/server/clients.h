@@ -113,3 +113,5 @@ OperationResult recvMessage(ClientsContext * context, int socket, void * pointer
 OperationResult regPlayer(ClientsContext * context, int socket, void * topicsContext);
 
 OperationResult selectTopic(ClientsContext *context, int socket, void * topicsContext);
+
+OperationResult playTopic(ClientsContext *context, int socket, void * topicsContext);
