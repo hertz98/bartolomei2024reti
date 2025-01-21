@@ -258,7 +258,7 @@ bool sendCommand(int socket, enum Command cmd)
     return true;
 }
 
-bool gameInit(Client * client, TopicsContext * topicsContext)
+bool client_gameInit(Client * client, TopicsContext * topicsContext)
 {
     client->game.playing = -1;
     client->game.currentQuestion = -1;
@@ -279,22 +279,37 @@ bool gameInit(Client * client, TopicsContext * topicsContext)
     return true;
 }
 
-int setPlayed(Client *client, TopicsContext * topics, int playable)
+int client_playableIndex(Client * client, TopicsContext * topics, int playable)
 {
+    if (!client || !topics || !client->game.playableTopics)
+        return -1;
+
     if (playable < 0 || playable >= topics->nTopics)
         return -1;
     
     for (int i = 0, n = 0; i < topics->nTopics; i++)
         if (client->game.playableTopics[i])
             if (n++ == playable)
-            {
-                if (client->game.nPlayable)
-                    client->game.nPlayable--;
-                client->game.playableTopics[i] = false;
-                if (topicPlayed(topics, client->name, i))
                     return i;
-            }
+
     return -1;
+}
+
+bool client_setPlayed(Client * client, TopicsContext * topics, int topic)
+{
+    if (topic < 0 || topic >= topics->nTopics)
+        return false;
+
+    if (!client->game.playableTopics[topic])
+        return false;
+
+    client->game.playableTopics[topic] = false;
+    if (client->game.nPlayable)
+        client->game.nPlayable--;
+
+    if (topicPlayed(topics, client->name, topic))
+        return true;
+    return false;
 }
 
 OperationResult regPlayer(ClientsContext *context, int socket, void *topicsContext)
@@ -324,7 +339,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
 
     if (nameValid(context, socket, client->name))
     {
-        if (gameInit(client, topics) && sendCommand(socket, CMD_OK))
+        if (client_gameInit(client, topics) && sendCommand(socket, CMD_OK))
         {
             context->registered++;
             client->registered = true;
@@ -392,8 +407,8 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         {
         case OP_DONE:
             client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].data); //TODO: Free()???
-            client->game.playing = setPlayed(client, topics, client->game.playing);
-            if (client->game.playing < 0)
+            client->game.playing = client_playableIndex(client, topics, client->game.playing);
+            if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // TODO: Distinzione errore nel server da input scorretto
             {
                 sendCommand(socket, CMD_NOTVALID);
                 ret = OP_FAIL;

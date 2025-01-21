@@ -81,8 +81,26 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
 
 bool nameValid(ClientsContext * context, int socket, char * name);
 
-bool gameInit(Client * clientsContext, TopicsContext * topicsContext);
-int setPlayed(Client * ClientsContext, TopicsContext * topics, int playable);
+/// @brief Inizializza le strutture dati inerenti al gioco (si fa dopo la registrazione)
+/// @param client Struttura dati del client inizializzate con dati di gioco non inizializzati
+/// @param topicsContext Strutture dati inerenti ai topics
+/// @return true se è andato tutto liscio
+bool client_gameInit(Client * client, TopicsContext * topicsContext);
+
+/// @brief Converte l'indice del topic fornito dal client nell'indice corrispondente nell'array dei topic
+/// La funzione è fatta per prendere direttamente in ingresso l'input del client, avendo dei controlli
+/// @param client Struttura dati del client corrispondente con dati di gioco inizializzati
+/// @param topics Strutture dati inerenti ai topics
+/// @param playable Indice dei topics dal punto di vista del client
+/// @return Indice dello stesso topic corrispondente nell'array dei topics
+int client_playableIndex(Client * client, TopicsContext * topics, int playable);
+
+/// @brief Determina un topic come giocato sia a livello di strutture dati che su disco
+/// @param client Struttura dati del client corrispondente con dati di gioco inizializzati
+/// @param topics Strutture dati inerenti ai topics
+/// @param topic Indice reale del topic
+/// @return true se è andato tutto liscio
+bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
 
 // Operations
 
