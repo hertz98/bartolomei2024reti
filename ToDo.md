@@ -1,5 +1,1 @@
-- longOperation
-- fd_set per la scrittura
-- client handler per l'invio
-- funzione per l'invio
-- client/server: gestire i casi in cui la send e la recv non inviano/ricevono l'intero messaggio
+Attenersi alle specifiche

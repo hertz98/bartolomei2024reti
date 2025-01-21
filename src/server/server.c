@@ -21,7 +21,7 @@
 #define DEBUG
 
 #define MAX_CLIENTs 32
-#define SLEEP_TIME 1
+#define REFRESH_RATE 1000
 #define DATA_DIR "./data/"
 
 void signalhandler(int signal);
@@ -61,14 +61,12 @@ int main (int argc, char ** argv)
     {
         printServer();
 
-        struct timeval timeout = {SLEEP_TIME, 0};
-
         fd_set read_fds = clientsContext.master_fds, // Copy the master set
                write_fds = clientsContext.write_fds;
         FD_SET(listener, &read_fds);
         
         // Use select to wait for activity on the sockets
-        if (select(clientsContext.fd_max + 1, &read_fds, &write_fds, NULL, &timeout) == -1) {
+        if (select(clientsContext.fd_max + 1, &read_fds, &write_fds, NULL, &((struct timeval) {0, REFRESH_RATE * 1000})) == -1) {
             perror("Select failed");
             exit(1);
         }
@@ -203,6 +201,10 @@ bool clientHandler(ClientsContext * context, int socket)
     return true;
 }
 
+#define PRINT_TOPIC_NAMES_ALWAYS
+#define PRINT_COLON_SCORE
+#define PRINT_SCORE_COMPLETED
+
 void printServer()
 {
     printf("\033[H\033[J"); // system("clear");
@@ -225,13 +227,21 @@ void printServer()
 
     for (int t = 0; t < topicsContext.nTopics; t++)
     {
-        printf("Punteggio tema %d\n", t + 1);
+        #ifdef PRINT_TOPIC_NAMES_ALWAYS
+            printf("Punteggio tema \"%d - %s\"\n", t + 1, topicsContext.topics[t].name);
+        #else
+            printf("Punteggio tema %d\n", t + 1);
+        #endif
         for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
             if (isClient(&clientsContext, i, true) &&
                 clientsContext.clients[i]->game.playing == t &&
                 clientsContext.clients[i]->game.score[t] != -1)
             {
-                printf("- %s %d\n", clientsContext.clients[i]->name, clientsContext.clients[i]->game.score[t]);
+                #ifdef PRINT_COLON_SCORE
+                    printf("- %s: %d\n", clientsContext.clients[i]->name, clientsContext.clients[i]->game.score[t]);
+                #else
+                    printf("- %s %d\n", clientsContext.clients[i]->name, clientsContext.clients[i]->game.score[t]);
+                #endif
                 n++;
             }
         printf("\n");
@@ -239,13 +249,21 @@ void printServer()
     
     for (int t = 0; t < topicsContext.nTopics; t++)
     {
-        printf("Quiz tema %d completato\n", t + 1);
+        #ifdef PRINT_TOPIC_NAMES_ALWAYS
+            printf("Quiz tema \"%d - %s\" completato\n", t + 1, topicsContext.topics[t].name);
+        #else
+            printf("Quiz tema %d completato\n", t + 1);
+        #endif
         for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
             if (isClient(&clientsContext, i, true) &&
                 clientsContext.clients[i]->game.playing != t &&
                 clientsContext.clients[i]->game.score[t] != -1)
             {
-                printf("- %s\n", clientsContext.clients[i]->name);
+                #ifdef PRINT_SCORE_COMPLETED
+                    printf("- %s: %d\n", clientsContext.clients[i]->name, clientsContext.clients[i]->game.score[t]);
+                #else
+                    printf("- %s\n", clientsContext.clients[i]->name);
+                #endif
             }
         printf("\n");
     }

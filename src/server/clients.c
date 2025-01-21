@@ -304,6 +304,7 @@ bool client_setPlayed(Client * client, TopicsContext * topics, int topic)
         return false;
 
     client->game.playableTopics[topic] = false;
+    client->game.score[topic] = 0;
     if (client->game.nPlayable)
         client->game.nPlayable--;
 

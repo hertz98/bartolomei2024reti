@@ -66,6 +66,8 @@ int init(int argc, char ** argv)
 
     signal(SIGINT, socketclose);
 
+    context.topics = NULL;
+
     return 0;
 }
 
@@ -181,7 +183,7 @@ bool signup()
     return false;
 }
 
-bool topicsSelection()
+bool topicsSelection() // TODO: attenersi alle specifiche
 {
     clear();
 
@@ -190,25 +192,29 @@ bool topicsSelection()
         printf("Errore nella comunicazione");
         exit(1);
     }
-    
 
-    MessageArray * topics = recvMessage(sd);
+    if (context.topics)
+        messageArrayDestroy(context.topics, NULL);
 
-    if (!topics)
+    context.topics = recvMessage(sd);
+
+    if (!context.topics)
         return false;
 
-    if (!topics->size)
+    if (!context.topics->size)
     {
         printf("Nessun quiz disponibile per l'utente %s\n", context.name);
+        printf("Premere [Invio] per terminare\n");
+        while(getchar() != '\n');
         exit(0);
     }
 
     printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
 
-    for (int i = 0; i < topics->size; i++)
+    for (int i = 0; i < context.topics->size; i++)
     {
-        topics->messages[i].toFree = true;
-        printf("%d - %s\n", i + 1, (char*) topics->messages[i].data);
+        context.topics->messages[i].toFree = true;
+        printf("%d - %s\n", i + 1, (char*) context.topics->messages[i].data);
     }
 
     printf("+++++++++++++++++++++++++++++++\n");
@@ -219,7 +225,7 @@ bool topicsSelection()
         printf("La tua scelta: ");
         fflush(stdout);
         
-        if (readUser_int(&selection) && selection >= 1 && selection <= topics->size)
+        if (readUser_int(&selection) && selection >= 1 && selection <= context.topics->size)
             break;
     }
 
@@ -227,7 +233,7 @@ bool topicsSelection()
     messageInteger(&message_sel->messages[0], selection - 1);
     sendMessage(sd, message_sel);
 
-    messageArrayDestroy(topics, NULL);
+    //messageArrayDestroy(topics, NULL);
     messageArrayDestroy(message_sel, NULL);
 
     return true;
