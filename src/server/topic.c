@@ -105,15 +105,17 @@ bool topicLoad(char * path, Topic * topic)
     if (!(file = fopen(path, "r")))
         return false;
 
-    Question * new_question = NULL;
-    char * line = NULL;
+    char * line = NULL,
+         * current_question = NULL;
     size_t alloc_len;
     while( getline(&line, &alloc_len, file) != -1)
     {
         // Ignora linee vuote, valutazione in corto circuito
         if ((line[0] == '\n' || line[1] == '\n'))
         {
-            new_question = NULL;
+            if (current_question)
+                free(current_question);
+            current_question = NULL;
             continue;
         }
 
@@ -123,22 +125,27 @@ bool topicLoad(char * path, Topic * topic)
             printf("line %d/%d: _%s_\n", (int) strlen(line), (int) alloc_len, line); // DEBUG
         #endif
 
-        if (!new_question)
+        if (!current_question)
         {
-            new_question = malloc( sizeof(Question) );
-            list_append(&topic->questions, new_question);
-            new_question->question = line;
-            new_question->answer = NULL; // Nel caso la risposta non venisse caricata
-            topic->nQuestions++;
+            current_question = line;
         }
         else
         {
+            Question * new_question = malloc( sizeof(Question) );
+            new_question->question = current_question;
             new_question->answer = line;
-            new_question = NULL; // Verrà create una nuova domanda per prossima linea
+            list_append(&topic->questions, new_question);
+            
+            current_question = NULL;
+            topic->nQuestions++;
         }
 
         line = NULL;
     }
+
+    if (current_question)
+        free(current_question);
+
     free(line);
     fclose(file);
 
