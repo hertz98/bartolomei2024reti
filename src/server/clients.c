@@ -102,7 +102,7 @@ void clientRemove(ClientsContext * context, int socket)
         if (client->game.questions)
             free(client->game.questions);
         if (client->game.score)
-            free(client->game.questions);
+            free(client->game.score);
 
         free(client);
 
@@ -279,6 +279,34 @@ bool client_gameInit(Client * client, TopicsContext * topicsContext)
     return true;
 }
 
+bool client_quizInit(Client *client, TopicsContext *topicsContext)
+{
+    Topic *currentTopic = &topicsContext->topics[client->game.playing];
+
+    if (client->game.questions)
+        free(client->game.questions);
+    
+    client->game.questions = malloc(sizeof(Question *) * currentTopic->nQuestions);
+    if (!client->game.questions)
+        return false;
+
+    int count = 0;
+    for (Node * tmp = currentTopic->questions; tmp; tmp = tmp->next)
+    {
+        if (count >= currentTopic->nQuestions)
+        {
+            printf("Errore nel numero di domande\n"); // Andrebbe usato un logger
+            break;
+        }
+        client->game.questions[count] = (Question *) tmp->data;
+        count++;
+    }
+
+    // TODO: SHUFFLE
+
+    return true;
+}
+
 int client_playableIndex(Client * client, TopicsContext * topics, int playable)
 {
     if (!client || !topics || !client->game.playableTopics)
@@ -415,6 +443,9 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
                 ret = OP_FAIL;
                 break;
             }
+            client->game.currentQuestion = 0;
+            if (!client_quizInit(client, topics))
+                ret = OP_FAIL;
         case OP_FAIL:
             messageArrayDestroy((MessageArray **) &currentOperation->tmp);
         default:
@@ -574,4 +605,102 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
         return OP_DONE;
     else
         return OP_OK;
+}
+
+
+
+OperationResult playTopic(ClientsContext *context, int socket, void *topicsContext)
+{
+    Client *client = context->clients[socket];
+    TopicsContext * topics = topicsContext;
+
+    Operation *currentOperation = getOperation(client, playTopic);
+    if (!currentOperation)
+        return OP_FAIL;
+
+    OperationResult ret = OP_FAIL;
+
+    if (!client->registered)
+        return OP_FAIL;
+
+    if (client->game.playing < 0 || client->game.currentQuestion < 0) // ridondante
+    {
+        sendCommand(socket, CMD_NONE);
+        return OP_DONE;
+    }
+
+    Topic *currentTopic = &topics->topics[client->game.playing];
+    Question *currentQuestion = client->game.questions[client->game.currentQuestion];
+
+    if (!currentOperation->function)
+    {
+        currentOperation->function = playTopic;
+        currentOperation->step = 0;
+        currentOperation->p = topics;
+        
+        if (client->game.playing < 0 || client->game.currentQuestion < 0)
+            sendCommand(socket, CMD_NONE);
+        else
+            sendCommand(socket, CMD_OK);
+
+        MessageArray *question_msg = messageArray(1);
+        messageString(&question_msg->messages[0], currentQuestion->question, false);
+        currentOperation->tmp = question_msg;
+    }
+
+    switch (currentOperation->step)
+    {
+    case 0:
+        MessageArray *question_msg = currentOperation->tmp;
+
+        switch (ret = (sendMessage(context, socket, question_msg)))
+        {
+        case OP_DONE:
+            currentOperation->step++;
+        case OP_FAIL:
+            messageArrayDestroy((MessageArray **) &currentOperation->tmp);
+        default:
+            ret = (bool) ret;
+            break;
+        }
+        break;
+    
+    case 1:
+
+        switch((ret = recvMessage(context, socket, &currentOperation->tmp)))
+        {
+        case OP_DONE:
+            MessageArray *answer_msg = currentOperation->tmp;
+            // TODO: Funzioni di condizionamento della risposta, strip, stringa NULL
+            if (!stricmp(answer_msg->messages[0].payload, currentQuestion->answer))
+            {
+                sendCommand(socket, CMD_CORRECT);
+                client->game.score[client->game.playing]++;
+            }
+            else
+                sendCommand(socket, CMD_WRONG);
+
+            if (++client->game.currentQuestion >= currentTopic->nQuestions)
+            {
+                client->game.playing = -1;
+                client->game.currentQuestion = -1;
+            }
+
+        case OP_FAIL:
+            messageArrayDestroy((MessageArray **) &currentOperation->tmp);
+        default:
+            break;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    if (ret == OP_DONE || ret == OP_FAIL)
+    {
+        memset(currentOperation, 0, sizeof(Operation));
+    }
+
+    return ret;
 }

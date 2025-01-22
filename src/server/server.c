@@ -187,15 +187,26 @@ bool clientHandler(ClientsContext * context, int socket)
             return false;
     }
 
-    enum Command cmd = recvCommand(socket);
-
-    if (cmd == false) // false
-        return false;
-
-    if (cmd == CMD_TOPICS)
+    switch (recvCommand(socket))
     {
+    case false: // CMD_STOP
+        return false;
+        break;
+
+    case CMD_TOPICS:
         sendCommand(socket, CMD_OK);
         selectTopic(context, socket, &topicsContext);
+        break;
+
+    case CMD_NEXTQUESTION:
+        if (client->game.playing < 0 || client->game.currentQuestion < 0)
+            sendCommand(socket, CMD_NONE);
+        else
+            playTopic(context, socket, &topicsContext);
+        break;
+    
+    default:
+        break;
     }
 
     return true;

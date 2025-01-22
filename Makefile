@@ -21,6 +21,7 @@ windows: ./src/client/client.c ./src/server/server.c
 
 run_server: test_server
 test_server: server
+	rm -f bin/data/users/prova.txt
 	./bin/server 127.0.0.1 1234
 
 run_client: test_client
@@ -28,6 +29,7 @@ test_client: client
 	./bin/client 127.0.0.1 1234
 
 gdb_server: server
+	rm -f bin/data/users/prova.txt
 	gdb -x ./src/server/.gdbinit ./bin/server
 
 gdb_client: client

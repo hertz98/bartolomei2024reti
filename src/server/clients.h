@@ -44,7 +44,7 @@ struct Client
         int nPlayable;
         int * score; // array di punteggi 
         int currentQuestion; // indice domanda corrente
-        Question * questions; // array di domande (allo scopo di mischiarle)
+        Question ** questions; // array di domande (allo scopo di mischiarle)
     } game;
 };
 
@@ -86,6 +86,8 @@ bool nameValid(ClientsContext * context, int socket, char * name);
 /// @param topicsContext Strutture dati inerenti ai topics
 /// @return true se è andato tutto liscio
 bool client_gameInit(Client * client, TopicsContext * topicsContext);
+
+bool client_quizInit(Client * client, TopicsContext * topicsContext);
 
 /// @brief Converte l'indice del topic fornito dal client nell'indice corrispondente nell'array dei topic
 /// La funzione è fatta per prendere direttamente in ingresso l'input del client, avendo dei controlli

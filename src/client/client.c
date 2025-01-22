@@ -20,6 +20,8 @@ bool signup();
 bool topicsSelection();
 char * newlineReplace(char * string);
 bool readUser_int(int * number);
+bool playTopic();
+void readUser_Enter();
 
 struct sockaddr_in server_addr;
 int sd;
@@ -28,6 +30,7 @@ struct Context
 {
     char name[255];
     MessageArray * topics;
+    int playing;
 } context;
 
 
@@ -84,13 +87,15 @@ int main (int argc, char ** argv)
     if (!signup())
         return 1;
 
-    topicsSelection();
+    while(true)
+    {
+        if (!topicsSelection() || !playTopic())
+            break;
+    }
 
-    //sendCommand(sd, CMD_STOP);
-    while(1);
     close(sd);
 
-    return(0);
+    return(EXIT_FAILURE);
 }
 
 bool mainMenu()
@@ -202,8 +207,7 @@ bool topicsSelection() // TODO: attenersi alle specifiche
     if (!context.topics->size)
     {
         printf("Nessun quiz disponibile per l'utente %s\n", context.name);
-        printf("Premere [Invio] per terminare\n");
-        while(getchar() != '\n');
+        readUser_Enter();
         exit(0);
     }
 
@@ -271,5 +275,85 @@ bool readUser_int(int * number)
             exit(0);
         }
         return false;
+    }
+}
+
+void readUser_Enter()
+{
+    printf("Premere [Invio] per continuare...\n");
+    while(getchar() != '\n');
+}
+
+bool playTopic()
+{
+    while(true)
+    {
+        if (!sendCommand(sd, CMD_NEXTQUESTION))
+        {
+            printf("Erroe di comunicazione");
+            exit(0);
+        }
+        
+        switch (recvCommand(sd))
+        {
+        case CMD_OK:
+            break;
+        
+        case CMD_NONE:
+            return true;
+        
+        default:
+            return false;
+            break;
+        }
+
+        clear();
+        printf("Quiz - %s\n+++++++++++++++++++++++++++++++\n",
+             (char*) context.topics->messages[context.playing].payload);
+        
+        MessageArray *question_msg = recvMessage(sd);
+        question_msg->messages[0].toFree = true;
+
+        printf(question_msg->messages[0].payload);
+        printf("\n");
+
+        char buffer[128];
+        while(true)
+        {
+            printf("Risposta: ");
+            fflush(stdout);
+            int ret;
+            if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) > 1)
+            {
+                buffer[ret - 1] = '\0';
+                break;
+            }
+        }
+        
+        MessageArray *answer_msg = messageArray(1);
+        messageString(&answer_msg->messages[0], buffer, false);
+        sendMessage(sd, answer_msg);
+
+        messageArrayDestroy(&question_msg);
+        messageArrayDestroy(&answer_msg);
+
+        switch (recvCommand(sd))
+        {
+        case CMD_CORRECT:
+            printf("Risposta corretta\n");
+            break;
+
+        case CMD_WRONG:
+            printf("Rispsota errata\n");
+            break;
+        
+        default:
+            printf("Errore nella ricezione del verdetto\n");
+            return false;
+            break;
+        }
+
+    readUser_Enter();
+        
     }
 }
