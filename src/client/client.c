@@ -14,6 +14,13 @@
 #include "../shared/message.h"
 #include "../shared/list.h"
 
+/********** PARAMETRI **********/
+
+#define DEFAULT_BIND_IP 127.0.0.1
+#define DEFAULT_BIND_PORT 1234
+
+/********** PROTOTIPI DI FUNZIONE **********/
+
 void clear();
 bool mainMenu();
 bool signup();
@@ -22,6 +29,8 @@ char * newlineReplace(char * string);
 bool readUser_int(int * number);
 bool playTopic();
 void readUser_Enter();
+
+/********** VARIABILI GLOBALI **********/
 
 struct sockaddr_in server_addr;
 int sd;
@@ -33,6 +42,7 @@ struct Context
     int playing;
 } context;
 
+/********** METODI **********/
 
 void socketclose()
 { 
@@ -43,19 +53,31 @@ void socketclose()
 
 int init(int argc, char ** argv)
 {
-    if (argc < 3)
-    {
-        printf("Argomenti insufficienti\n");
-        return(1);
-    }
-
     sd = socket(AF_INET, SOCK_STREAM, 0);
     
     memset(&server_addr, 0, sizeof(server_addr)); // Pulizia
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = atoi( argv[2] );
 
-    if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) == -1)
+    char * addr;
+    switch (argc)
+    {
+    case 0:
+    case 1:
+        addr = "DEFAULT_BIND_IP";
+        server_addr.sin_port = htons( DEFAULT_BIND_PORT );
+        break;
+    case 2:
+        addr = "DEFAULT_BIND_IP";
+        server_addr.sin_port = htons( atoi( argv[1] ));
+        break;
+    case 3:
+    default:
+        addr = argv[1];
+        server_addr.sin_port = htons( atoi( argv[2] ));
+        break;
+    }
+
+    if (inet_pton(AF_INET, addr, &server_addr.sin_addr) == -1)
     {
         printf("Errore nella conversione dell'indirizzo ip\n");
         return 1;

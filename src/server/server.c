@@ -18,25 +18,42 @@
 #include "util.h"
 #include "../shared/message.h"
 
-#define DEBUG
+/********** PARAMETRI **********/
+
+#define DEFAULT_BIND_IP 127.0.0.1
+#define DEFAULT_BIND_PORT 1234
 
 #define MAX_CLIENTs 32
 #define REFRESH_RATE 1000
 #define DATA_DIR "./data/"
 
-void signalhandler(int signal);
-void exiting();
-void closeSockets(void * p);
+// #define BY_SPECIFICATIONS // Abilitare per l'esame
+
+#ifndef BY_SPECIFICATIONS
+    #define DEBUG // Disabilitare per l'esame
+    #define PRINT_TOPIC_NAMES_ALWAYS
+    #define PRINT_COLON_SCORE
+    #define PRINT_SCORE_COMPLETED
+#endif
+
+/********** PROTOTIPI DI FUNZIONE **********/
 
 int init(int, char **);
 bool clientHandler(ClientsContext * context, int socket);
 bool sendHandler(ClientsContext * context, int socket);
 void commandHandler();
 void printServer();
+void signalhandler(int signal);
+void exiting();
+void closeSockets(void * p);
+
+/********** VARIABILI GLOBALI **********/
 
 int listener;
 ClientsContext clientsContext;
 TopicsContext topicsContext;
+
+/********** METODI **********/
 
 int main (int argc, char ** argv)
 {
@@ -106,23 +123,32 @@ int main (int argc, char ** argv)
 
 int init(int argc, char ** argv)
 {
-    if (argc < 3)
-    {
-        printf("Argomenti insufficienti\n");
-        return(1);
-    }
-
-    //buffer[BUFFER_SIZE] = '\0';
-
     listener = socket(AF_INET, SOCK_STREAM, 0);
 
     struct sockaddr_in my_addr;
     memset(&my_addr, 0, sizeof(my_addr)); // Pulizia
     my_addr.sin_family = AF_INET ;
-    my_addr.sin_port = atoi( argv[2] );
-    my_addr.sin_addr.s_addr = INADDR_ANY;
 
-    if (inet_pton(AF_INET, argv[1], &my_addr.sin_addr) == -1)
+    char * addr;
+    switch (argc)
+    {
+    case 0:
+    case 1:
+        addr = "DEFAULT_BIND_IP";
+        my_addr.sin_port = htons( DEFAULT_BIND_PORT );
+        break;
+    case 2:
+        addr = "DEFAULT_BIND_IP";
+        my_addr.sin_port = htons( atoi( argv[1] ));
+        break;
+    case 3:
+    default:
+        addr = argv[1];
+        my_addr.sin_port = htons( atoi( argv[2] ));
+        break;
+    }
+
+    if (inet_pton(AF_INET, addr, &my_addr.sin_addr) == -1)
     {
         printf("Errore nella conversione dell'indirizzo ip\n");
         return 1;
@@ -144,7 +170,7 @@ int init(int argc, char ** argv)
         return 1;
     }
 
-    if (listen(listener, MAX_CLIENTs) == -1)
+    if (listen(listener, MAX_CLIENTs) == -1) // Massimo numero di clients prima di scegliere un nome
     {
         perror("Errore nella listen");
         return 1;
@@ -211,10 +237,6 @@ bool clientHandler(ClientsContext * context, int socket)
 
     return true;
 }
-
-#define PRINT_TOPIC_NAMES_ALWAYS
-#define PRINT_COLON_SCORE
-#define PRINT_SCORE_COMPLETED
 
 void printServer()
 {
