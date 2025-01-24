@@ -3,6 +3,10 @@
 #include <limits.h>
 #include "../shared/list.h"
 
+#define DATA_DIR "./data/"
+#define TOPICS_DIR "./topics/"
+#define USERS_DIR "./users/"
+
 typedef struct Question 
 {
     char * question;
@@ -28,7 +32,7 @@ typedef struct TopicsContext
 /// @param context Strutture dati inerenti ai topic non inizializzate
 /// @param directory Percorso contenente i topic
 /// @return Ritorna true se ha successo
-bool topicsInit(TopicsContext *context, char * directory);
+bool topicsInit(TopicsContext *context);
 
 /// @brief Analizza la cartella dei topic e per ciascun file crea un topic e lo carica in memoria
 /// @param context Strutture dati inerenti ai topic inizializzate
@@ -60,6 +64,12 @@ bool topicPlayed(TopicsContext * context, char * user, int topic);
 
 /* FUNZIONI UTILITA' */
 
+/// @brief Crea una directory nel percorso voluto
+/// @param buffer_path buffer contentente il percorso dove creare la directory
+/// @param directory nome della directory
+/// @return true se la directory è stata creata o esiste già, false in case di errore
+bool directoryCreate(char * buffer_path, char * directory);
+
 /// @brief Funzione utilità: dati due topic, compara i nomi dei topic al fine di permetterne il riordinamento usando qsort della stl
 /// @param a Puntatore void al primo topic
 /// @param b Puntatore void al secondo topic
@@ -77,7 +87,3 @@ void topics_questionDestroy(void * data);
 /// @brief Ottiene il nome del topic dal nome del file completo
 /// @param name Stringa contenente il nome del file con numerazione ed estensione
 void topic_name(char * name);
-
-/// @brief Prepara la stringa contentente la lista ordinata dei topics al fine di un invio rapido ai clients
-/// @param context Strutture dati inerenti ai topic inizializzate
-void topicsStringPrepare(TopicsContext * context);

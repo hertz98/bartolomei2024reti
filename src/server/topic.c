@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <dirent.h> 
 #include <unistd.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "topic.h"
 #include "util.h"
 
@@ -12,7 +15,23 @@
 // #define DEBUG_TOPIC
 // #define DEBUG_QUESTION
 
-bool topicsInit(TopicsContext *context, char * directory)
+bool directoryCreate(char * buffer_path, char * directory)
+{
+    int endline = strlen(buffer_path);
+    strncat(buffer_path, directory, NAME_MAX);
+
+    if (mkdir(buffer_path, 0755) < 0)
+        if (errno != EEXIST)
+        {
+            perror("Errore nella creazione delle directory");
+            return false;
+        }
+
+    buffer_path[endline] = '\0';
+    return true;
+}
+
+bool topicsInit(TopicsContext *context)
 {
     context->nTopics = 0;
     context->topics = NULL;
@@ -23,11 +42,16 @@ bool topicsInit(TopicsContext *context, char * directory)
     if (!parentDirectory(context->directory))
         return true;
 
-    strcat(context->directory, directory);
+    strcat(context->directory, DATA_DIR);
 
     #ifdef DEBUG_PATH
         printf("directory: %s\n", context->directory); // DEBUG
     #endif
+    
+    if (!directoryCreate(context->directory, "") ||
+        !directoryCreate(context->directory, TOPICS_DIR) ||
+        !directoryCreate(context->directory, USERS_DIR))
+        return false;
 
     return false;
 }
@@ -39,8 +63,7 @@ bool topicsLoader(TopicsContext *context)
     #endif
 
     int endline = strlen(context->directory);
-    strncat(context->directory, "./topics/", NAME_MAX);
-
+    strncat(context->directory, TOPICS_DIR, NAME_MAX);
     DIR * stream = opendir(context->directory);
     struct dirent *file;
 
@@ -81,8 +104,6 @@ bool topicsLoader(TopicsContext *context)
     #ifdef DEBUG_PATH
         printf("directory: %s\n", context->directory); // DEBUG
     #endif
-
-    topicsStringPrepare(context);
 
     return true;
 }
@@ -178,28 +199,6 @@ void topic_name(char *name)
     return;
 }
 
-void topicsStringPrepare(TopicsContext *context)
-{
-    context->topicsString = (char *) malloc(sizeof(char));
-
-    char * topicsString = context->topicsString;
-    topicsString[0] = '\0';
-    int size = 1;
-
-    for (int i = 0; i < context->nTopics; i++)
-    {
-        char * currentName = context->topics[i].name;
-        
-        size += + strlen(currentName) + 2;
-        topicsString = realloc(topicsString, size);
-
-        strcat(topicsString, context->topics[i].name);
-        if (i != context->nTopics - 1)
-            strcat(topicsString, "\n");
-    }
-    return;
-}
-
 void topicsFree(TopicsContext *context)
 {
     if (!context->nTopics)
@@ -219,7 +218,7 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
     int endline = strlen(context->directory);
     
     char *path = context->directory;
-    strncat(path, "./users/", NAME_MAX);
+    strncat(path, USERS_DIR, NAME_MAX);
     strncat(path, user, NAME_MAX);
     strncat(path, ".txt", NAME_MAX);
     
@@ -265,7 +264,7 @@ bool topicPlayed(TopicsContext *context, char *user, int i_topic)
     int endline = strlen(context->directory);
     
     char *path = context->directory;
-    strncat(path, "./users/", NAME_MAX);
+    strncat(path, USERS_DIR, NAME_MAX);
     strncat(path, user, NAME_MAX);
     strncat(path, ".txt", NAME_MAX);
 

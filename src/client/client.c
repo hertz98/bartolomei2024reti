@@ -16,7 +16,7 @@
 
 /********** PARAMETRI **********/
 
-#define DEFAULT_BIND_IP 127.0.0.1
+#define DEFAULT_BIND_IP "127.0.0.1"
 #define DEFAULT_BIND_PORT 1234
 
 /********** PROTOTIPI DI FUNZIONE **********/
@@ -63,11 +63,11 @@ int init(int argc, char ** argv)
     {
     case 0:
     case 1:
-        addr = "DEFAULT_BIND_IP";
+        addr = DEFAULT_BIND_IP;
         server_addr.sin_port = htons( DEFAULT_BIND_PORT );
         break;
     case 2:
-        addr = "DEFAULT_BIND_IP";
+        addr = DEFAULT_BIND_IP;
         server_addr.sin_port = htons( atoi( argv[1] ));
         break;
     case 3:
@@ -100,11 +100,11 @@ int main (int argc, char ** argv)
 {
     int ret;
 
-    if ((ret = init(argc, argv)))
-        return ret;
-
     if (!mainMenu())
         return 0;
+    
+    if ((ret = init(argc, argv)))
+        return ret;
 
     if (!signup())
         return 1;

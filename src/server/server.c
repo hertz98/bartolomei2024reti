@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -20,12 +21,11 @@
 
 /********** PARAMETRI **********/
 
-#define DEFAULT_BIND_IP 127.0.0.1
+#define DEFAULT_BIND_IP "127.0.0.1"
 #define DEFAULT_BIND_PORT 1234
 
 #define MAX_CLIENTs 32
 #define REFRESH_RATE 1000
-#define DATA_DIR "./data/"
 
 // #define BY_SPECIFICATIONS // Abilitare per l'esame
 
@@ -66,7 +66,7 @@ int main (int argc, char ** argv)
     if ((ret = clientsInit(&clientsContext, MAX_CLIENTs)))
         return ret;
 
-    if ((ret = topicsInit(&topicsContext, DATA_DIR)))
+    if ((ret = topicsInit(&topicsContext)))
         return ret;
 
     if (!topicsLoader(&topicsContext))
@@ -134,11 +134,11 @@ int init(int argc, char ** argv)
     {
     case 0:
     case 1:
-        addr = "DEFAULT_BIND_IP";
+        addr = DEFAULT_BIND_IP;
         my_addr.sin_port = htons( DEFAULT_BIND_PORT );
         break;
     case 2:
-        addr = "DEFAULT_BIND_IP";
+        addr = DEFAULT_BIND_IP;
         my_addr.sin_port = htons( atoi( argv[1] ));
         break;
     case 3:

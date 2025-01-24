@@ -405,11 +405,6 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
 
     if (!currentOperation->function)
     {
-        if (!client->game.nPlayable)
-        {
-            // TODO: Comando topics finiti
-        }
-
         currentOperation->function = selectTopic;
         currentOperation->step = 0;
         currentOperation->p = topics;
@@ -676,7 +671,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         {
         case OP_DONE:
             MessageArray *answer_msg = currentOperation->tmp;
-            // TODO: Funzioni di condizionamento della risposta, strip, stringa NULL
+            // TODO: Custom answer compare
             if (!stricmp(answer_msg->messages[0].payload, currentQuestion->answer))
             {
                 sendCommand(socket, CMD_CORRECT);
