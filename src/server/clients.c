@@ -208,18 +208,19 @@ OperationResult sendData(int socket, void *buffer, unsigned int lenght, unsigned
 
 enum Command recvCommand(int socket)
 {
-    int ret;
+    int ret,
+        sent = 0;
 
     u_int8_t tmp;
 
-    if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
+    while (sent < sizeof(tmp))
     {
-        if (!ret) // Client disconnesso
+        if ((ret = recv(socket, &tmp + sent, sizeof(tmp)- sent, 0)) > 0)
+            sent += ret;
+        else if (errno == EAGAIN || errno == EWOULDBLOCK)
+            continue;
+        else
             return false;
-
-        if (errno)
-            perror("recvCommand failed");
-        return false;    
     }
 
     return (enum Command) tmp;
@@ -244,17 +245,21 @@ bool nameValid(ClientsContext * context, int socket, char * name)
 
 bool sendCommand(int socket, enum Command cmd)
 {
-    int ret;
+    int ret,
+        received = 0;
 
     u_int8_t tmp = (u_int8_t) cmd;
 
-    if ((ret = send(socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
+    while (received < sizeof(tmp))
     {
-        if (errno)
-            perror("sendCommand failed");
-        return false;    
+        if ((ret = send(socket, &tmp + received, sizeof(tmp)- received, 0)) > 0)
+            received += ret;
+        else if (errno == EAGAIN || errno == EWOULDBLOCK)
+            continue;
+        else
+            return false;
     }
-    
+
     return true;
 }
 

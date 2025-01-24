@@ -1,2 +1,2 @@
 - Attenersi alle specifiche
-- recvCommand e sendCommand
+- client endquiz and scores

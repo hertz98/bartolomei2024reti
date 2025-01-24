@@ -46,24 +46,14 @@ bool sendData(int socket, void * buffer, unsigned int lenght)
     return true;
 }
 
-enum Command recvCommand(int socket)
+enum Command inline recvCommand(int socket)
 {
-    int ret;
-
     u_int8_t tmp;
 
-    if ((ret = recv(socket, &tmp, sizeof(tmp), 0) != sizeof(tmp)))
-    {
-        if (!ret)
-            return false;
-        if (errno)
-            perror("recvCommand failed");
-        return false;    
-    }
-
-    //client->recv_timestamp = time(NULL);
-
-    return (enum Command) tmp;
+    if (recvData(socket, &tmp, sizeof(tmp)))
+        return (enum Command) tmp;
+    else
+        return false;
 }
 
 MessageArray * recvMessage(int socket)
@@ -116,19 +106,10 @@ bool recvData(int socket, void * buffer, unsigned int lenght)
     return true;
 }
 
-bool sendCommand(int socket, enum Command cmd)
+bool inline sendCommand(int socket, enum Command cmd)
 {
-    int ret;
-
     u_int8_t tmp = (u_int8_t) cmd;
 
-    if ((ret = send(socket, &tmp, sizeof(tmp), 0)) != sizeof(tmp))
-    {
-        if (errno)
-            perror("sendCommand failed");
-        return false;    
-    }
-    
-    return true;
+    return sendData(socket, &tmp, sizeof(tmp));
 }
 
