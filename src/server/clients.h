@@ -17,22 +17,24 @@ typedef enum OperationResult {
 typedef struct Client Client;
 typedef struct ClientsContext ClientsContext;
 typedef struct Message Message;
-typedef struct Operation Operation;
+
+typedef struct Operation
+{
+    OperationResult (* function)(ClientsContext *context, int socket, void *);
+    // Parametri con cui verrà richiamata la funzione
+    int step;
+    void * p;
+
+    bool init;
+    void *tmp;
+} Operation;
 
 struct Client
 {
     bool registered;
     char * name;
 
-    struct Operation
-    {
-        OperationResult (* function)(ClientsContext *context, int socket, void *);
-        // Parametri con cui verrà richiamata la funzione
-        int step;
-        void * p;
-
-        void *tmp;
-    } operation[MAX_STACKABLE_OPERATIONS]; // Si possono accavallare al più due operazioni
+    Node * operation;
     
     MessageArray * toSend; // Messaggi
     int transferring;
@@ -106,7 +108,20 @@ bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
 
 // Operations
 
-Operation *getOperation(Client * client, void * function);
+/// @brief Si occupa di eseguire le operazioni in ordine e di deallocarle al termine
+/// @param client Struttura dati del client inizializzata
+/// @return Il risultato dell'operazione, false in caso di fallimento
+bool operationHandler(ClientsContext *context, int socket);
+
+/// @brief Alloca una nuova operazione e la esegue
+/// @param function Operazione da eseguire
+/// @param context Strutture dati inerenti ai client inizializzate da passare alla operazione
+/// @param socket indice del socket da passare alla operazione
+/// @param p Puntatore da passare alla operazione
+/// @return Il risultato dell'operazione, false in caso di fallimento
+bool operationCreate(OperationResult (* function)(ClientsContext *context, int socket, void *), ClientsContext *context, int socket, void *p);
+
+void operationDestroy(void * operation);
 
 OperationResult sendMessage(ClientsContext * context, int socket, void * message);
 

@@ -346,26 +346,91 @@ bool client_setPlayed(Client * client, TopicsContext * topics, int topic)
     return false;
 }
 
+bool operationHandler(ClientsContext *context, int socket)
+{
+    Client *client = context->clients[socket];
+
+    if (!client->operation)
+        return true;
+
+    while(client->operation)
+    {
+        Operation * currentOperation = client->operation->data;
+
+        OperationResult ret; 
+        switch (ret = (*currentOperation->function)(context, socket, currentOperation->p))
+        {
+            case OP_OK:
+                return true;
+            case OP_DONE:
+                operationDestroy( list_extractHead(&client->operation) );
+                continue;
+            case OP_FAIL:
+            default:
+                return false;
+        }
+    }
+
+    return false;
+}
+
+bool operationCreate(OperationResult (*function)(ClientsContext *context, int socket, void *), ClientsContext *context, int socket, void *p)
+{
+    Client * client = context->clients[socket];
+
+    // TODO: controllo numero operazioni
+    
+    Operation * tmp = malloc(sizeof(Operation));
+    if (!tmp)
+        return OP_FAIL;
+
+    memset(tmp, 0, sizeof(Operation));
+    
+    tmp->init = true;
+    tmp->function = function;
+    tmp->p = p;
+
+    if (list_insertHead(&client->operation, tmp))
+        return operationHandler(context, socket);
+    else
+    {
+        free(tmp);
+        return OP_FAIL;
+    }
+
+    return false;
+}
+
+void operationDestroy(void *operation)
+{
+    if (!operation)
+        return;
+    free(operation);
+}
+
 OperationResult regPlayer(ClientsContext *context, int socket, void *topicsContext)
 {
     Client *client = context->clients[socket];
     TopicsContext * topics = topicsContext;
 
-    Operation *currentOperation = getOperation(client, regPlayer);
+    Operation *currentOperation = client->operation->data;
     if (!currentOperation)
         return OP_FAIL;
 
-    if (!currentOperation->function)
+    if (currentOperation->init)
     {
         currentOperation->function = regPlayer;
         currentOperation->step = 0;
         currentOperation->p = topics;
+        currentOperation->init = false;
     }
 
     OperationResult ret = OP_FAIL;
 
-    if((ret = recvMessage(context, socket, &client->name)) != OP_DONE)
-        return ret;
+    if (!client->name)
+        return operationCreate(recvMessage, context, socket, &client->name);
+    
+    ret = OP_FAIL;
 
     MessageArray * tmp = (void*) client->name;
     client->name = (char*) ((MessageArray *) client->name)->messages->payload;
@@ -397,17 +462,18 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
     Client *client = context->clients[socket];
     TopicsContext * topics = topicsContext;
 
-    Operation *currentOperation = getOperation(client, selectTopic);
+    Operation *currentOperation = client->operation->data;
     if (!currentOperation)
         return OP_FAIL;
 
     OperationResult ret = OP_FAIL;
 
-    if (!currentOperation->function)
+    if (currentOperation->init)
     {
         currentOperation->function = selectTopic;
         currentOperation->step = 0;
         currentOperation->p = topics;
+        currentOperation->init = false;
 
         currentOperation->tmp = messageArray(client->game.nPlayable);
         for (int t = 0, m = 0; t < topics->nTopics; t++)
@@ -457,37 +523,23 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         break;
     }
 
-    if (ret == OP_DONE || ret == OP_FAIL)
-    {
-        memset(currentOperation, 0, sizeof(Operation));
-    }
-
     return ret;
-}
-
-struct Operation *getOperation(Client * client, void * function)
-{
-    for(int i = 0; i < MAX_STACKABLE_OPERATIONS; i++)
-    {
-        if (client->operation[i].function == function || client->operation[i].function == NULL)
-            return &client->operation[i];
-    }
-    return NULL;
 }
 
 OperationResult sendMessage(ClientsContext *context, int socket, void *message_array)
 {
     Client *client = context->clients[socket];
 
-    Operation *currentOperation = getOperation(client, sendMessage);
+    Operation *currentOperation = client->operation->data;
     if (!currentOperation)
         return OP_FAIL;
 
-    if (!currentOperation->function)
+    if (currentOperation->init)
     {
         currentOperation->function = sendMessage;
         currentOperation->step = 0;
         currentOperation->p = message_array;
+        currentOperation->init = false;
     }
 
     MessageArray *msgs = (MessageArray *) message_array;
@@ -510,9 +562,6 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
             break;
     }
 
-    if (ret == OP_DONE)
-        memset(currentOperation, 0, sizeof(Operation));
-
     return ret;
 }
 
@@ -521,18 +570,19 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
     Client * client = context->clients[socket];
     OperationResult ret = OP_OK;
 
-    Operation *currentOperation = getOperation(client, recvMessage);
+    Operation *currentOperation = client->operation->data;
     if (!currentOperation)
         return OP_FAIL;
 
     MessageArray ** msgs = (MessageArray **) pointer;
 
-    if (!currentOperation->function)
+    if (currentOperation->init)
     {
         currentOperation->function = recvMessage;
         currentOperation->p = pointer;
         *msgs = messageArray(0);
         client->transferring = -1;
+        currentOperation->init = false;
     }
 
     if (client->transferring == -1)
@@ -577,9 +627,6 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
         client->transferring++;
     }
 
-    client->transferring = false;
-    memset(currentOperation, 0, sizeof(Operation));
-
     return sendCommand(socket, CMD_OK) ? OP_DONE : OP_FAIL;
 }
 
@@ -614,7 +661,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
     Client *client = context->clients[socket];
     TopicsContext * topics = topicsContext;
 
-    Operation *currentOperation = getOperation(client, playTopic);
+    Operation *currentOperation = client->operation->data;
     if (!currentOperation)
         return OP_FAIL;
 
@@ -632,11 +679,12 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
     Topic *currentTopic = &topics->topics[client->game.playing];
     Question *currentQuestion = client->game.questions[client->game.currentQuestion];
 
-    if (!currentOperation->function)
+    if (currentOperation->init)
     {
         currentOperation->function = playTopic;
         currentOperation->step = 0;
         currentOperation->p = topics;
+        currentOperation->init = false;
         
         if (client->game.playing < 0 || client->game.currentQuestion < 0)
             sendCommand(socket, CMD_NONE);
@@ -695,11 +743,6 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
 
     default:
         break;
-    }
-
-    if (ret == OP_DONE || ret == OP_FAIL)
-    {
-        memset(currentOperation, 0, sizeof(Operation));
     }
 
     return ret;
