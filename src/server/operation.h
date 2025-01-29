@@ -20,7 +20,6 @@ typedef struct Operation
     int step;
     void * p;
 
-    bool init;
     void *tmp;
 } Operation;
 
