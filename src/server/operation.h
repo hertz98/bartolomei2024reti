@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#define MAX_OPERATIONS_PER_CLIENT 5
+
 typedef struct ClientsContext ClientsContext;
 
 // Operations

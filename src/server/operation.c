@@ -9,7 +9,10 @@ bool operationHandler(ClientsContext *context, int socket)
     Client *client = context->clients[socket];
 
     if (!client->operation)
-        return true;
+        return !client->nOperations ? true : false;
+
+    if (client->nOperations > MAX_OPERATIONS_PER_CLIENT)
+        return false;
 
     while(client->operation)
     {
@@ -21,12 +24,11 @@ bool operationHandler(ClientsContext *context, int socket)
             case OP_OK:
                 return true;
             case OP_DONE:
-                operationDestroy( list_extractHead(&client->operation) );
+                operationDestroy( list_extractHead(&client->operation)->data );
+                client->nOperations--;
                 continue;
             case OP_FAIL:
             default:
-                list_destroy(client->operation, operationDestroy);
-                client->operation = NULL;
                 return false;
         }
     }
@@ -51,7 +53,10 @@ bool operationCreate(OperationResult (*function)(ClientsContext *context, int so
     tmp->step = 0;
 
     if (list_insertHead(&client->operation, tmp))
+    {
+        client->nOperations++;
         return operationHandler(context, socket);
+    }
     else
     {
         free(tmp);
@@ -65,6 +70,12 @@ void operationDestroy(void *operation)
 {
     if (!operation)
         return;
+
+    if ( ((Operation *) operation)->function == recvMessage)
+    {
+
+    }
+
     free(operation);
 }
 

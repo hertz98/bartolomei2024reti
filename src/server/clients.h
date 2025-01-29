@@ -18,7 +18,8 @@ struct Client
     char * name;
 
     Node * operation;
-    
+    int nOperations;
+
     MessageArray * toSend; // Messaggi
     int transferring;
 

@@ -62,6 +62,8 @@ bool clientAdd(ClientsContext * context, int socket)
     client->game.playableTopics = NULL;
     client->game.questions = NULL;
     client->game.score = NULL;
+    client->operation = NULL;
+    client->nOperations = 0;
 
     FD_SET(socket, &context->master_fds);
 
@@ -103,6 +105,12 @@ void clientRemove(ClientsContext * context, int socket)
             free(client->game.questions);
         if (client->game.score)
             free(client->game.score);
+
+        if (client->operation)
+        {
+            list_destroy(client->operation, operationDestroy);
+            client->operation = NULL;
+        }
 
         free(client);
 
