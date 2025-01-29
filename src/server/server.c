@@ -17,6 +17,7 @@
 #include "topic.h"
 #include "clients.h"
 #include "util.h"
+#include "operation.h"
 #include "../shared/message.h"
 
 /********** PARAMETRI **********/

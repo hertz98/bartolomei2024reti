@@ -1,0 +1,355 @@
+#include <string.h>
+#include <arpa/inet.h>
+#include "util.h"
+#include "operation.h"
+#include "clients.h"
+
+bool operationHandler(ClientsContext *context, int socket)
+{
+    Client *client = context->clients[socket];
+
+    if (!client->operation)
+        return true;
+
+    while(client->operation)
+    {
+        Operation * currentOperation = client->operation->data;
+
+        OperationResult ret; 
+        switch (ret = (*currentOperation->function)(context, socket, currentOperation->p))
+        {
+            case OP_OK:
+                return true;
+            case OP_DONE:
+                operationDestroy( list_extractHead(&client->operation) );
+                continue;
+            case OP_FAIL:
+            default:
+                list_destroy(client->operation, operationDestroy);
+                client->operation = NULL;
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool operationCreate(OperationResult (*function)(ClientsContext *context, int socket, void *), ClientsContext *context, int socket, void *p)
+{
+    Client * client = context->clients[socket];
+
+    // TODO: controllo numero operazioni
+    
+    Operation * tmp = malloc(sizeof(Operation));
+    if (!tmp)
+        return OP_FAIL;
+
+    memset(tmp, 0, sizeof(Operation));
+    
+    tmp->init = true;
+    tmp->function = function;
+    tmp->p = p;
+
+    if (list_insertHead(&client->operation, tmp))
+        return operationHandler(context, socket);
+    else
+    {
+        free(tmp);
+        return OP_FAIL;
+    }
+
+    return false;
+}
+
+void operationDestroy(void *operation)
+{
+    if (!operation)
+        return;
+    free(operation);
+}
+
+OperationResult regPlayer(ClientsContext *context, int socket, void *topicsContext)
+{
+    Client *client = context->clients[socket];
+    TopicsContext * topics = topicsContext;
+
+    Operation *currentOperation = client->operation->data;
+    if (!currentOperation)
+        return OP_FAIL;
+
+    if (currentOperation->init)
+    {
+        currentOperation->function = regPlayer;
+        currentOperation->step = 0;
+        currentOperation->p = topics;
+        currentOperation->init = false;
+    }
+
+    OperationResult ret = OP_FAIL;
+
+    if (!client->name)
+        return operationCreate(recvMessage, context, socket, &client->name);
+    
+    ret = OP_FAIL;
+
+    MessageArray * tmp = (void*) client->name;
+    client->name = (char*) ((MessageArray *) client->name)->messages->payload;
+    messageArrayDestroy(&tmp);
+
+    if (nameValid(context, socket, client->name))
+    {
+        if (client_gameInit(client, topics) && sendCommand(socket, CMD_OK))
+        {
+            context->registered++;
+            client->registered = true;
+            ret = OP_DONE;
+        }
+    }
+    else
+    {
+        sendCommand(socket, CMD_NOTVALID);
+        currentOperation->step = 0;
+    }
+
+    if (ret == OP_DONE)
+        memset(currentOperation, 0, sizeof(Operation));
+
+    return ret;
+}
+
+OperationResult selectTopic(ClientsContext *context, int socket, void * topicsContext)
+{
+    Client *client = context->clients[socket];
+    TopicsContext * topics = topicsContext;
+
+    Operation *currentOperation = client->operation->data;
+    if (!currentOperation)
+        return OP_FAIL;
+
+    OperationResult ret = OP_FAIL;
+
+    if (currentOperation->init)
+    {
+        currentOperation->function = selectTopic;
+        currentOperation->step = 0;
+        currentOperation->p = topics;
+        currentOperation->init = false;
+
+        currentOperation->tmp = messageArray(client->game.nPlayable);
+        for (int t = 0, m = 0; t < topics->nTopics; t++)
+            if (client->game.playableTopics[t])
+                messageString( &( ((MessageArray *)currentOperation->tmp)->messages[m++] ), topics->topics[t].name, false);
+    }
+
+    switch (currentOperation->step++)
+    {
+    case 0:
+        return operationCreate(sendMessage, context, socket, currentOperation->tmp);
+    
+    case 1:
+        return OP_OK;
+
+    case 2:
+        return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
+    
+    case 3:
+        client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload); //TODO: Free()???
+        client->game.playing = client_playableIndex(client, topics, client->game.playing);
+        if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // TODO: Distinzione errore nel server da input scorretto
+        {
+            sendCommand(socket, CMD_NOTVALID);
+            ret = OP_FAIL;
+            break;
+        }
+        client->game.currentQuestion = 0;
+        if (!client_quizInit(client, topics))
+            ret = OP_FAIL;
+        return OP_DONE;
+    default:
+        break;
+    }
+
+    return ret;
+}
+
+OperationResult sendMessage(ClientsContext *context, int socket, void *message_array)
+{
+    Client *client = context->clients[socket];
+
+    Operation *currentOperation = client->operation->data;
+    if (!currentOperation)
+        return OP_FAIL;
+
+    if (currentOperation->init)
+    {
+        currentOperation->function = sendMessage;
+        currentOperation->step = 0;
+        currentOperation->p = message_array;
+        currentOperation->init = false;
+    }
+
+    MessageArray *msgs = (MessageArray *) message_array;
+    OperationResult ret = OP_FAIL;
+
+    switch (currentOperation->step++)
+    {
+        case 0:
+            if (sendCommand(socket, CMD_MESSAGE))
+            {
+                client->toSend = msgs;
+                client->transferring = -1;
+                FD_SET(socket, &context->write_fds);   
+                ret = OP_OK;
+            }
+            break;
+        case 1:
+            if (recvCommand(socket) == CMD_OK)
+                ret = OP_DONE;
+            break;
+    }
+
+    return ret;
+}
+
+OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
+{
+    Client * client = context->clients[socket];
+    OperationResult ret = OP_OK;
+
+    Operation *currentOperation = client->operation->data;
+    if (!currentOperation)
+        return OP_FAIL;
+
+    MessageArray ** msgs = (MessageArray **) pointer;
+
+    if (currentOperation->init)
+    {
+        currentOperation->function = recvMessage;
+        currentOperation->p = pointer;
+        *msgs = messageArray(0);
+        client->transferring = -1;
+        currentOperation->init = false;
+    }
+
+    if (client->transferring == -1)
+    {
+        Message *tmp = &(*msgs)->messages[0];
+        if ((ret = recvData(socket, &tmp->lenght, sizeof(tmp->lenght), &tmp->transmitted)) == OP_DONE)
+        {
+            int size = ntohl(tmp->lenght);
+            messageArrayDestroy((MessageArray **) msgs);
+            *msgs = messageArray(size);
+            client->transferring = 0;
+        }
+        return (bool) ret;
+    }
+    
+    while (client->transferring < (*msgs)->size)
+    {
+        Message * msg = &(*msgs)->messages[client->transferring];
+
+        if (msg->transmitted < sizeof(msg->lenght))
+        {
+            if ((ret = recvData(socket, &msg->lenght, sizeof(msg->lenght), &msg->transmitted)) == OP_DONE)
+                {
+                    msg->lenght = ntohl(msg->lenght);
+                    msg->payload = (void *) malloc(msg->lenght + 1);
+                }
+            else
+                return (bool) ret;
+        }
+
+        if (msg->lenght)
+        {
+            unsigned int sent = msg->transmitted - sizeof(msg->lenght);
+
+            if ((ret = recvData(socket, msg->payload, msg->lenght, &sent)) == OP_DONE)
+                *(char*) (msg->payload + msg->lenght) = '\0'; // Proteggo le stringhe ponendo il byte (in più) nullo
+            else
+                return (bool) ret;
+        }
+
+        client->transferring++;
+    }
+
+    return sendCommand(socket, CMD_OK) ? OP_DONE : OP_FAIL;
+}
+
+
+OperationResult playTopic(ClientsContext *context, int socket, void *topicsContext)
+{
+    Client *client = context->clients[socket];
+    TopicsContext * topics = topicsContext;
+
+    Operation *currentOperation = client->operation->data;
+    if (!currentOperation)
+        return OP_FAIL;
+
+    OperationResult ret = OP_FAIL;
+
+    if (!client->registered)
+        return OP_FAIL;
+
+    if (client->game.playing < 0 || client->game.currentQuestion < 0) // ridondante
+    {
+        sendCommand(socket, CMD_NONE);
+        return OP_DONE;
+    }
+
+    Topic *currentTopic = &topics->topics[client->game.playing];
+    Question *currentQuestion = client->game.questions[client->game.currentQuestion];
+
+    if (currentOperation->init)
+    {
+        currentOperation->function = playTopic;
+        currentOperation->step = 0;
+        currentOperation->p = topics;
+        currentOperation->init = false;
+        
+        if (client->game.playing < 0 || client->game.currentQuestion < 0)
+            sendCommand(socket, CMD_NONE);
+        else
+            sendCommand(socket, CMD_OK);
+
+        MessageArray *question_msg = messageArray(1);
+        messageString(&question_msg->messages[0], currentQuestion->question, false);
+        currentOperation->tmp = question_msg;
+    }
+
+    switch (currentOperation->step++)
+    {
+    case 0:
+        MessageArray *question_msg = currentOperation->tmp;
+        return operationCreate(sendMessage, context, socket, question_msg);
+    
+    case 1:
+        return OP_OK;
+
+    case 2:
+        return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
+
+    case 3:
+        MessageArray *answer_msg = currentOperation->tmp;
+        // TODO: Custom answer compare
+        if (!stricmp(answer_msg->messages[0].payload, currentQuestion->answer))
+        {
+            sendCommand(socket, CMD_CORRECT);
+            client->game.score[client->game.playing]++;
+        }
+        else
+            sendCommand(socket, CMD_WRONG);
+
+        if (++client->game.currentQuestion >= currentTopic->nQuestions)
+        {
+            client->game.playing = -1;
+            client->game.currentQuestion = -1;
+        }
+
+        return OP_DONE;
+
+    default:
+        break;
+    }
+
+    return ret;
+}

@@ -1,4 +1,5 @@
 To Do:
+- nOperations
 - SOCK_NONBLOCK
 - client endquiz and scores
 - inits: false should return fails, if fail pause before exit
