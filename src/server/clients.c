@@ -367,11 +367,13 @@ bool operationHandler(ClientsContext *context, int socket)
                 continue;
             case OP_FAIL:
             default:
+                list_destroy(client->operation, operationDestroy);
+                client->operation = NULL;
                 return false;
         }
     }
 
-    return false;
+    return true;
 }
 
 bool operationCreate(OperationResult (*function)(ClientsContext *context, int socket, void *), ClientsContext *context, int socket, void *p)
@@ -481,44 +483,30 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
                 messageString( &( ((MessageArray *)currentOperation->tmp)->messages[m++] ), topics->topics[t].name, false);
     }
 
-    switch (currentOperation->step)
+    switch (currentOperation->step++)
     {
     case 0:
-        switch (ret = (sendMessage(context, socket, currentOperation->tmp)))
-        {
-        case OP_DONE:
-            currentOperation->step++;
-        case OP_FAIL:
-            messageArrayDestroy((MessageArray **) &currentOperation->tmp);
-        default:
-            ret = (bool) ret;
-            break;
-        }
-        break;
+        return operationCreate(sendMessage, context, socket, currentOperation->tmp);
     
     case 1:
+        return OP_OK;
 
-        switch((ret = recvMessage(context, socket, &currentOperation->tmp)))
+    case 2:
+        return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
+    
+    case 3:
+        client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload); //TODO: Free()???
+        client->game.playing = client_playableIndex(client, topics, client->game.playing);
+        if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // TODO: Distinzione errore nel server da input scorretto
         {
-        case OP_DONE:
-            client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload); //TODO: Free()???
-            client->game.playing = client_playableIndex(client, topics, client->game.playing);
-            if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // TODO: Distinzione errore nel server da input scorretto
-            {
-                sendCommand(socket, CMD_NOTVALID);
-                ret = OP_FAIL;
-                break;
-            }
-            client->game.currentQuestion = 0;
-            if (!client_quizInit(client, topics))
-                ret = OP_FAIL;
-        case OP_FAIL:
-            messageArrayDestroy((MessageArray **) &currentOperation->tmp);
-        default:
+            sendCommand(socket, CMD_NOTVALID);
+            ret = OP_FAIL;
             break;
         }
-        break;
-
+        client->game.currentQuestion = 0;
+        if (!client_quizInit(client, topics))
+            ret = OP_FAIL;
+        return OP_DONE;
     default:
         break;
     }
@@ -696,50 +684,36 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         currentOperation->tmp = question_msg;
     }
 
-    switch (currentOperation->step)
+    switch (currentOperation->step++)
     {
     case 0:
         MessageArray *question_msg = currentOperation->tmp;
-
-        switch (ret = (sendMessage(context, socket, question_msg)))
-        {
-        case OP_DONE:
-            currentOperation->step++;
-        case OP_FAIL:
-            messageArrayDestroy((MessageArray **) &currentOperation->tmp);
-        default:
-            ret = (bool) ret;
-            break;
-        }
-        break;
+        return operationCreate(sendMessage, context, socket, question_msg);
     
     case 1:
+        return OP_OK;
 
-        switch((ret = recvMessage(context, socket, &currentOperation->tmp)))
+    case 2:
+        return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
+
+    case 3:
+        MessageArray *answer_msg = currentOperation->tmp;
+        // TODO: Custom answer compare
+        if (!stricmp(answer_msg->messages[0].payload, currentQuestion->answer))
         {
-        case OP_DONE:
-            MessageArray *answer_msg = currentOperation->tmp;
-            // TODO: Custom answer compare
-            if (!stricmp(answer_msg->messages[0].payload, currentQuestion->answer))
-            {
-                sendCommand(socket, CMD_CORRECT);
-                client->game.score[client->game.playing]++;
-            }
-            else
-                sendCommand(socket, CMD_WRONG);
-
-            if (++client->game.currentQuestion >= currentTopic->nQuestions)
-            {
-                client->game.playing = -1;
-                client->game.currentQuestion = -1;
-            }
-
-        case OP_FAIL:
-            messageArrayDestroy((MessageArray **) &currentOperation->tmp);
-        default:
-            break;
+            sendCommand(socket, CMD_CORRECT);
+            client->game.score[client->game.playing]++;
         }
-        break;
+        else
+            sendCommand(socket, CMD_WRONG);
+
+        if (++client->game.currentQuestion >= currentTopic->nQuestions)
+        {
+            client->game.playing = -1;
+            client->game.currentQuestion = -1;
+        }
+
+        return OP_DONE;
 
     default:
         break;

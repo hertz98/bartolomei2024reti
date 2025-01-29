@@ -191,7 +191,7 @@ bool clientHandler(ClientsContext * context, int socket)
         return false;
     
     if(client->operation)
-        operationHandler(context, socket);
+        return operationHandler(context, socket);
 
     if (!client->registered)
     {
