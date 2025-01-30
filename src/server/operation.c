@@ -27,7 +27,9 @@ bool operationHandler(ClientsContext *context, int socket)
                 else
                     return true; // Servi più tardi
             case OP_DONE:
-                operationDestroy( list_extractHead(&client->operation)->data );
+                Node * tmp = list_extractHead(&client->operation);
+                operationDestroy(tmp->data);
+                free(tmp);
                 client->nOperations--;
                 continue;
             case OP_FAIL:
@@ -64,6 +66,7 @@ bool operationCreate(OperationResult (*function)(ClientsContext *context, int so
     tmp->function = function;
     tmp->p = p;
     tmp->step = 0;
+    tmp->tmp = NULL;
 
     if (list_insertHead(&client->operation, tmp))
     {
@@ -84,9 +87,13 @@ void operationDestroy(void *operation)
     if (!operation)
         return;
 
-    if ( ((Operation *) operation)->function == recvMessage)
-    {
+    Operation * currentOperation = operation;
 
+    // Nel caso in cui si ricevono dei dati è necessario deallocarle anche quando non le operazioni non arrivano a fine
+    if ( currentOperation->function == selectTopic 
+        || currentOperation->function == playTopic)
+    {
+        messageArrayDestroy((MessageArray **) &currentOperation->tmp);
     }
 
     free(operation);
@@ -159,9 +166,11 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
 
     case 3:
         return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
-    
+
     case 4:
-        client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload); //TODO: Free()???
+        ((MessageArray *) currentOperation->tmp)->messages[0].toFree = true;
+        client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload);
+        messageArrayDestroy((MessageArray**) &currentOperation->tmp);
         client->game.playing = client_playableIndex(client, topics, client->game.playing);
         
         if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // TODO: Distinzione errore nel server da input scorretto
@@ -335,6 +344,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
 
     case 4:
         MessageArray *answer_msg = currentOperation->tmp;
+        answer_msg->messages[0].toFree = true;
         
         if (!stricmp(answer_msg->messages[0].payload, currentQuestion->answer)) // TODO: Custom answer compare
         {

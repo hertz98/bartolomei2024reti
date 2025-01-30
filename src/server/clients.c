@@ -189,7 +189,8 @@ OperationResult sendMessageHandler(ClientsContext *context, int socket)
     }
 
     client->transferring = false;
-    client->toSend = NULL;
+    messageArrayDestroy((MessageArray **) &client->toSend);
+    //client->toSend = NULL;
     return OP_DONE;
 }
 
