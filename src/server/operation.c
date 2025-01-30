@@ -120,10 +120,10 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
         }
         else
         {
-            sendCommand(socket, CMD_NOTVALID);
             free(client->name);
             client->name = NULL;
-            currentOperation->step = 0;
+            if (!sendCommand(socket, CMD_NOTVALID))
+                return OP_FAIL;
             return OP_DONE;
         }
     
