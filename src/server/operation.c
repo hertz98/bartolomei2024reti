@@ -109,7 +109,8 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
         client->name = (char*) ((MessageArray *) client->name)->messages->payload;
         messageArrayDestroy(&tmp);
 
-        if (nameValid(context, socket, client->name))
+        enum Command ret;
+        if ((ret = nameValid(context, socket, client->name)) == CMD_OK)
         {
             if (client_gameInit(client, topics) && sendCommand(socket, CMD_OK))
             {
@@ -122,7 +123,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
         {
             free(client->name);
             client->name = NULL;
-            if (!sendCommand(socket, CMD_NOTVALID))
+            if (!sendCommand(socket, ret))
                 return OP_FAIL;
             return OP_DONE;
         }

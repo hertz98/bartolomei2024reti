@@ -8,6 +8,10 @@
 #include "topic.h"
 #include "operation.h"
 
+// Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
+#define CLIENT_NAME_MAX 32
+#define CLIENT_NAME_MIN 4
+
 typedef struct Client Client;
 typedef struct ClientsContext ClientsContext;
 typedef struct Message Message;
@@ -65,7 +69,7 @@ OperationResult sendMessageHandler(ClientsContext * context, int socket);
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
 OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int *received);
 
-bool nameValid(ClientsContext * context, int socket, char * name);
+enum Command nameValid(ClientsContext * context, int socket, char * name);
 
 /// @brief Inizializza le strutture dati inerenti al gioco (si fa dopo la registrazione)
 /// @param client Struttura dati del client inizializzate con dati di gioco non inizializzati

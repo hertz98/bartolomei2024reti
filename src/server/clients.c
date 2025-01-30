@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <limits.h>
+#include <ctype.h>
 #include "clients.h"
 #include "util.h"
 
@@ -234,21 +235,23 @@ enum Command recvCommand(int socket)
     return (enum Command) tmp;
 }
 
-bool nameValid(ClientsContext * context, int socket, char * name)
+enum Command nameValid(ClientsContext * context, int socket, char * name)
 {
-    // Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
-    if (strlen(name) > NAME_MAX - strlen(".txt") && strlen(name) < 4)
-        return false;
+    if (strlen(name) == 0)
+        return CMD_NOTVALID;
+
+    if (strlen(name) > CLIENT_NAME_MAX && strlen(name) < CLIENT_NAME_MIN)
+        return CMD_NOTVALID;
+
+    if (!isAlphaNumeric(name))
+        return CMD_NOTVALID ;
 
     for (int i = 0; i <= context->fd_max; i++)
         if (i != socket && isClient(context, i, false))
             if (strcmp(name, context->clients[i]->name) == 0)
-                return false;
-    
-    if (!isAlphaNumeric(name))
-        return false;
+                return CMD_EXISTING;
 
-    return true;
+    return CMD_OK;
 }
 
 bool sendCommand(int socket, enum Command cmd)
