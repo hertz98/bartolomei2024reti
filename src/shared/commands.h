@@ -1,4 +1,4 @@
-enum Command 
+typedef enum Command 
 {
     CMD_STOP = false, // Terminate
     CMD_NONE, 
@@ -13,4 +13,4 @@ enum Command
     CMD_NEXTQUESTION, // Client ask to play next question
     CMD_CORRECT, // Server informs that the answer is correct
     CMD_WRONG, // Server informs that the answer is wrong
-};
+} Command;

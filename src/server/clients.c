@@ -235,16 +235,20 @@ enum Command recvCommand(int socket)
     return (enum Command) tmp;
 }
 
-enum Command nameValid(ClientsContext * context, int socket, char * name)
+Command nameValid(ClientsContext * context, int socket, char * name)
 {
+    if (!name)
+        return CMD_STOP;
+
     if (strlen(name) == 0)
         return CMD_NOTVALID;
 
     if (strlen(name) > CLIENT_NAME_MAX && strlen(name) < CLIENT_NAME_MIN)
         return CMD_NOTVALID;
 
-    if (!isAlphaNumeric(name))
-        return CMD_NOTVALID ;
+    for (char *c = name; *c; c++)
+        if (!isprint(*c))
+            return CMD_NOTVALID;
 
     for (int i = 0; i <= context->fd_max; i++)
         if (i != socket && isClient(context, i, false))
