@@ -69,11 +69,11 @@ OperationResult sendMessageHandler(ClientsContext * context, int socket);
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
 OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int *received);
 
-/// @brief Verifica se il nome utente fornito
-/// @param context 
-/// @param socket 
-/// @param name 
-/// @return 
+/// @brief Verifica il nome utente fornito dal client
+/// @param context Struttura dati del client inizializzate con dati di gioco inizializzata
+/// @param socket Indice del descrittore del socket corrispettivo al client
+/// @param name Stringa contenente il nome fornito dal client
+/// @return Il comando da inviare al client
 Command nameValid(ClientsContext * context, int socket, char * name);
 
 /// @brief Inizializza le strutture dati inerenti al gioco (si fa dopo la registrazione)
