@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
+#include <ctype.h>
 #include "util.h"
 
 bool parentDirectory(char * path)
@@ -86,11 +87,9 @@ int stricmp(const char *string1, const char *string2)
 
 bool isAlphaNumeric(const char *string)
 {
-    for (int i = 0; string[i] != '\0'; i++)
+    for (int i = 0; string[i]; i++)
     {
-        if (!((string[i] >= 'A' && string[i] <= 'Z') ||
-            (string[i] >= 'a' && string[i] <= 'z') ||
-            (string[i] >= '0' && string[i] <= '9')))
+        if (!isalnum(string[i]))
             return false;
     }
     return true;

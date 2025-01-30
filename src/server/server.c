@@ -17,6 +17,7 @@
 #include "topic.h"
 #include "clients.h"
 #include "util.h"
+#include "operation.h"
 #include "../shared/message.h"
 
 /********** PARAMETRI **********/
@@ -185,29 +186,20 @@ int init(int argc, char ** argv)
 
 bool clientHandler(ClientsContext * context, int socket)
 {
-    OperationResult ret;
-
     struct Client * client = context->clients[socket];
 
     if (client->toSend != NULL) // Il client non è in sync con quello del server, termina
         return false;
     
-    if (client->operation[0].function)
-        switch ((ret = client->operation[0].function(context, socket, client->operation[0].p)))
-        {
-            case OP_DONE:
-            case OP_FAIL:
-                memset(client->operation, 0, sizeof(struct Operation) * MAX_STACKABLE_OPERATIONS);
-            case OP_OK:
-                return (bool) ret;
-        }
+    if(client->operation)
+        return operationHandler(context, socket);
 
     if (!client->registered)
     {
         if (recvCommand(socket) == CMD_REGISTER)
         {
             sendCommand(socket, CMD_OK);
-            return regPlayer(context, socket, &topicsContext);
+            return operationCreate(regPlayer, context, socket, &topicsContext);
         }
         else
             return false;
@@ -221,14 +213,14 @@ bool clientHandler(ClientsContext * context, int socket)
 
     case CMD_TOPICS:
         sendCommand(socket, CMD_OK);
-        selectTopic(context, socket, &topicsContext);
+        return operationCreate(selectTopic, context, socket, &topicsContext);
         break;
 
     case CMD_NEXTQUESTION:
         if (client->game.playing < 0 || client->game.currentQuestion < 0)
             sendCommand(socket, CMD_NONE);
         else
-            playTopic(context, socket, &topicsContext);
+            return operationCreate(playTopic, context, socket, &topicsContext);
         break;
     
     default:

@@ -4,36 +4,26 @@
 #include <sys/select.h>
 #include "../shared/commands.h"
 #include "../shared/message.h"
+
 #include "topic.h"
+#include "operation.h"
 
-#define MAX_STACKABLE_OPERATIONS 2
-
-typedef enum OperationResult {
-    OP_FAIL = false, // L'operazione non ha avuto successo
-    OP_OK = true, // L'operazione sta procedendo
-    OP_DONE // L'operazione è terminata con successo
-} OperationResult;
+// Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
+#define CLIENT_NAME_MAX 32
+#define CLIENT_NAME_MIN 4
 
 typedef struct Client Client;
 typedef struct ClientsContext ClientsContext;
 typedef struct Message Message;
-typedef struct Operation Operation;
 
 struct Client
 {
     bool registered;
     char * name;
 
-    struct Operation
-    {
-        OperationResult (* function)(ClientsContext *context, int socket, void *);
-        // Parametri con cui verrà richiamata la funzione
-        int step;
-        void * p;
+    Node * operation;
+    int nOperations;
 
-        void *tmp;
-    } operation[MAX_STACKABLE_OPERATIONS]; // Si possono accavallare al più due operazioni
-    
     MessageArray * toSend; // Messaggi
     int transferring;
 
@@ -79,7 +69,12 @@ OperationResult sendMessageHandler(ClientsContext * context, int socket);
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
 OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int *received);
 
-bool nameValid(ClientsContext * context, int socket, char * name);
+/// @brief Verifica se il nome utente fornito
+/// @param context 
+/// @param socket 
+/// @param name 
+/// @return 
+Command nameValid(ClientsContext * context, int socket, char * name);
 
 /// @brief Inizializza le strutture dati inerenti al gioco (si fa dopo la registrazione)
 /// @param client Struttura dati del client inizializzate con dati di gioco non inizializzati
@@ -103,17 +98,3 @@ int client_playableIndex(Client * client, TopicsContext * topics, int playable);
 /// @param topic Indice reale del topic
 /// @return true se è andato tutto liscio
 bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
-
-// Operations
-
-Operation *getOperation(Client * client, void * function);
-
-OperationResult sendMessage(ClientsContext * context, int socket, void * message);
-
-OperationResult recvMessage(ClientsContext * context, int socket, void * pointer);
-
-OperationResult regPlayer(ClientsContext * context, int socket, void * topicsContext);
-
-OperationResult selectTopic(ClientsContext *context, int socket, void * topicsContext);
-
-OperationResult playTopic(ClientsContext *context, int socket, void * topicsContext);

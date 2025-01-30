@@ -153,8 +153,7 @@ inline void clear()
 bool signup()
 {
     int ret;
-    enum Command cmd = CMD_STOP;
-    
+
     clear();
     printf("Trivia Quiz\n+++++++++++++++++++++++++++++++\n");
 
@@ -169,40 +168,40 @@ bool signup()
 
         if (!sendCommand(sd, CMD_REGISTER))
         {
-            printf("Errore nella comunicazione");
+            printf("Errore nella comunicazione\n");
             return false;
         }
 
-        if ( recvCommand(sd) == CMD_OK)
+        if ( recvCommand(sd) != CMD_OK)
         {
-            MessageArray *tmp = messageArray(1);
-            messageString(&tmp->messages[0], context.name, false);
-            sendMessage(sd, tmp);
+            printf("Rifiutato dal server\n");
+            return false;
+        }
 
-            if ((cmd = recvCommand(sd)) == CMD_OK)
-            {
+        MessageArray *tmp = messageArray(1);
+        messageString(&tmp->messages[0], context.name, false);
+        sendMessage(sd, tmp);
+
+        switch(recvCommand(sd))
+        {
+            case CMD_OK:
                 return true;
-            }
-            else if (cmd == CMD_EXISTING)
-            {
-                printf("Nome già utilizzato!\n\n");
-                continue;
-            }
-            else if (cmd == CMD_NOTVALID)
-            {
-                printf("Nome non valido!\n\n");
-                continue;
-            }
-            else
-            {
-                printf("Rifiutato dal server!");
+            
+            case CMD_EXISTING:
+                printf("Nome duplicato!\n\n");
+                break;
+
+            case CMD_NOTVALID:
+                printf("Nome non valido\n\n");
+                break;
+
+            case false:
+                printf("Rifiutato dal server\n");
                 return false;
-            }
-        }
-        else
-        {
-            printf("Rifiutato dal server!");
-            return false;
+
+            default:
+                printf("Errore nella comunicazione\n");
+                return false;
         }
     }
     return false;
