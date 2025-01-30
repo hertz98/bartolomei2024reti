@@ -5,6 +5,9 @@
 #include "../shared/list.h"
 #include "../shared/message.h"
 
+#define SEND_MAX_MESSAGEARRAY_SIZE 1
+#define SEND_MAX_MESSAGE_LENGHT 256
+
 bool serverTimeout(int, int);
 
 bool sendCommand(int, enum Command);

@@ -5,6 +5,10 @@
 
 #define MAX_OPERATIONS_PER_CLIENT 5
 
+// Limito le dimensioni del messaggi del client in base alle esigenze
+#define RECV_MAX_MESSAGEARRAY_SIZE 1
+#define RECV_MAX_MESSAGE_LENGHT 256
+
 typedef struct ClientsContext ClientsContext;
 
 // Operations

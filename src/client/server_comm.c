@@ -11,6 +11,12 @@ bool sendMessage(int socket, MessageArray * msgs)
     if (!msgs)
         return false;
     
+    if (msgs->size > SEND_MAX_MESSAGEARRAY_SIZE)
+    {
+        printf("Errore, messaggio troppo grande\n");
+        return false;
+    }
+
     for (int i = -1; i < msgs->size; i++)
     {
         Message *msg;
@@ -19,6 +25,12 @@ bool sendMessage(int socket, MessageArray * msgs)
         else
             msg = &msgs->messages[i];
         
+        if (msgs->size > SEND_MAX_MESSAGE_LENGHT)
+        {
+            printf("Errore, messaggio troppo grande\n");
+            return false;
+        }
+
         uint32_t lenght = htonl(msg->lenght);
 
         sendData(socket, &lenght, sizeof(lenght));
@@ -80,6 +92,13 @@ MessageArray * recvMessage(int socket)
             break;
         
         msg->payload = (void *) malloc(msg->lenght);
+        if (!msg->payload)
+        {
+            printf("Errore nella allocazione\n");
+            return false;
+        }
+        
+        msg->toFree = true;
 
         if (!recvData(socket, msg->payload, msg->lenght))
             return false;

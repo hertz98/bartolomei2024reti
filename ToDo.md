@@ -1,13 +1,10 @@
 To Do:
-- recvMessage maximum number of Messages
-- recvMessage default free parameter
-- select in operationHandler?
 - client endquiz and scores
 - inits: false should return fails, if fail pause before exit
-- memory leaks
 - messageArray to char pointers array
 - shuffle
 - comments
+- sendHandler can be an operation
 - SOCK_NONBLOCK
 
 If time left:

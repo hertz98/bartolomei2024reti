@@ -113,7 +113,8 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
 
     case 1:
         MessageArray * tmp = (void*) client->name;
-        client->name = (char*) ((MessageArray *) client->name)->messages->payload;
+        tmp->messages[0].toFree = false;
+        client->name = (char*) tmp->messages[0].payload;
         messageArrayDestroy(&tmp);
 
         enum Command ret;
@@ -232,6 +233,9 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
     switch (currentOperation->step)
     {
     case 0:
+        // if(*msgs != NULL) // Parametri limite, non implementato, uso i #define
+        //     currentOperation->tmp = *msgs;
+
         *msgs = messageArray(0);
         client->transferring = -1;
         currentOperation->step++;
@@ -244,6 +248,10 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
             {
                 int size = ntohl(tmp->lenght);
                 messageArrayDestroy((MessageArray **) msgs);
+
+                if (size > RECV_MAX_MESSAGEARRAY_SIZE)
+                    return OP_FAIL;
+
                 *msgs = messageArray(size);
                 client->transferring = 0;
             }
@@ -259,7 +267,10 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
                 if ((ret = recvData(socket, &msg->lenght, sizeof(msg->lenght), &msg->transmitted)) == OP_DONE)
                     {
                         msg->lenght = ntohl(msg->lenght);
+                        if (msg->lenght > RECV_MAX_MESSAGE_LENGHT)
+                            return OP_FAIL;
                         msg->payload = (void *) malloc(msg->lenght + 1);
+                        msg->toFree = true;
                     }
                 else
                     return (bool) ret;
