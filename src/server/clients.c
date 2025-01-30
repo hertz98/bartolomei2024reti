@@ -275,7 +275,10 @@ bool sendCommand(int socket, enum Command cmd)
             return false;
     }
 
-    return true;
+    if (cmd == CMD_STOP)
+        return false; // Rimuovi già il client
+    else
+        return true;
 }
 
 bool client_gameInit(Client * client, TopicsContext * topicsContext)
