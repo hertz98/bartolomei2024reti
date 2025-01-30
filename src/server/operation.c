@@ -22,18 +22,31 @@ bool operationHandler(ClientsContext *context, int socket)
         switch (ret = (*currentOperation->function)(context, socket, currentOperation->p))
         {
             case OP_OK:
-                return true;
+                if (socketReady(socket)) // Se ci sono messaggi disponibili finisci a servire il client
+                    continue;
+                else
+                    return true; // Servi più tardi
             case OP_DONE:
                 operationDestroy( list_extractHead(&client->operation)->data );
                 client->nOperations--;
                 continue;
             case OP_FAIL:
             default:
-                return false;
+                return false; // Rimuovi il client
         }
     }
 
-    return true;
+    return true; // In questo caso nessuna operazione è in corso, ritorno true per non rimuovere il client
+}
+
+bool socketReady(int socket)
+{
+    fd_set test_fds;
+    FD_ZERO(&test_fds);
+    FD_SET(socket, &test_fds);
+    if (select(socket + 1, &test_fds, NULL, NULL, &(struct timeval) {0,0} ) > 0)
+        return true;
+    return false;
 }
 
 bool operationCreate(OperationResult (*function)(ClientsContext *context, int socket, void *), ClientsContext *context, int socket, void *p)
@@ -111,7 +124,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
             free(client->name);
             client->name = NULL;
             currentOperation->step = 0;
-            return OP_OK;
+            return OP_DONE;
         }
     
     default:
