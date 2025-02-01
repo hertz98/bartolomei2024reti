@@ -242,18 +242,18 @@ bool topicsSelection() // TODO: attenersi alle specifiche
 
     printf("+++++++++++++++++++++++++++++++\n");
 
-    int selection;
     while(true)
     {
         printf("La tua scelta: ");
         fflush(stdout);
         
-        if (readUser_int(&selection) && selection >= 1 && selection <= context.topics->size)
+        if (readUser_int(&context.playing) && context.playing >= 1 && context.playing <= context.topics->size)
             break;
     }
+    context.playing--;
 
     MessageArray * message_sel = messageArray(1);
-    messageInteger(&message_sel->messages[0], selection - 1);
+    messageInteger(&message_sel->messages[0], context.playing);
     sendMessage(sd, message_sel);
 
     //messageArrayDestroy(topics, NULL);
