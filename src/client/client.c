@@ -235,6 +235,13 @@ bool getTopicsData()
     context.topics = messageArray2StringArray(tmp);
     messageArrayDestroy(&tmp);
 
+    if (!context.nTopics)
+    {
+        printf("Nessun quiz disponibile nel server\n");
+        readUser_Enter();
+        exit(EXIT_SUCCESS);
+    }
+
     return true;
 }
 
@@ -270,10 +277,12 @@ bool topicsSelection() // TODO: attenersi alle specifiche
     MessageArray * tmp = recvMessage(sd);
     context.playable = tmp->messages[0].payload;
 
-    if (!context.topics)
-        return false;
+    int nPlayable = 0;
+    for (int i = 0; i < context.nTopics; i++)
+        if (context.playable[i])
+            nPlayable++;
 
-    if (!context.nTopics)
+    if (!context.playable)
     {
         printf("Nessun quiz disponibile per l'utente %s\n", context.name);
         readUser_Enter();
@@ -283,10 +292,8 @@ bool topicsSelection() // TODO: attenersi alle specifiche
     printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
 
     for (int i = 0, n = 0; i < context.nTopics; i++)
-    {
         if (context.playable[i])
             printf("%d - %s\n", ++n, (char*) context.topics[i]);
-    }
 
     printf("+++++++++++++++++++++++++++++++\n");
 
@@ -295,16 +302,17 @@ bool topicsSelection() // TODO: attenersi alle specifiche
         printf("La tua scelta: ");
         fflush(stdout);
         
-        if (readUser_int(&context.playing) && context.playing >= 1 && context.playing <= context.nTopics)
+        if (readUser_int(&context.playing) 
+            && context.playing >= 1 
+            && context.playing <= nPlayable)
             break;
     }
-    context.playing--;
+    context.playing = client_playableIndex(context.playing - 1);
 
     MessageArray * message_sel = messageArray(1);
     messageInteger(&message_sel->messages[0], context.playing);
     sendMessage(sd, message_sel);
 
-    //messageArrayDestroy(topics, NULL);
     messageArrayDestroy(&message_sel);
 
     return true;

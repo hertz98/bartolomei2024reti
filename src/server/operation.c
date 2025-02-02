@@ -90,16 +90,15 @@ void operationDestroy(void *operation)
 
     Operation * currentOperation = operation;
 
-    // Nel caso in cui si ricevono dei dati è necessario deallocarle anche quando non le operazioni non arrivano a fine
+    // Nel caso in cui si ricevono dei dati è necessario deallocarle anche quando le operazioni non arrivano a fine
     if ( currentOperation->function == selectTopic 
         || currentOperation->function == playTopic)
     {
         messageArrayDestroy((MessageArray **) &currentOperation->tmp);
     }
-
     if (currentOperation->function == sendMessage)
     {
-        
+        messageArrayDestroy((MessageArray **)  &currentOperation->p);
     }
 
     free(operation);
@@ -167,6 +166,7 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         return operationCreate(sendMessage, context, socket, currentOperation->tmp);
     
     case 2:
+        currentOperation->tmp = NULL;
         return OP_OK;
 
     case 3:
@@ -390,6 +390,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         return operationCreate(sendMessage, context, socket, question_msg);
     
     case 2:
+        currentOperation->tmp = NULL;
         return OP_OK;
 
     case 3:

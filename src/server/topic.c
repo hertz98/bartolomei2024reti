@@ -209,7 +209,9 @@ void topicsFree(TopicsContext *context)
 
     for (int i = 0; i < context->nTopics; i++)
         list_destroy(context->topics[i].questions, topics_questionDestroy);
-        
+    
+    messageArrayDestroy(&context->topicsString);
+
     free(context->topics);
     
     context->nTopics = 0;
