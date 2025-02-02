@@ -80,6 +80,11 @@ MessageArray * recvMessage(int socket)
     lenght = ntohl(lenght);
     MessageArray *tmp = messageArray(lenght);
 
+    if (!tmp){
+        printf("impossibile allocare %d bytes", lenght);
+        exit(EXIT_FAILURE);
+    }
+
     for (int i = 0; i < tmp->size; i++)
     {
         Message * msg = &tmp->messages[i];

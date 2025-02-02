@@ -90,6 +90,8 @@ bool topicsLoader(TopicsContext *context)
 
     qsort(context->topics, context->nTopics, sizeof(Topic), topics_compare);
 
+    context->topicsString = messageArray(context->nTopics);
+
     for (int i = 0; i < context->nTopics; i++)
     {
     #ifdef DEBUG_TOPIC
@@ -97,6 +99,7 @@ bool topicsLoader(TopicsContext *context)
     #endif
         topicLoad(context->directory, &context->topics[i]);
         topic_name(context->topics[i].name);
+        messageString(&context->topicsString->messages[i], context->topics[i].name, false);
     }
 
     context->directory[endline] = '\0';

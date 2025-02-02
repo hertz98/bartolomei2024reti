@@ -305,6 +305,20 @@ int client_playableIndex(Client * client, TopicsContext * topics, int playable)
     return -1;
 }
 
+bool client_checkTopicIndex(Client * client, TopicsContext * topics, int playable)
+{
+    if (!client || !topics || !client->game.playableTopics)
+        return false;
+
+    if (playable < 0 || playable >= topics->nTopics)
+        return false;
+    
+    if (client->game.playableTopics[client->game.playing])
+        return true;
+
+    return false;
+}
+
 bool client_setPlayed(Client * client, TopicsContext * topics, int topic)
 {
     if (topic < 0 || topic >= topics->nTopics)

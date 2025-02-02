@@ -29,6 +29,12 @@ char * newlineReplace(char * string);
 bool readUser_int(int * number);
 bool playTopic();
 void readUser_Enter();
+bool getTopicsData();
+
+/// @brief Converte l'indice del topic dal punto di vista dell'utente a quello
+/// dal punto di vista dell'array dei topic nel server
+/// @return Indice dello stesso topic corrispondente nell'array dei topics
+int client_playableIndex(int playable);
 
 /********** VARIABILI GLOBALI **********/
 
@@ -38,7 +44,9 @@ int sd;
 struct Context
 {
     char name[255];
-    MessageArray * topics;
+    int nTopics;
+    char ** topics;
+    bool * playable;
     int playing;
 } context;
 
@@ -91,7 +99,7 @@ int init(int argc, char ** argv)
 
     signal(SIGINT, socketclose);
 
-    context.topics = NULL;
+    memset(&context, 0, sizeof(context));
 
     return 0;
 }
@@ -106,7 +114,7 @@ int main (int argc, char ** argv)
     if ((ret = init(argc, argv)))
         return ret;
 
-    if (!signup())
+    if (!signup() || !getTopicsData())
         return 1;
 
     while(true)
@@ -207,25 +215,65 @@ bool signup()
     return false;
 }
 
+bool getTopicsData()
+{
+    if (sendCommand(sd, CMD_TOPICS) && recvCommand(sd) != CMD_OK)
+    {
+        printf("Errore nello scaricamento dei topics\n");
+        return false;
+    }
+
+    if (context.topics)
+    {
+        for (int i = 0; i < context.nTopics; i++)
+            free(context.topics[i]);
+        free(context.topics);
+    }
+
+    MessageArray *tmp = recvMessage(sd);
+    context.nTopics = tmp->size;
+    context.topics = messageArray2StringArray(tmp);
+    messageArrayDestroy(&tmp);
+
+    return true;
+}
+
+int client_playableIndex(int playable)
+{
+    if (playable < 0 || playable >= context.nTopics)
+        return -1;
+    
+    for (int i = 0, n = 0; i < context.nTopics; i++)
+        if (context.playable[i])
+            if (n++ == playable)
+                    return i;
+
+    return -1;
+}
+
 bool topicsSelection() // TODO: attenersi alle specifiche
 {
     clear();
 
-    if (!(sendCommand(sd, CMD_TOPICS) && recvCommand(sd) == CMD_OK))
+    if (!(sendCommand(sd, CMD_TOPICPLAY) && recvCommand(sd) == CMD_OK))
     {
         printf("Errore nella comunicazione");
         exit(1);
     }
 
-    if (context.topics)
-        messageArrayDestroy(&context.topics);
+    if (context.playable)
+    {
+        free(context.playable);
+        context.playable = NULL;
+    }
 
-    context.topics = recvMessage(sd);
+    MessageArray * tmp = recvMessage(sd);
+    context.playable = tmp->messages[0].payload;
 
     if (!context.topics)
         return false;
 
-    if (!context.topics->size)
+    if (!context.nTopics)
     {
         printf("Nessun quiz disponibile per l'utente %s\n", context.name);
         readUser_Enter();
@@ -234,10 +282,10 @@ bool topicsSelection() // TODO: attenersi alle specifiche
 
     printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
 
-    for (int i = 0; i < context.topics->size; i++)
+    for (int i = 0, n = 0; i < context.nTopics; i++)
     {
-        context.topics->messages[i].toFree = true;
-        printf("%d - %s\n", i + 1, (char*) context.topics->messages[i].payload);
+        if (context.playable[i])
+            printf("%d - %s\n", ++n, (char*) context.topics[i]);
     }
 
     printf("+++++++++++++++++++++++++++++++\n");
@@ -247,7 +295,7 @@ bool topicsSelection() // TODO: attenersi alle specifiche
         printf("La tua scelta: ");
         fflush(stdout);
         
-        if (readUser_int(&context.playing) && context.playing >= 1 && context.playing <= context.topics->size)
+        if (readUser_int(&context.playing) && context.playing >= 1 && context.playing <= context.nTopics)
             break;
     }
     context.playing--;
@@ -330,7 +378,7 @@ bool playTopic()
 
         clear();
         printf("Quiz - %s\n+++++++++++++++++++++++++++++++\n",
-             (char*) context.topics->messages[context.playing].payload);
+             (char*) context.topics[context.playing]);
         
         MessageArray *question_msg = recvMessage(sd);
         question_msg->messages[0].toFree = true;
@@ -378,3 +426,5 @@ bool playTopic()
         
     }
 }
+
+

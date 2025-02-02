@@ -211,8 +211,13 @@ bool clientHandler(ClientsContext * context, int socket)
     case false: // CMD_STOP
         return false;
         break;
-
+    
     case CMD_TOPICS:
+        sendCommand(socket, CMD_OK);
+        return operationCreate(sendMessage, context, socket, MessageArrayCpy(topicsContext.topicsString));
+        break;
+
+    case CMD_TOPICPLAY:
         sendCommand(socket, CMD_OK);
         return operationCreate(selectTopic, context, socket, &topicsContext);
         break;

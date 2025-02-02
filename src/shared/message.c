@@ -44,6 +44,21 @@ MessageArray *messageArray(int size)
     return tmp;
 }
 
+MessageArray *MessageArrayCpy(MessageArray *toCopy)
+{
+    MessageArray *tmp = messageArray(toCopy->size);
+    if (!tmp)
+        return NULL;
+    
+    for (int i = 0; i <= toCopy->size; i++)
+    {
+        tmp->messages[i] = toCopy->messages[i];
+        tmp->messages[i].transmitted = 0;
+    }
+
+    return tmp;
+}
+
 char ** messageArray2StringArray(MessageArray *messageArray)
 {
 

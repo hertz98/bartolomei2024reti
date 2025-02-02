@@ -1,6 +1,8 @@
 #pragma once
 #include <stdbool.h>
 #include <limits.h>
+
+#include "../shared/message.h"
 #include "../shared/list.h"
 
 #define DATA_DIR "./data/"
@@ -25,7 +27,7 @@ typedef struct TopicsContext
     char directory[PATH_MAX];
     int nTopics;
     struct Topic * topics;
-    char * topicsString;
+    MessageArray * topicsString;
 } TopicsContext;
 
 /// @brief Inizializza le strutture dati inerrenti ai topic

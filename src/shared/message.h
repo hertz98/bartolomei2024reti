@@ -30,6 +30,11 @@ void messageArrayDestroy(MessageArray **messageArray);
 /// @return l'indirizzo del nuovo MessageArray appena allocato o NULL in caso di fallimento
 MessageArray * messageArray(int size);
 
+/// @brief Crea un nuovo messageArray con gli stessi messaggi
+/// @param  toCopy MessageArray da copiare
+/// @return Ritorna una nuova copia allocata di un messageArray oppure NULL in caso di fallimento
+MessageArray * MessageArrayCpy(MessageArray * toCopy);
+
 /// @brief restituisce un array di puntatori a stringhe da un MessageArray
 /// @param messageArray messageArray contenente solo stringhe
 /// @return un puntatore a puntatori a stringa

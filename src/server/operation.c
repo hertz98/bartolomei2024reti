@@ -97,6 +97,11 @@ void operationDestroy(void *operation)
         messageArrayDestroy((MessageArray **) &currentOperation->tmp);
     }
 
+    if (currentOperation->function == sendMessage)
+    {
+        
+    }
+
     free(operation);
 }
 
@@ -154,10 +159,8 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
     switch (currentOperation->step++)
     {
     case 0:
-        currentOperation->tmp = messageArray(client->game.nPlayable);
-        for (int t = 0, m = 0; t < topics->nTopics; t++)
-            if (client->game.playableTopics[t])
-                messageString( &( ((MessageArray *)currentOperation->tmp)->messages[m++] ), topics->topics[t].name, false);
+        currentOperation->tmp = messageArray(1);
+        messageBoolArray( &((MessageArray *) currentOperation->tmp)->messages[0], client->game.playableTopics, topics->nTopics);
         currentOperation->step++;
 
     case 1:
@@ -173,7 +176,9 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         ((MessageArray *) currentOperation->tmp)->messages[0].toFree = true;
         client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload);
         messageArrayDestroy((MessageArray**) &currentOperation->tmp);
-        client->game.playing = client_playableIndex(client, topics, client->game.playing);
+        
+        if (!client_checkTopicIndex(client, topics, client->game.playing))
+            return false;
         
         if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // TODO: Distinzione errore nel server da input scorretto
         {

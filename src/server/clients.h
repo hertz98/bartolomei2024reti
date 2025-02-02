@@ -80,7 +80,7 @@ bool client_gameInit(Client * client, TopicsContext * topicsContext);
 
 bool client_quizInit(Client * client, TopicsContext * topicsContext);
 
-/// @brief Converte l'indice del topic fornito dal client nell'indice corrispondente nell'array dei topic
+/// @brief (Non più usato) Converte l'indice del topic fornito dal client nell'indice corrispondente nell'array dei topic
 /// La funzione è fatta per prendere direttamente in ingresso l'input del client, avendo dei controlli
 /// @param client Struttura dati del client corrispondente con dati di gioco inizializzati
 /// @param topics Strutture dati inerenti ai topics
@@ -88,9 +88,24 @@ bool client_quizInit(Client * client, TopicsContext * topicsContext);
 /// @return Indice dello stesso topic corrispondente nell'array dei topics
 int client_playableIndex(Client * client, TopicsContext * topics, int playable);
 
-/// @brief Determina un topic come giocato sia a livello di strutture dati che su disco
+/// @brief Verifica che l'indice del topic ritornato dal client sia ammissibile
 /// @param client Struttura dati del client corrispondente con dati di gioco inizializzati
 /// @param topics Strutture dati inerenti ai topics
+/// @param playable Indice dei topics dal punto di vista del client
+/// @return Indice dello stesso topic corrispondente nell'array dei topics
+bool client_checkTopicIndex(Client * client, TopicsContext * topics, int playable);
+
+/// @brief Determina un topic come giocato sia a livello di strutture dati che su disco
+/// @param client Struttura dati del client corrispondente con dati di gioco inizializzati
+/// @param topics Strutture dati inerenti ai topics finalizzate
 /// @param topic Indice reale del topic
 /// @return true se è andato tutto liscio
 bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
+
+
+/// @brief Invia l'intera lista dei topics al client
+/// @param context Struttura dati inerenti ai client inizializzate
+/// @param socket Indice del descrittore del socket del client
+/// @param topics Strutture dati inerenti ai topics finalizzate
+/// @return true se è andato tutto liscio
+bool client_sendTopics(ClientsContext *context, int socket, TopicsContext * topics);
