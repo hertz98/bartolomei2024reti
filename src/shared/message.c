@@ -44,6 +44,24 @@ MessageArray *messageArray(int size)
     return tmp;
 }
 
+char ** messageArray2StringArray(MessageArray *messageArray)
+{
+
+    char ** tmp = malloc(sizeof(char*) * messageArray->size);
+    if (!tmp)
+    {
+        printf("Error allocating space\n");
+        return NULL;
+    }
+
+    for (int i = 0; i < messageArray->size; i++){
+        messageArray->messages[i].toFree = false;
+        tmp[i] = (char *) messageArray->messages[i].payload;
+    }
+
+    return tmp;
+}
+
 void messageString(Message *message, char *string, bool toFree)
 {
     if (!string)
@@ -57,29 +75,76 @@ void messageString(Message *message, char *string, bool toFree)
     return;
 }
 
-void messageInteger(Message *message, int32_t number)
+bool messageInteger(Message *message, int32_t number)
 {
     if (!message)
-        return;
+        return false;;
     
     message->payload = malloc(sizeof(number));
     if (!message->payload)
     {
-        printf("Error allocating space");
-        exit(EXIT_FAILURE);
+        printf("Error allocating space\n");
+        return false;
     }
     *(int32_t *) message->payload = htonl(number);
     message->lenght = sizeof(number);
     message->transmitted = 0;
-    message->toFree = true;
+    message->toFree = true; // In questo caso porto a true perché ho eseguito una copia
+
+    return true;
 }
 
-void emptyMessage(Message *message)
+void messageBoolArray(Message * message, bool *array, int size)
 {
-    message->payload = NULL;
-    message->lenght = 0;
+    if (!message)
+        return;
+    
+    if (size <= 0)
+    {
+        message->payload = NULL;
+        message->lenght = 0;
+        message->toFree = false;
+        return;
+    }
+
+    message->lenght = sizeof(bool) * size;
+    message->payload = array; 
+
     message->transmitted = 0;
     message->toFree = false;
+}
 
-    return;
+bool messageIntegerArray(Message *message, int32_t *array, int size)
+{
+    if (!message)
+        return false;
+    
+    if (size <= 0)
+    {
+        message->payload = NULL;
+        message->lenght = 0;
+        message->toFree = false;
+        return true;
+    }
+
+    message->lenght = sizeof(uint32_t) * size;
+    message->payload = malloc(message->lenght);
+    if (!message->payload)
+    {
+        printf("Error allocating space\n");
+        return false;
+    }
+
+    for (int i = 0; i < size; i++)
+        ((int *) message->payload)[i] = htonl(array[i]);
+
+    message->transmitted = 0;
+    message->toFree = true; // In questo caso porto a true perché ho eseguito una copia
+
+    return true;
+}
+
+void inline emptyMessage(Message *message)
+{
+    memset(message, 0, sizeof(Message));
 }
