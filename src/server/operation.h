@@ -27,6 +27,7 @@ typedef struct Operation
     void * p;
 
     void *tmp;
+    int count;
 } Operation;
 
 /// @brief Si occupa di gestire e eseguire le operazioni in ordine e di deallocarle al termine

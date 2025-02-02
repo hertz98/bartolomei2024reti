@@ -113,9 +113,10 @@ int main (int argc, char ** argv)
         for (int i = 0; i <= clientsContext.fd_max; i++) 
             if (FD_ISSET(i, &write_fds)) // Found a ready descriptor
                 if(isClient(&clientsContext, i, false) &&
-                    sendMessageHandler(&clientsContext, i) != OP_OK)
+                    operationHandler(&clientsContext, i) != OP_OK)
                     {
-                        clientsContext.clients[i]->toSend = NULL; // TODO: free
+                        //ridondante
+                        clientsContext.clients[i]->sending = false;
                         FD_CLR(i, &clientsContext.write_fds);
                     }
     }
@@ -188,7 +189,7 @@ bool clientHandler(ClientsContext * context, int socket)
 {
     struct Client * client = context->clients[socket];
 
-    if (client->toSend != NULL) // Il client non è in sync con quello del server, termina
+    if (client->sending) // Il client non è in sync con il server, termina
         return false;
     
     if(client->operation)

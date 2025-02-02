@@ -21,11 +21,9 @@ struct Client
     bool registered;
     char * name;
 
-    Node * operation;
-    int nOperations;
-
-    MessageArray * toSend; // Messaggi
-    int transferring;
+    Node * operation; // Lista di operazioni
+    int nOperations; // Numero di operazioni attualmente acavallate
+    bool sending; // Identifica se è in corso un'operazione di invio di dati
 
     // Topics
     struct Game{
@@ -63,8 +61,6 @@ bool isClient(ClientsContext *context, int socket, bool onlyRegistered);
 
 bool sendCommand(int socket, enum Command);
 enum Command recvCommand(int socket);
-
-OperationResult sendMessageHandler(ClientsContext * context, int socket);
 
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
 OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int *received);

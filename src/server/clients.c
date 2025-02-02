@@ -58,8 +58,6 @@ bool clientAdd(ClientsContext * context, int socket)
 
     client->name = NULL;
     client->registered = false;
-    client->toSend = NULL;
-    client->transferring = false;
     client->game.playableTopics = NULL;
     client->game.questions = NULL;
     client->game.score = NULL;
@@ -152,46 +150,6 @@ inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
         if (!onlyRegistered || context->clients[socket]->registered)
             return true;
     return false;
-}
-
-OperationResult sendMessageHandler(ClientsContext *context, int socket)
-{
-    Client * client = context->clients[socket];
-
-    if (!client->toSend)
-        return false;
-    
-    OperationResult ret;
-    while (client->transferring < client->toSend->size)
-    {
-        Message * msg;
-        if (client->transferring == -1)
-            msg = &client->toSend->messages[client->toSend->size];
-        else
-            msg = &client->toSend->messages[client->transferring];
-
-        int lenght = htonl(msg->lenght);
-        int lenght_size = sizeof(msg->lenght);
-
-        if (msg->transmitted < lenght_size)
-            if ((ret = sendData(socket, &lenght, lenght_size, &msg->transmitted)) != OP_DONE)
-                return ret;
-
-        if (msg->payload)
-        {
-            unsigned int sent = msg->transmitted - lenght_size;
-
-            if ((ret = sendData(socket, msg->payload, msg->lenght, &sent)) != OP_DONE)
-                return ret;
-        }
-
-        client->transferring++;
-    }
-
-    client->transferring = false;
-    //messageArrayDestroy((MessageArray **) &client->toSend);
-    //client->toSend = NULL;
-    return OP_DONE;
 }
 
 OperationResult sendData(int socket, void *buffer, unsigned int lenght, unsigned int *sent)

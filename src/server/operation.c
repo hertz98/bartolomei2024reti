@@ -67,6 +67,7 @@ bool operationCreate(OperationResult (*function)(ClientsContext *context, int so
     tmp->p = p;
     tmp->step = 0;
     tmp->tmp = NULL;
+    tmp->count = 0;
 
     if (list_insertHead(&client->operation, tmp))
     {
@@ -198,21 +199,57 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
 
     Operation *currentOperation = client->operation->data;
 
+    if (!message_array)
+        return OP_FAIL;
+
     MessageArray *msgs = (MessageArray *) message_array;
 
-    switch (currentOperation->step++)
+    switch (currentOperation->step)
     {
         case 0:
             if (sendCommand(socket, CMD_MESSAGE))
-            {
-                client->toSend = msgs;
-                client->transferring = -1;
-                FD_SET(socket, &context->write_fds);   
-                return OP_OK;
-            }
-            break;
+                FD_SET(socket, &context->write_fds);
+            else 
+                return OP_FAIL;
+
+            client->sending = true;
+            currentOperation->count = -1;
+            currentOperation->step++;
 
         case 1:
+            OperationResult ret;
+            while (currentOperation->count < msgs->size)
+            {
+                Message * msg;
+                if (currentOperation->count == -1)
+                    msg = &msgs->messages[msgs->size];
+                else
+                    msg = &msgs->messages[currentOperation->count];
+
+                int lenght_size = sizeof(msg->lenght);
+                if (msg->transmitted < lenght_size)
+                {
+                    int lenght = htonl(msg->lenght);
+                    if ((ret = sendData(socket, &lenght, lenght_size, &msg->transmitted)) != OP_DONE)
+                        return ret;
+                }
+
+                if (msg->payload)
+                {
+                    unsigned int sent = msg->transmitted - lenght_size;
+
+                    if ((ret = sendData(socket, msg->payload, msg->lenght, &sent)) != OP_DONE)
+                        return ret;
+                }
+
+                currentOperation->count++;
+            }
+
+                currentOperation->step++;
+
+        case 2:
+            client->sending = false;
+            FD_CLR(socket, &context->write_fds);
             if (recvCommand(socket) == CMD_OK)
                 return OP_DONE;
             break;
@@ -237,11 +274,11 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
         //     currentOperation->tmp = *msgs;
 
         *msgs = messageArray(0);
-        client->transferring = -1;
+        currentOperation->count = -1;
         currentOperation->step++;
 
     case 1:
-        if (client->transferring == -1)
+        if (currentOperation->count == -1)
         {
             Message *tmp = &(*msgs)->messages[0];
             if ((ret = recvData(socket, &tmp->lenght, sizeof(tmp->lenght), &tmp->transmitted)) == OP_DONE)
@@ -253,14 +290,14 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
                     return OP_FAIL;
 
                 *msgs = messageArray(size);
-                client->transferring = 0;
+                currentOperation->count = 0;
             }
             return (bool) ret;
         }
 
-        while (client->transferring < (*msgs)->size)
+        while (currentOperation->count < (*msgs)->size)
         {
-            Message * msg = &(*msgs)->messages[client->transferring];
+            Message * msg = &(*msgs)->messages[currentOperation->count];
 
             if (msg->transmitted < sizeof(msg->lenght))
             {
@@ -286,7 +323,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
                     return (bool) ret;
             }
 
-            client->transferring++;
+            currentOperation->count++;
         }
 
         currentOperation->step++;
