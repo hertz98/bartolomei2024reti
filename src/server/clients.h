@@ -62,7 +62,24 @@ bool isClient(ClientsContext *context, int socket, bool onlyRegistered);
 bool sendCommand(int socket, enum Command);
 enum Command recvCommand(int socket);
 
+/// @brief Funzione che invia dati, gestisce la send
+/// @param socket Indice del descrittore di socket del client
+/// @param buffer Buffer contenente i dati grezzi
+/// @param lenght Numero di byte da inviare
+/// @param sent Numero di byte già inviati
+/// @return OP_DONE se l'invio è avvenuto completamente, 
+/// OP_OK se sarà necessario richiamare la funzione per terminare l'invio
+/// OP_FAIL in caso di errore
 OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
+
+/// @brief Funzione che riceve dati, gestisce la recv
+/// @param socket Indice del descrittore di socket del client
+/// @param buffer Buffer che conterrà i dati grezzi
+/// @param lenght Numero di byte da ricevere (o dimensione del buffer)
+/// @param sent Numero di byte già ricevuti
+/// @return OP_DONE se la ricezione è avvenuta completamente, 
+/// OP_OK se sarà necessario richiamare la funzione per terminare la ricezione
+/// OP_FAIL in caso di disconnessione del client o di altro errore
 OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int *received);
 
 /// @brief Verifica il nome utente fornito dal client
@@ -78,6 +95,10 @@ Command nameValid(ClientsContext * context, int socket, char * name);
 /// @return true se è andato tutto liscio
 bool client_gameInit(Client * client, TopicsContext * topicsContext);
 
+/// @brief Carica il topic nella struttura dati del client
+/// @param client Struttura dati del client inizializzata con dati di gioco inizializzati
+/// @param topicsContext Strutture dati inerenti ai topics
+/// @return true se va tutto liscio
 bool client_quizInit(Client * client, TopicsContext * topicsContext);
 
 /// @brief (Non più usato) Converte l'indice del topic fornito dal client nell'indice corrispondente nell'array dei topic
@@ -101,7 +122,6 @@ bool client_checkTopicIndex(Client * client, TopicsContext * topics, int playabl
 /// @param topic Indice reale del topic
 /// @return true se è andato tutto liscio
 bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
-
 
 /// @brief Invia l'intera lista dei topics al client
 /// @param context Struttura dati inerenti ai client inizializzate
