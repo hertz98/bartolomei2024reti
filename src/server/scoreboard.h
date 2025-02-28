@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 
-#include "../shared/list.h"
+#include "../shared/doubly_list.h"
 
 //#define SCOREBOARD_SAVE_SCORE
 
@@ -17,7 +17,7 @@ typedef struct Scoreboard
 {
     int nTopics;
     int *nElements;
-    Node ** score_list; // Array di liste a Score
+    DNode ** score_list; // Array di liste a Score
 } Scoreboard;
 
 /// @brief Inizializza le strutture dati inerenti ai punteggi
@@ -35,8 +35,10 @@ void scoreboard_scoreDestroy(void * p);
 // che identifica lo stesso client, in caso contrario lo crea 
 /// @param score_list Lista di puntatori a Score
 /// @return Il puntatore a Score trovato o quello appena allocato, NULL in caso di fallimento
-Score *scoreboard_get(Node **score_list, char * name);
+Score *scoreboard_get(DNode **score_list, char * name);
 
-/// @brief Incrementa un punteggio
-/// @param score Puntatore ad un punteggio
-void scoreboard_increase(Score * score);
+int scoreboard_scoreCompare(void *a_ptr, void *b_ptr);
+
+void scoreboard_print(Scoreboard * scoreboard);
+
+void scoreboard_scorePrint(void * score);

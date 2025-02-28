@@ -131,10 +131,10 @@ bool listDoubly_sortElement(DNode *elem, int(compare)(void *, void *))
         for (DNode *current = elem, *next = current->next; 
                 next && dNode_compare(current, next, compare) > 0;
                 current = current->next, next = next->next)
-            {
-                dNode_exchange(current, next);
-                moved = true;
-            }
+        {
+            dNode_exchange(current, next);
+            moved = true;
+        }
     }
     if (!moved && elem->prev)
     {
@@ -149,7 +149,8 @@ bool listDoubly_sortElement(DNode *elem, int(compare)(void *, void *))
     return moved;
 }
 
-// In realtà si scambiano solo i puntatori
+// Mantengo la posizione ma scambio il campo data
+// semplice, ma necessita cambiare i riferimenti
 void dNode_exchange(DNode *a, DNode *b)
 {
     void * tmp = a->data;
