@@ -123,39 +123,138 @@ int dNode_compare(DNode *a, DNode *b, int(compare)(void *, void *))
         return compare(a->data, b->data);
 }
 
-bool listDoubly_sortElement(DNode *elem, int(compare)(void *, void *))
+bool listDoubly_sortElement(DNode **head, DNode *elem, int(compare)(void *, void *))
 {
-    bool moved = false; // Dando per scontato una lista ordianta si sposta in un solo verso
-    if (elem->next)
-    {
-        for (DNode *current = elem, *next = current->next; 
-                next && dNode_compare(current, next, compare) > 0;
-                current = current->next, next = next->next)
-        {
-            dNode_exchange(current, next);
-            moved = true;
-        }
-    }
-    if (!moved && elem->prev)
-    {
-        for (DNode *current = elem, *prev = current->prev; 
-            prev && dNode_compare(current, prev, compare) < 0;
-            current = current->prev, prev = prev->prev)
-        {
-            dNode_exchange(current, prev);
-            moved = true;
-        }
-    }
+    bool moved = false;
+    while (elem->next && 
+            dNode_compare(elem, elem->next, compare) > 0 && 
+            listDoubly_DNode_moveFordward(head, NULL, elem))
+        moved = true;
+
+    if (!moved)
+        while (elem->prev && 
+            dNode_compare(elem, elem->prev, compare) < 0 && 
+            listDoubly_DNode_moveBack(head, NULL, elem))
+        moved = true;
+
     return moved;
 }
 
 // Mantengo la posizione ma scambio il campo data
 // semplice, ma necessita cambiare i riferimenti
-void dNode_exchange(DNode *a, DNode *b)
+void listDoubly_DNode_swap(DNode ** head, DNode ** tail, DNode *a, DNode *b)
 {
-    void * tmp = a->data;
+    if (!a || !b)
+        return;
+    
+    if (a == b)
+        return;
+    
+    if (b->next == a) // Caso nodi consecutivi (inverso)
+        return listDoubly_DNode_swap(head, tail, b, a);
+
+    // Puntatori esterni
+    if (a->prev)
+        a->prev->next = b;
+    else if (head)
+        *head = b;
+
+    if (b->next)
+        b->next->prev = a;
+    else if (tail)
+        *tail = a;
+
+    if (b->prev && b->next != b)
+        b->prev->next = a;
+    else if (head)
+        *head = a;
+
+    // Puntatori successivi
+    if (a->next && a->next != b)
+        a->next->prev = b;
+    else if (tail)
+        *tail = b;  
+
+    // Puntatori interni
+
+    if (a->next == b) // Caso nodi consecutivi
+    {
+        void * tmp = a->prev;
+        a->next = b->next;
+        a->prev = b;
+        b->next = a;
+        b->prev = tmp;
+    }
+    else // Caso generico nodi non consecutivi
+    {        
+        DNode tmp = *a;
+        a->next = b->next;
+        a->prev = b->prev;
+        b->next = tmp.next;
+        b->prev = tmp.prev;
+    }
+
+}
+
+void listDoubly_DNode_swapData(DNode *a, DNode *b)
+{
+    void *tmp = a->data;
     a->data = b->data;
     b->data = tmp;
+}
+
+bool listDoubly_DNode_moveFordward(DNode ** head, DNode ** tail, DNode * elem)
+{
+    if (!elem)
+        return false;
+
+    DNode * toSwap = elem->next;
+
+    if (!toSwap)
+        return false;
+        
+    if (elem->prev)
+        elem->prev->next = toSwap;
+    else if (head)
+        *head = toSwap;
+
+    if (toSwap->next)
+        toSwap->next->prev = elem;
+    else if (tail)
+        *tail = elem;
+    elem->next = toSwap->next;
+    toSwap->next = elem;
+    toSwap->prev = elem->prev;
+    elem->prev = toSwap;
+    
+    return true;
+}
+
+bool listDoubly_DNode_moveBack(DNode ** head, DNode ** tail, DNode * elem)
+{
+    if (!elem)
+        return false;
+
+    DNode * toSwap = elem->prev;
+
+    if (!toSwap)
+        return false;
+
+    if (elem->next)
+        elem->next->prev = toSwap;
+    else if (tail)
+        *tail = elem;
+
+    if (toSwap->prev)
+        toSwap->prev->next = elem;
+    else if (head)
+        *head = elem;
+    elem->prev = toSwap->prev;
+    toSwap->prev = elem;
+    toSwap->next = elem->next;
+    elem->next = toSwap;
+
+    return true;
 }
 
 int intptr_compare(void *a_ptr, void *b_ptr)

@@ -69,12 +69,31 @@ int dNode_compare(DNode *a, DNode *b, int (compare) (void *, void *) );
 /// @param elem Elemento della lista che è stato aggiornato
 /// @param compare Funzione che compara il contenuto dei due Nodi
 /// @return Ritorna true se una modifica è stata effettuata
-bool listDoubly_sortElement(DNode * elem, int (compare) (void *, void *));
+bool listDoubly_sortElement(DNode **head, DNode *elem, int(compare)(void *, void *));
 
-/// @brief Scambia la posizione di due nodi
-/// @param a Primo nodo
+/// @brief Scambia il contenuto di due nodi (i puntatori)
+/// @param a Primo elemento
+/// @param b Secondo elemento
+void listDoubly_DNode_swapData(DNode *a, DNode *b);
+
+/// @brief Scambia lanodo posizione di due nodi e aggiusta i puntatori alla lista
+/// @param a Primo 
 /// @param b Secondo nodo
-void dNode_exchange(DNode *a, DNode *b);
+void listDoubly_DNode_swap(DNode ** head, DNode ** tail, DNode *a, DNode *b);
+
+/// @brief Sposta avanti di una posizione un nodo, e aggiusta i puntatori alla lista se necessario
+/// @param head (optional) Il puntatore alla testa della lista 
+/// @param tail (optional) Il puntatore alla coda della lista
+/// @param elem Nodo da spostare avanti
+/// @return true se lo spostamento è avvenuto
+bool listDoubly_DNode_moveFordward(DNode **head, DNode **tail, DNode *elem);
+
+/// @brief Sposta indietro di una posizione un nodo, e aggiusta i puntatori alla lista se necessario
+/// @param head (optional) Il puntatore alla testa della lista 
+/// @param tail (optional) Il puntatore alla coda della lista
+/// @param elem Nodo da spostare indietro
+/// @return true se lo spostamento è avvenuto
+bool listDoubly_DNode_moveBack(DNode **head, DNode **tail, DNode *elem);
 
 /********** DEBUG **********/
 
@@ -83,7 +102,7 @@ void dNode_exchange(DNode *a, DNode *b);
 void listDoubly_print_intptr(void * data);
 
 /// @brief Funzione comparazione, usa i puntatori come fossero interi (DEBUG)
-/// @param a Primo valore 
+/// @param a Primo valore
 /// @param b Secondo valore
 /// @return <0 se a minore di b, 0 se a uguale a b, >0 se a maggiore di b
 int intptr_compare(void *a, void *b);
