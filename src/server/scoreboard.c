@@ -75,11 +75,11 @@ int scoreboard_scoreCompare(void *a_ptr, void *b_ptr)
     Score *a = a_ptr;
     Score *b = b_ptr;
     if (a->score < b->score)
-        return -1;
+        return +1;
     else if (a->score == b->score)
         return 0;
     else
-        return 1;
+        return -1;
 }
 
 void scoreboard_print(Scoreboard *scoreboard)

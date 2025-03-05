@@ -42,7 +42,7 @@ DNode *scoreboard_get(DNode **score_list, char * name);
 /// @brief Funzione che compara due Score
 /// @param a_ptr Primo punteggio
 /// @param b_ptr Secondo punteggio
-/// @return -1 se a < b, uguale a 0 se a == b, 1 se a > 0
+/// @return +1 se a < b, uguale a 0 se a == b, -1 se a > 0 (inverso)
 int scoreboard_scoreCompare(void *a_ptr, void *b_ptr);
 
 /// @brief Funzione per stampare la classifica (debug)
