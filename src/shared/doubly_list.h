@@ -69,7 +69,7 @@ int dNode_compare(DNode *a, DNode *b, int (compare) (void *, void *) );
 /// @param elem Elemento della lista che è stato aggiornato
 /// @param compare Funzione che compara il contenuto dei due Nodi
 /// @return Ritorna true se una modifica è stata effettuata
-bool listDoubly_sortElement(DNode **head, DNode *elem, int(compare)(void *, void *));
+bool listDoubly_sortElement(DNode **head, DNode **tail, DNode *elem, int(compare)(void *, void *));
 
 /// @brief Scambia il contenuto di due nodi (i puntatori)
 /// @param a Primo elemento

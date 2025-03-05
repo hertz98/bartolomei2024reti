@@ -34,23 +34,32 @@ void scoreboard_scoreDestroy(void *p)
     free(score);
 }
 
-Score *scoreboard_get(DNode **score_list, char * name)
+DNode *scoreboard_get(DNode **score_list, char * name)
 {
-    DNode ** current = score_list;
-    while( (*current) && (*current)->next)
-    {
-        char * tmp_name = ((Score *) (*current)->data)->name;
-        if ( tmp_name && !strcmp( tmp_name , name) )
-            return (*current)->data;
-
-        (*current) = (*current)->next;
-    }
-
+    if (!score_list || !name)
+        return NULL;
+    
     Score * tmp = malloc(sizeof(Score));
     if (!tmp)
         return NULL;
+
+    tmp->name = NULL;
+    tmp->score = 0;
+
+    if (!*score_list)
+        return listDoubly_append(score_list, tmp);
+
+    DNode *current = *score_list;
+    for (; current && current->next; current = current->next)
+    {
+        char * score_name = ((Score *) current->data)->name;
+        if ( score_name && !strcmp( score_name , name) )
+            return current;
+    }
     
-    return listDoubly_append(current, tmp)->data;
+    // Evito di ripercorrere tutta la intera lista
+    // Aggiungo in fondo perchè è probabile che il punteggio sia 0 inizialmente
+    return listDoubly_append(&current, tmp);
 }
 
 void scoreboard_increase(Score *score)
@@ -77,10 +86,10 @@ void scoreboard_print(Scoreboard *scoreboard)
 {
     for (int i = 0; i < scoreboard->nTopics; i++)
     {
-        printf("scoreboard %d\n", i);
+        printf("scoreboard %d:\n", i);
         for (DNode * tmp = scoreboard->score_list[i]; tmp; tmp = tmp->next)
         {
-            scoreboard_scorePrint(tmp);
+            scoreboard_scorePrint(tmp->data);
             printf("\n");
         }
         printf("\n");
@@ -89,5 +98,5 @@ void scoreboard_print(Scoreboard *scoreboard)
 
 void scoreboard_scorePrint(void *score)
 {
-    printf("%s: %d", ((Score *) score)->name, ((Score *) score)->score);
+    printf("- %s: %d", ((Score *) score)->name, ((Score *) score)->score);
 }

@@ -123,18 +123,21 @@ int dNode_compare(DNode *a, DNode *b, int(compare)(void *, void *))
         return compare(a->data, b->data);
 }
 
-bool listDoubly_sortElement(DNode **head, DNode *elem, int(compare)(void *, void *))
+bool listDoubly_sortElement(DNode **head, DNode **tail, DNode *elem, int(compare)(void *, void *))
 {
+    if (!elem)
+        return false;
+
     bool moved = false;
     while (elem->next && 
             dNode_compare(elem, elem->next, compare) > 0 && 
-            listDoubly_DNode_moveFordward(head, NULL, elem))
+            listDoubly_DNode_moveFordward(head, tail, elem))
         moved = true;
 
     if (!moved)
         while (elem->prev && 
             dNode_compare(elem, elem->prev, compare) < 0 && 
-            listDoubly_DNode_moveBack(head, NULL, elem))
+            listDoubly_DNode_moveBack(head, tail, elem))
         moved = true;
 
     return moved;
