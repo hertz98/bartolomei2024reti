@@ -39,12 +39,7 @@ DNode *scoreboard_get(DNode **score_list, char * name)
     if (!score_list || !name)
         return NULL;
     
-    Score * tmp = malloc(sizeof(Score));
-    if (!tmp)
-        return NULL;
-
-    tmp->name = NULL;
-    tmp->score = 0;
+    Score * tmp = scoreboard_newScore(name, 0);
 
     if (!*score_list)
         return listDoubly_append(score_list, tmp);
@@ -59,7 +54,23 @@ DNode *scoreboard_get(DNode **score_list, char * name)
     
     // Evito di ripercorrere tutta la intera lista
     // Aggiungo in fondo perchè è probabile che il punteggio sia 0 inizialmente
-    return listDoubly_append(&current, tmp);
+    DNode *ret;
+    if (!(ret = listDoubly_append(&current, tmp)))
+        free(tmp);
+    return ret;
+}
+
+Score * scoreboard_newScore(char * name, int score)
+{
+    Score * tmp = malloc(sizeof(Score));
+
+    if (!tmp)
+        return NULL;
+
+    tmp->name = name;
+    tmp->score = score;
+
+    return tmp;
 }
 
 void scoreboard_increase(Score *score)

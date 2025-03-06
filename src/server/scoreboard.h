@@ -52,3 +52,9 @@ void scoreboard_print(Scoreboard * scoreboard);
 /// @brief Funzione per stampare un punteggio (debug)
 /// @param score Puntatore a punteggio
 void scoreboard_scorePrint(void * score);
+
+/// @brief Alloca un nuovo Score
+/// @param name puntatore al nome del giocatore
+/// @param score punteggio
+/// @return il puntatore allo Score allocato o NULL
+Score * scoreboard_newScore(char * name, int score);
