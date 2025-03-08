@@ -182,6 +182,8 @@ int init(int argc, char ** argv)
     signal(SIGINT, signalhandler);
     signal(SIGPIPE, SIG_IGN);
 
+    srand(time(NULL));
+
     return 0;
 }
 

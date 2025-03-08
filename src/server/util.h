@@ -35,3 +35,8 @@ int stricmp(const char * string1, const char * string2);
 /// @param string Stringa da verificare
 /// @return true se la stringa è alfanumerica
 bool isAlphaNumeric(const char * string);
+
+/// @brief Usa l'algoritmo di fisher-yates per mescolare gli elementi di un array di puntatori
+/// @param array Puntatore all'array di puntatori
+/// @param arraySize Numero di elementi dell'array
+void shuffleArrayPtr(void **array, int arraySize);

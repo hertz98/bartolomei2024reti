@@ -284,7 +284,7 @@ bool client_quizInit(Client *client, TopicsContext *topicsContext)
         count++;
     }
 
-    // TODO: SHUFFLE
+    shuffleArrayPtr((void*) client->game.questions, currentTopic->nQuestions);
 
     return true;
 }

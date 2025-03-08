@@ -95,6 +95,18 @@ bool isAlphaNumeric(const char *string)
     return true;
 }
 
+void shuffleArrayPtr(void **array, int arraySize)
+{
+    for (int i = arraySize - 1; i >= 0; i--)
+    {
+        int j = rand() % (arraySize - 1);
+        // exchange
+        void *tmp = array[i];
+        array[i] = array[j];
+        array[j] = tmp;
+    } 
+}
+
 bool removeNumbering(char *string)
 {
     int i = 0;
