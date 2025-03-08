@@ -95,6 +95,13 @@ bool listDoubly_DNode_moveFordward(DNode **head, DNode **tail, DNode *elem);
 /// @return true se lo spostamento è avvenuto
 bool listDoubly_DNode_moveBack(DNode **head, DNode **tail, DNode *elem);
 
+/// @brief Estrae un elemento dalla lista, e aggiusta i puntatori alla lista se necessario
+/// @param head (optional) Il puntatore alla testa della lista
+/// @param tail (optional) Il puntatore alla coda della lista
+/// @param elem Nodo da estrarre
+/// @return Il nodo appena estratto, altrimenit NULL
+DNode * listDoubly_DNode_extract(DNode ** head, DNode ** tail, DNode *elem);
+
 /********** DEBUG **********/
 
 /// @brief Stampa il puntatore come fosse un intero (DEBUG)

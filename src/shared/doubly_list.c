@@ -106,6 +106,21 @@ void listDoubly_print_string(void *data) {
     printf("%s", (char *) data);
 }
 
+DNode * listDoubly_DNode_extract(DNode **head, DNode **tail, DNode *elem)
+{
+    if (elem->prev)
+        elem->prev->next = elem->next;
+    else if (head)
+        (*head) = elem->next;
+    
+    if (elem->next)
+        elem->next->prev = elem->prev;
+    else if (tail)
+        (*tail) = elem->prev;
+    
+    return elem;
+}
+
 void listDoubly_print_intptr(void *data)
 {
     printf("%d", (int) (__intptr_t) data);
