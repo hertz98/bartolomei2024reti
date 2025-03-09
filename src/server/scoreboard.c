@@ -6,20 +6,25 @@ bool scoreboard_init(Scoreboard *scoreboard, int nTopics)
     scoreboard->nElements = 0;
     scoreboard->nTopics = nTopics;
 
-    scoreboard->score_list = malloc(sizeof(DNode *) * nTopics);
-    if (!scoreboard->score_list)
+    scoreboard->current = malloc(sizeof(DNode *) * nTopics);
+    if (!scoreboard->current)
         return false;
 
-    memset(scoreboard->score_list, 0, sizeof(DNode *) * nTopics);
+    scoreboard->completed = malloc(sizeof(DNode *) * nTopics);
+    if (!scoreboard->current)
+        return false;
 
-    return false;
+    memset(scoreboard->current, 0, sizeof(DNode *) * nTopics);
+    memset(scoreboard->completed, 0, sizeof(DNode *) * nTopics);
+
+    return true;
 }
 
 void scoreboard_destroy(Scoreboard *scoreboard)
 {
     for (int i = 0; i < scoreboard->nTopics; i++)
-        if (scoreboard->score_list[i])
-            listDoubly_destroy(scoreboard->score_list[i], scoreboard_scoreDestroy);
+        if (scoreboard->current[i])
+            listDoubly_destroy(scoreboard->current[i], scoreboard_scoreDestroy);
 
     scoreboard->nElements = 0;
 }
@@ -98,7 +103,7 @@ void scoreboard_print(Scoreboard *scoreboard)
     for (int i = 0; i < scoreboard->nTopics; i++)
     {
         printf("scoreboard %d:\n", i);
-        for (DNode * tmp = scoreboard->score_list[i]; tmp; tmp = tmp->next)
+        for (DNode * tmp = scoreboard->current[i]; tmp; tmp = tmp->next)
         {
             scoreboard_scorePrint(tmp->data);
             printf("\n");

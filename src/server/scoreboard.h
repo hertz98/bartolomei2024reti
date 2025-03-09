@@ -17,7 +17,8 @@ typedef struct Scoreboard
 {
     int nTopics;
     int *nElements;
-    DNode ** score_list; // Array di liste a Score
+    DNode ** current; // Array di liste a Score
+    DNode ** completed;
 } Scoreboard;
 
 /// @brief Inizializza le strutture dati inerenti ai punteggi

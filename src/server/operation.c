@@ -187,7 +187,7 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
             break;
         }
         client->game.currentQuestion = 0;
-        if (!client_quizInit(client, topics))
+        if (!client_quizInit(context, socket, topics))
             return OP_FAIL;
         return OP_DONE;
 
@@ -404,7 +404,11 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         {
             if (!sendCommand(socket, CMD_CORRECT))
                 return OP_FAIL;
-            client->game.score[client->game.playing]++;
+            
+            // Incremento il punteggio
+            DNode * score = client->game.score[client->game.playing];
+            ((Score*) score->data)->score++;
+            listDoubly_sortElement(&context->scoreboard.current[client->game.playing], NULL, score, scoreboard_scoreCompare);
         }
         else
             if (!sendCommand(socket, CMD_WRONG))
@@ -412,6 +416,12 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
 
         if (++client->game.currentQuestion >= currentTopic->nQuestions)
         {
+            DNode * score = client->game.score[client->game.playing];
+            listDoubly_DNode_extract(&context->scoreboard.current[client->game.playing], NULL, score);
+            listDoubly_insert(&context->scoreboard.completed[client->game.playing], score->data, scoreboard_scoreCompare);
+            if (score)
+                free(score);
+
             client->game.playing = -1;
             client->game.currentQuestion = -1;
         }

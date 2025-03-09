@@ -73,6 +73,9 @@ int main (int argc, char ** argv)
     if (!topicsLoader(&topicsContext))
         return false;
 
+    if (!scoreboard_init(&clientsContext.scoreboard, topicsContext.nTopics))
+        return false;
+        
     clientsContext.fd_max = listener > STDIN_FILENO ? listener + 1 : STDIN_FILENO + 1;
 
     while(true)
@@ -263,18 +266,17 @@ void printServer()
         #else
             printf("Punteggio tema %d\n", t + 1);
         #endif
-        for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
-            if (isClient(&clientsContext, i, true) &&
-                clientsContext.clients[i]->game.playing == t &&
-                clientsContext.clients[i]->game.score[t] != -1)
-            {
-                #ifdef PRINT_COLON_SCORE
-                    printf("- %s: %d\n", clientsContext.clients[i]->name, clientsContext.clients[i]->game.score[t]);
-                #else
-                    printf("- %s %d\n", clientsContext.clients[i]->name, clientsContext.clients[i]->game.score[t]);
-                #endif
-                n++;
-            }
+
+        for (DNode * score = clientsContext.scoreboard.current[t]; score; score = score->next)
+        {
+            Score *current = score->data;
+            #ifdef PRINT_COLON_SCORE
+                printf("- %s: %d\n", current->name, current->score);
+            #else
+                printf("- %s %d\n", current->name, current->score);
+            #endif
+        }
+
         printf("\n");
     }
     
@@ -285,17 +287,17 @@ void printServer()
         #else
             printf("Quiz tema %d completato\n", t + 1);
         #endif
-        for (int i = 0, n = 0; i < clientsContext.allocated && n < clientsContext.nClients; i++)
-            if (isClient(&clientsContext, i, true) &&
-                clientsContext.clients[i]->game.playing != t &&
-                clientsContext.clients[i]->game.score[t] != -1)
-            {
-                #ifdef PRINT_SCORE_COMPLETED
-                    printf("- %s: %d\n", clientsContext.clients[i]->name, clientsContext.clients[i]->game.score[t]);
-                #else
-                    printf("- %s\n", clientsContext.clients[i]->name);
-                #endif
-            }
+
+        for (DNode * score = clientsContext.scoreboard.completed[t]; score; score = score->next)
+        {
+            Score *current = score->data;
+            #ifdef PRINT_COLON_SCORE
+                printf("- %s: %d\n", current->name, current->score);
+            #else
+                printf("- %s %d\n", current->name, current->score);
+            #endif
+        }
+
         printf("\n");
     }
 }
