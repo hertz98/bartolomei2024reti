@@ -363,7 +363,7 @@ void readUser_Enter()
 
 bool playTopic()
 {
-    while(true)
+    while(true) // Exyernal topic playing loop
     {
         if (!sendCommand(sd, CMD_NEXTQUESTION))
         {
@@ -375,7 +375,7 @@ bool playTopic()
         {
         case CMD_OK:
             break;
-        
+
         case CMD_NONE:
             return true;
         
@@ -384,32 +384,62 @@ bool playTopic()
             break;
         }
 
-        clear();
-        printf("Quiz - %s\n+++++++++++++++++++++++++++++++\n",
-             (char*) context.topics[context.playing]);
-        
         MessageArray *question_msg = recvMessage(sd);
         question_msg->messages[0].toFree = true;
 
-        printf(question_msg->messages[0].payload);
-        printf("\n");
-
         char buffer[128];
-        while(true)
+        while(true) // Printing loop
         {
-            printf("Risposta: ");
-            fflush(stdout);
-            int ret;
-            if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) > 1)
+            clear();
+            printf("Quiz - %s\n+++++++++++++++++++++++++++++++\n",
+                (char*) context.topics[context.playing]);
+
+            printf("%s\n", (char *) question_msg->messages[0].payload);
+            printf("\n");
+
+            while(true) // User input loop
             {
-                buffer[ret - 1] = '\0';
-                break;
+                printf("Risposta: ");
+                fflush(stdout);
+                int ret;
+                if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) > 1)
+                {
+                    buffer[ret - 1] = '\0';
+                    break;
+                }
+            }
+
+            if (!strcmp(buffer, "endquiz"))
+            {
+                sendCommand(sd, CMD_STOP);
+                exit(0);
+            }
+            else if (!strcmp(buffer, "show score"))
+            {
+                sendCommand(sd, CMD_RANK);
+                // TODO
+                readUser_Enter();
+                continue;
+            }
+            else // It's an answer!
+            {
+                if ( !sendCommand(sd, CMD_ANSWER) )
+                {
+                    printf("Errore nell'invio della risposta\n");
+                    return false;
+                }
+                else
+                    break; // Internal user input loop
             }
         }
-        
+
         MessageArray *answer_msg = messageArray(1);
         messageString(&answer_msg->messages[0], buffer, false);
-        sendMessage(sd, answer_msg);
+        if (!sendMessage(sd, answer_msg))
+        {
+            printf("Errore nell'invio della risposta\n");
+            return false;
+        }
 
         messageArrayDestroy(&question_msg);
         messageArrayDestroy(&answer_msg);
@@ -430,8 +460,7 @@ bool playTopic()
             break;
         }
 
-    readUser_Enter();
-        
+    readUser_Enter();    
     }
 }
 

@@ -389,14 +389,28 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         MessageArray *question_msg = currentOperation->tmp;
         return operationCreate(sendMessage, context, socket, question_msg);
     
-    case 2:
+    case 2: // The function will be called again after the termination of next operation
         currentOperation->tmp = NULL;
         return OP_OK;
-
+    
     case 3:
-        return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
+        switch( recvCommand(socket) )
+        {
+            case CMD_ANSWER:
+                return OP_OK; // Wait for the next message
+            
+            case CMD_RANK: // TODO
+                currentOperation->step--; // The next time come here
+                return OP_OK; 
+
+            default:
+                return OP_FAIL;
+        }
 
     case 4:
+        return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
+
+    case 5:
         MessageArray *answer_msg = currentOperation->tmp;
         answer_msg->messages[0].toFree = true;
         
