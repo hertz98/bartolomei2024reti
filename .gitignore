@@ -2,4 +2,5 @@
 bin/
 src/server/.gdbinit
 src/client/.gdbinit
+src/testing
 debug

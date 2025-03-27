@@ -96,14 +96,22 @@ void clientRemove(ClientsContext * context, int socket)
         if (client->registered)
             context->registered--;
 
-        if (client->name)
-            free(client->name);
+        // if (client->name)
+        //     free(client->name);
         if (client->game.playableTopics)
             free(client->game.playableTopics);
         if (client->game.questions)
             free(client->game.questions);
         if (client->game.score)
+        {
+            if (client->game.playing != -1)
+            {
+                DNode * score = client->game.score[client->game.playing];
+                listDoubly_DNode_extract(&context->scoreboard.current[client->game.playing], NULL, score);
+                listDoubly_insert(&context->scoreboard.completed[client->game.playing], score->data, scoreboard_scoreCompare); // TODO: if not by specs
+            }
             free(client->game.score);
+        }
 
         if (client->operation)
         {
@@ -252,26 +260,31 @@ bool client_gameInit(Client * client, TopicsContext * topicsContext)
 
     client->game.questions = NULL;
 
-    client->game.score = malloc(sizeof(int) * topicsContext->nTopics);
+    // Inizializzo lo array dei puntatori a punteggi
+    client->game.score = malloc(sizeof(DNode *) * topicsContext->nTopics);
     if (!client->game.score)
         return false;
     for (int i = 0; i < topicsContext->nTopics; i++)
-        client->game.score[i] = -1;
+        client->game.score[i] = NULL;
 
     return true;
 }
 
-bool client_quizInit(Client *client, TopicsContext *topicsContext)
+bool client_quizInit(ClientsContext * context, int socket, TopicsContext *topicsContext)
 {
+    Client * client = context->clients[socket];
     Topic *currentTopic = &topicsContext->topics[client->game.playing];
 
     if (client->game.questions)
         free(client->game.questions);
     
+    // Alloco l'array delle domande
     client->game.questions = malloc(sizeof(Question *) * currentTopic->nQuestions);
     if (!client->game.questions)
         return false;
 
+
+    // Eseguo la copia di tutti i puntatori alle domande nello array delle domande
     int count = 0;
     for (Node * tmp = currentTopic->questions; tmp; tmp = tmp->next)
     {
@@ -284,10 +297,14 @@ bool client_quizInit(Client *client, TopicsContext *topicsContext)
         count++;
     }
 
+    client->game.score[client->game.playing] = scoreboard_get(&context->scoreboard.current[client->game.playing], client->name);
+    if (!client->game.score[client->game.playing])
+        return false;
+
     shuffleArrayPtr((void*) client->game.questions, currentTopic->nQuestions);
 
     return true;
-}
+}   
 
 int client_playableIndex(Client * client, TopicsContext * topics, int playable)
 {

@@ -4,9 +4,11 @@
 #include <sys/select.h>
 #include "../shared/commands.h"
 #include "../shared/message.h"
+#include "../shared/doubly_list.h"
 
 #include "topic.h"
 #include "operation.h"
+#include "scoreboard.h"
 
 // Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
 #define CLIENT_NAME_MAX 32
@@ -30,7 +32,7 @@ struct Client
         int playing; // indice topic corrente
         bool * playableTopics; // array di topic giocabili dal Client
         int nPlayable;
-        int * score; // array di punteggi 
+        DNode ** score; // array di punteggi 
         int currentQuestion; // indice domanda corrente
         Question ** questions; // array di domande (allo scopo di mischiarle)
     } game;
@@ -49,6 +51,8 @@ struct ClientsContext {
 
     Client ** clients;
     int allocated; // Numero di strutture allocate per i clients
+
+    Scoreboard scoreboard;
 };
 
 int clientsInit(ClientsContext * clientsContext, int max);
@@ -99,7 +103,7 @@ bool client_gameInit(Client * client, TopicsContext * topicsContext);
 /// @param client Struttura dati del client inizializzata con dati di gioco inizializzati
 /// @param topicsContext Strutture dati inerenti ai topics
 /// @return true se va tutto liscio
-bool client_quizInit(Client * client, TopicsContext * topicsContext);
+bool client_quizInit(ClientsContext * context, int socket, TopicsContext *topicsContext);
 
 /// @brief (Non più usato) Converte l'indice del topic fornito dal client nell'indice corrispondente nell'array dei topic
 /// La funzione è fatta per prendere direttamente in ingresso l'input del client, avendo dei controlli
