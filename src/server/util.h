@@ -1,3 +1,8 @@
+#pragma once
+
+#ifndef UTIL_HEADER
+#define UTIL_HEADER
+
 #include <stdbool.h>
 
 /// @brief Ottiene la directory padre
@@ -40,3 +45,5 @@ bool isAlphaNumeric(const char * string);
 /// @param array Puntatore all'array di puntatori
 /// @param arraySize Numero di elementi dell'array
 void shuffleArrayPtr(void **array, int arraySize);
+
+#endif

@@ -1,3 +1,4 @@
+#define _DEFAULT_SOURCE
 #include <string.h>
 #include <arpa/inet.h>
 #include "util.h"

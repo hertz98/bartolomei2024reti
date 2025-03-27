@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef TOPIC_HEADER
+#define TOPIC_HEADER
+
 #include <stdbool.h>
 #include <limits.h>
 
@@ -89,3 +93,5 @@ void topics_questionDestroy(void * data);
 /// @brief Ottiene il nome del topic dal nome del file completo
 /// @param name Stringa contenente il nome del file con numerazione ed estensione
 void topic_name(char * name);
+
+#endif

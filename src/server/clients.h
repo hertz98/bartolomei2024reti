@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef CLIENTS_HEADER
+#define CLIENTS_HEADER
+
 #include <time.h>
 #include <stdbool.h>
 #include <sys/select.h>
@@ -133,3 +137,5 @@ bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
 /// @param topics Strutture dati inerenti ai topics finalizzate
 /// @return true se è andato tutto liscio
 bool client_sendTopics(ClientsContext *context, int socket, TopicsContext * topics);
+
+#endif

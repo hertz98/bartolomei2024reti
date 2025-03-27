@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef MESSAGE_HEADER
+#define MESSAGE_HEADER
+
 #include <inttypes.h>
 #include "list.h"
 
@@ -68,3 +72,5 @@ bool messageIntegerArray(Message *message, int32_t *array, int size);
 /// @brief Azzera il contenuto di un messaggio
 /// @param message Indirizzo del messaggio
 void emptyMessage(Message *message);
+
+#endif

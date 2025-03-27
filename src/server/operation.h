@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef OPERATION_HEADER
+#define OPERATION_HEADER
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -86,3 +90,5 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
 /// @param topicsContext Strutture dati inerenti ai topic finalizzate
 /// @return Ritorna l'esito dell'operazione, false in caso di fallimento
 OperationResult playTopic(ClientsContext *context, int socket, void * topicsContext);
+
+#endif

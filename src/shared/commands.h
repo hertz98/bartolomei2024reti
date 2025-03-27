@@ -1,3 +1,8 @@
+#pragma once
+
+#ifndef COMMANDS_HEADER
+#define COMMANDS_HEADER
+
 typedef enum Command 
 {
     CMD_STOP = false, // Terminate
@@ -15,3 +20,5 @@ typedef enum Command
     CMD_CORRECT, // Server informs that the answer is correct
     CMD_WRONG, // Server informs that the answer is wrong
 } Command;
+
+#endif

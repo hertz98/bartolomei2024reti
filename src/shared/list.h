@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef LIST_HEADER
+#define LIST_HEADER
+
 #include <stdbool.h>
 
 /********** LISTA GENERICA **********/
@@ -48,3 +52,5 @@ void list_print(Node *head, void (*print)(void *));
 /// @brief Funzione per stampare il campo data (stringhe)
 /// @param data Puntatore data della lista
 void list_print_string(void *data);
+
+#endif

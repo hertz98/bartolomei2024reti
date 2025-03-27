@@ -1,4 +1,9 @@
 #pragma once
+
+#ifndef DOUBLYLIST_HEADER
+#define DOUBLYLIST_HEADER
+
+#pragma once
 #include <ctype.h>
 #include <stdbool.h>
 
@@ -113,3 +118,5 @@ void listDoubly_print_intptr(void * data);
 /// @param b Secondo valore
 /// @return <0 se a minore di b, 0 se a uguale a b, >0 se a maggiore di b
 int intptr_compare(void *a, void *b);
+
+#endif

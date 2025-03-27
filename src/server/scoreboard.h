@@ -1,3 +1,8 @@
+#pragma once
+
+#ifndef SCOREBOARD_HEADER
+#define SCOREBOARD_HEADER
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -59,3 +64,5 @@ void scoreboard_scorePrint(void * score);
 /// @param score punteggio
 /// @return il puntatore allo Score allocato o NULL
 Score * scoreboard_newScore(char * name, int score);
+
+#endif
