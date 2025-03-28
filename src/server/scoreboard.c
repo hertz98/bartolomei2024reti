@@ -148,7 +148,7 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
         SerializedScoreboard *current = &scoreboard->serialized[i];
 
         for (int t = 0; t < scoreboard->nTopics; t++)
-            if (true || current->modified[t]) // TODO
+            if (current->modified[t])
             {
                 char buffer[512];
 
