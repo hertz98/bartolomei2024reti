@@ -21,6 +21,9 @@ typedef struct Message {
 /// al di fuori delle funzioni di trasmissione e ricezione.
 typedef struct MessageArray {
     int size;
+     // If false every message needs to be fully sent to return, even if the socket would block
+     // This is necessary for data that can change on the half of sending
+    bool isInterruptible;
     Message * messages;
 } MessageArray;
 
@@ -39,6 +42,10 @@ MessageArray * messageArray(int size);
 /// @return Ritorna una nuova copia allocata di un messageArray oppure NULL in caso di fallimento
 MessageArray * MessageArrayCpy(MessageArray * toCopy);
 
+/// @brief Resetta lo stato di trasmissione di un intero MessageArray
+/// @param toReset Il MessageArray
+void messageArray_reset(MessageArray * toReset);
+
 /// @brief restituisce un array di puntatori a stringhe da un MessageArray
 /// @param messageArray messageArray contenente solo stringhe
 /// @return un puntatore a puntatori a stringa
@@ -49,6 +56,13 @@ char ** messageArray2StringArray(MessageArray * messageArray);
 /// @param string Stringa con carattere di terminazione nullo
 /// @param toFree se true, la stringa deve essere deallocata alla distruzione della lista
 void messageString(Message *message, char *string, bool toFree);
+
+/// @brief Prepara un messaggio di dimensione già conosciuta (evita l'overhead di dover ricontare la dimensione della stringa)
+/// @param message l'indirizzo del messaggio
+/// @param string Stringa con carattere di terminazione nullo
+/// @param size Il numero di caratteri della stringa, escluso il carattere di terminazione nullo
+/// @param toFree se true, la stringa deve essere deallocata alla distruzione della lista
+void messageStringReady(Message *message, char *string, int size, bool toFree);
 
 /// @brief Prepara la struttura dati di un messaggio contenente un array di interi
 /// @param message l'indirizzo del messaggio

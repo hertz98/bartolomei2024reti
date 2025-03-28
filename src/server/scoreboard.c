@@ -185,7 +185,7 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                                                                 current->serialized_lenght[t]);
                 }
 
-                current->serialized_lenght[t]++; // The last NULL caracher
+                // current->serialized_lenght[t]++; // The last NULL caracher
                 current->modified[t] = false;
             }   
     }

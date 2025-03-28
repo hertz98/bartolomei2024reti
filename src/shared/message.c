@@ -29,9 +29,11 @@ MessageArray *messageArray(int size)
 {
     if (size < 0)
         return NULL;
+
     MessageArray * tmp = (MessageArray *) malloc(sizeof(MessageArray));
     if (!tmp)
         return NULL;
+
     tmp->size = size;
     tmp->messages = (Message *) malloc(sizeof(Message) * (size + 1));
     if (!tmp->messages)
@@ -39,13 +41,20 @@ MessageArray *messageArray(int size)
         free(tmp);
         return NULL;
     }
+
     memset(tmp->messages, 0, sizeof(Message) * (size + 1));
     tmp->messages[size].lenght = size;
+
+    tmp->isInterruptible = true; // Default value
+
     return tmp;
 }
 
 MessageArray *MessageArrayCpy(MessageArray *toCopy)
 {
+    if (!toCopy)
+        return NULL;
+
     MessageArray *tmp = messageArray(toCopy->size);
     if (!tmp)
         return NULL;
@@ -59,8 +68,21 @@ MessageArray *MessageArrayCpy(MessageArray *toCopy)
     return tmp;
 }
 
+void messageArray_reset(MessageArray *toReset)
+{
+    if (!toReset)
+        return;
+
+    for (int i = 0; i < toReset->size + 1; i++)
+        toReset->messages[i].transmitted = 0;
+
+    return;
+}
+
 char ** messageArray2StringArray(MessageArray *messageArray)
 {
+    if (!messageArray)
+        return NULL;
 
     char ** tmp = malloc(sizeof(char*) * messageArray->size);
     if (!tmp)
@@ -79,11 +101,38 @@ char ** messageArray2StringArray(MessageArray *messageArray)
 
 void messageString(Message *message, char *string, bool toFree)
 {
-    if (!string)
+    if (!message)
         return;
+    
+    if (!string)
+    {
+        message->payload = NULL;
+        message->lenght = 0;
+        return;
+    }
 
     message->payload = string;
     message->lenght = strlen(string) + 1;
+    message->transmitted = 0;
+    message->toFree = toFree;
+    
+    return;
+}
+
+void messageStringReady(Message *message, char *string, int size, bool toFree)
+{
+    if (!message)
+        return;
+    
+    if (!string || size <= 0)
+    {
+        message->payload = NULL;
+        message->lenght = 0;
+        return;
+    }
+
+    message->payload = string;
+    message->lenght = size + 1;
     message->transmitted = 0;
     message->toFree = toFree;
     
@@ -111,7 +160,7 @@ bool messageInteger(Message *message, int32_t number)
 
 void messageBoolArray(Message * message, bool *array, int size)
 {
-    if (!message)
+    if (!message || !array)
         return;
     
     if (size <= 0)
@@ -131,7 +180,7 @@ void messageBoolArray(Message * message, bool *array, int size)
 
 bool messageIntegerArray(Message *message, int32_t *array, int size)
 {
-    if (!message)
+    if (!message || !array)
         return false;
     
     if (size <= 0)
