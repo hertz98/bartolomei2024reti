@@ -401,7 +401,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                 return OP_OK; // Wait for the next message
             
             case CMD_RANK: // TODO
-                currentOperation->step--; // The next time come here
+                currentOperation->step--; // The next time come here again
                 return OP_OK; 
 
             default:
@@ -423,7 +423,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
             // Incremento il punteggio
             DNode * score = client->game.score[client->game.playing];
             ((Score*) score->data)->score++;
-            listDoubly_sortElement(&context->scoreboard.current[client->game.playing], NULL, score, scoreboard_scoreCompare);
+            listDoubly_sortElement( &context->scoreboard.scores[SCR_CURRENT][client->game.playing], NULL, score, scoreboard_scoreCompare);
         }
         else
             if (!sendCommand(socket, CMD_WRONG))
@@ -432,8 +432,8 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         if (++client->game.currentQuestion >= currentTopic->nQuestions)
         {
             DNode * score = client->game.score[client->game.playing];
-            listDoubly_DNode_extract(&context->scoreboard.current[client->game.playing], NULL, score);
-            listDoubly_insert(&context->scoreboard.completed[client->game.playing], score->data, scoreboard_scoreCompare);
+            listDoubly_DNode_extract( &context->scoreboard.scores[SCR_CURRENT][client->game.playing], NULL, score);
+            listDoubly_insert( &context->scoreboard.scores[SCR_COMPLETED][client->game.playing], score->data, scoreboard_scoreCompare);
             if (score)
                 free(score);
 

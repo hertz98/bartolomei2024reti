@@ -107,6 +107,37 @@ void shuffleArrayPtr(void **array, int arraySize)
     } 
 }
 
+int strcpyResize(char **dst, const char *src, int *allocatedSize, int pos)
+{
+    if (!dst || !src || !allocatedSize || pos < 0) 
+        return -1;
+    
+    int len = 0; // Used for both indexing and measuring size
+    
+    while (src[len] != '\0')
+    {
+        if (pos + len + 1 >= *allocatedSize) // If the position + current lenght + null exceed the size
+        {
+            while (pos + len + 1 >= *allocatedSize)
+                *allocatedSize *= 2;  // Exponential growth
+
+            char *tmp = (char *) realloc(*dst, *allocatedSize);
+            if (!tmp)
+                return -1;
+            
+            *dst = tmp;
+        }
+
+        (*dst)[pos + len] = src[len];
+        
+        len++;
+    }
+
+    (*dst)[pos + len] = '\0';  // Terminating character
+
+    return len;  // Return the copied size (without the terminating character)
+}
+
 bool removeNumbering(char *string)
 {
     int i = 0;

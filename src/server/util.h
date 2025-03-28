@@ -46,4 +46,12 @@ bool isAlphaNumeric(const char * string);
 /// @param arraySize Numero di elementi dell'array
 void shuffleArrayPtr(void **array, int arraySize);
 
+/// @brief Come strcpy copia la stringa sorgente nella stringa di destinazione
+/// @param dst Stringa destinazione
+/// @param src Stringa sorgente
+/// @param allocatedSize Puntatore all'intero contenente la dimensione corrente della stringa
+/// @param pos Posizione dove iniziare la copia
+/// @return The number of bytes copied, excluded the null char
+int strcpyResize(char **dst, const char *src, int *allocatedSize, int pos);
+
 #endif

@@ -7,10 +7,16 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include "topic.h"
 
 #include "../shared/doubly_list.h"
 
 //#define SCOREBOARD_SAVE_SCORE
+#define PRINT_TOPIC_NAMES_ALWAYS
+
+#define DEFAULT_SCOREBOARD_ALLOCATION 4096
+#define SCOREBOARD_SIZE 2
+enum ScoreboardType {SCR_CURRENT, SCR_COMPLETED};
 
 typedef struct Score
 {
@@ -18,18 +24,27 @@ typedef struct Score
     int score;
 } Score;
 
+typedef struct SerializedScoreboard
+{
+    bool * modified; // This is the only optimization, serialize only the modified topics
+    char ** string;
+    int * serialized_lenght; // The size of the string
+    int * serialized_allocated; // The allocated size
+} SerializedScoreboard;
+
 typedef struct Scoreboard
 {
     int nTopics;
-    int *nElements;
-    DNode ** current; // Array di liste a Score
-    DNode ** completed;
+
+    DNode ** scores[2]; // Array di liste a Score
+    SerializedScoreboard serialized[2];
 } Scoreboard;
 
 /// @brief Inizializza le strutture dati inerenti ai punteggi
 /// @param scoreboard Strutture dati inerenti ai punteggi non inizializzate
+/// @param topisc Strutture dati inerenti ai topics finalizzate
 /// @return true in caso di successo, false in caso di fallimento
-bool scoreboard_init(Scoreboard * scoreboard, int topics);
+bool scoreboard_init(Scoreboard *scoreboard, TopicsContext * topics);
 
 /// @brief Libera dalla memoria le strutture dati allocate inerenti ai punteggi
 /// @param scoreboard Strutture dati inerenti ai punteggi
@@ -64,5 +79,15 @@ void scoreboard_scorePrint(void * score);
 /// @param score punteggio
 /// @return il puntatore allo Score allocato o NULL
 Score * scoreboard_newScore(char * name, int score);
+
+/// @brief Inizializza le strutture dati che rappresentano la classifica serializzata
+/// @param scoreboard Il puntatore alla struttura dati inerenti alla classifica
+/// @param size Numero di elementi
+/// @return true in caso di successo, false altrimenti
+bool scoreboard_serialize_init(SerializedScoreboard * scoreboard, int size);
+
+/// @brief Aggiorna le serializzazioni della classifica se necessario
+/// @param scoreboard Puntatore a struttura dati contenente la classifica
+void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext * topics);
 
 #endif

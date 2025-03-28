@@ -18,6 +18,7 @@
 #include "clients.h"
 #include "util.h"
 #include "operation.h"
+#include "scoreboard.h"
 #include "../shared/message.h"
 
 /********** PARAMETRI **********/
@@ -73,7 +74,7 @@ int main (int argc, char ** argv)
     if (!topicsLoader(&topicsContext))
         return false;
 
-    if (!scoreboard_init(&clientsContext.scoreboard, topicsContext.nTopics))
+    if (!scoreboard_init(&clientsContext.scoreboard, &topicsContext))
         return false;
         
     clientsContext.fd_max = listener > STDIN_FILENO ? listener + 1 : STDIN_FILENO + 1;
@@ -261,47 +262,14 @@ void printServer()
         }
     printf("\n");
 
-    for (int t = 0; t < topicsContext.nTopics; t++)
-    {
-        #ifdef PRINT_TOPIC_NAMES_ALWAYS
-            printf("Punteggio tema \"%d - %s\"\n", t + 1, topicsContext.topics[t].name);
-        #else
-            printf("Punteggio tema %d\n", t + 1);
-        #endif
+    Scoreboard * scoreboard = &clientsContext.scoreboard;
 
-        for (DNode * score = clientsContext.scoreboard.current[t]; score; score = score->next)
-        {
-            Score *current = score->data;
-            #ifdef PRINT_COLON_SCORE
-                printf("- %s: %d\n", current->name, current->score);
-            #else
-                printf("- %s %d\n", current->name, current->score);
-            #endif
-        }
+    scoreboard_serialize_update(scoreboard, &topicsContext);
 
-        printf("\n");
-    }
-    
-    for (int t = 0; t < topicsContext.nTopics; t++)
-    {
-        #ifdef PRINT_TOPIC_NAMES_ALWAYS
-            printf("Quiz tema \"%d - %s\" completato\n", t + 1, topicsContext.topics[t].name);
-        #else
-            printf("Quiz tema %d completato\n", t + 1);
-        #endif
+    for (int i = 0; i < SCOREBOARD_SIZE; i++)
+        for (int t = 0; t < scoreboard->nTopics; t++)
+            printf("%s\n", scoreboard->serialized[i].string[t]);
 
-        for (DNode * score = clientsContext.scoreboard.completed[t]; score; score = score->next)
-        {
-            Score *current = score->data;
-            #ifdef PRINT_COLON_SCORE
-                printf("- %s: %d\n", current->name, current->score);
-            #else
-                printf("- %s %d\n", current->name, current->score);
-            #endif
-        }
-
-        printf("\n");
-    }
 }
 
 void signalhandler(int signal)

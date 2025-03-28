@@ -107,8 +107,8 @@ void clientRemove(ClientsContext * context, int socket)
             if (client->game.playing != -1)
             {
                 DNode * score = client->game.score[client->game.playing];
-                listDoubly_DNode_extract(&context->scoreboard.current[client->game.playing], NULL, score);
-                listDoubly_insert(&context->scoreboard.completed[client->game.playing], score->data, scoreboard_scoreCompare); // TODO: if not by specs
+                listDoubly_DNode_extract( &context->scoreboard.scores[SCR_CURRENT][client->game.playing], NULL, score);
+                listDoubly_insert( &context->scoreboard.scores[SCR_COMPLETED][client->game.playing], score->data, scoreboard_scoreCompare); // TODO: if not by specs
             }
             free(client->game.score);
         }
@@ -297,7 +297,7 @@ bool client_quizInit(ClientsContext * context, int socket, TopicsContext *topics
         count++;
     }
 
-    client->game.score[client->game.playing] = scoreboard_get(&context->scoreboard.current[client->game.playing], client->name);
+    client->game.score[client->game.playing] = scoreboard_get(&context->scoreboard.scores[SCR_CURRENT][client->game.playing], client->name);
     if (!client->game.score[client->game.playing])
         return false;
 
