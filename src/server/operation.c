@@ -159,15 +159,14 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
     switch (currentOperation->step++)
     {
     case 0:
-        currentOperation->tmp = messageArray(1);
-        messageBoolArray( &((MessageArray *) currentOperation->tmp)->messages[0], client->game.playableTopics, topics->nTopics);
+        MessageArray *tmp = messageArray(1);
+        messageBoolArray( &((MessageArray *) tmp)->messages[0], client->game.playableTopics, topics->nTopics);
         currentOperation->step++;
 
     case 1:
-        return operationCreate(sendMessage, context, socket, currentOperation->tmp);
+        return operationCreate(sendMessage, context, socket, tmp);
     
     case 2:
-        currentOperation->tmp = NULL;
         return OP_OK;
 
     case 3:
@@ -251,14 +250,18 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
                 currentOperation->count++;
             }
 
-                currentOperation->step++;
-
-        case 2:
+            currentOperation->step++;
             client->sending = false;
             FD_CLR(socket, &context->write_fds);
+            return OP_OK;
+
+        case 2:
             if (recvCommand(socket) == CMD_OK)
                 return OP_DONE;
             break;
+
+        default:
+            return OP_FAIL;    
     }
 
     return OP_FAIL;
