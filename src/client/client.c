@@ -231,6 +231,13 @@ bool getTopicsData()
     }
 
     MessageArray *tmp = recvMessage(sd);
+
+    if (!tmp)
+    {
+        printf("Errore nella ricezione dei dati sui topics dal server\n");
+        exit(1);
+    }
+
     context.nTopics = tmp->size;
     context.topics = messageArray2StringArray(tmp);
     messageArrayDestroy(&tmp);
