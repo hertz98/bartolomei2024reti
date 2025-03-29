@@ -398,20 +398,41 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         switch( recvCommand(socket) )
         {
             case CMD_ANSWER:
+                currentOperation->step = 5;
                 return OP_OK; // Wait for the next message
             
-            case CMD_RANK: // TODO
-                currentOperation->step--; // The next time come here again
-                return OP_OK; 
+            case CMD_RANK:
+                MessageArray * tmp = messageArray(2 * context->scoreboard.nTopics);
+                if (!tmp)
+                    return OP_FAIL;
+
+                tmp->isInterruptible = false;
+
+                for (int i = 0; i < SCOREBOARD_SIZE; i++)
+                    for (int t = 0; t < context->scoreboard.nTopics; t++)
+                    {
+                        messageStringReady(&tmp->messages[i * context->scoreboard.nTopics + t], 
+                                            context->scoreboard.serialized[i].string[t], 
+                                            context->scoreboard.serialized[i].serialized_lenght[t],
+                                            false);
+                    }
+
+                operationCreate(sendMessage, context, socket, tmp);
+                return OP_OK;
 
             default:
                 return OP_FAIL;
         }
-
-    case 4:
-        return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
+    
+    case 4: // Ritorno dalla sendMessage (classifica)
+        currentOperation->step = 3; // Ritorno in attesa della risposta
+        currentOperation->tmp = NULL;
+        return OP_OK;
 
     case 5:
+        return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
+
+    case 6:
         MessageArray *answer_msg = currentOperation->tmp;
         answer_msg->messages[0].toFree = true;
         

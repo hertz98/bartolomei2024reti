@@ -30,6 +30,7 @@ bool readUser_int(int * number);
 bool playTopic();
 void readUser_Enter();
 bool getTopicsData();
+void scoreboard();
 
 /// @brief Converte l'indice del topic dal punto di vista dell'utente a quello
 /// dal punto di vista dell'array dei topic nel server
@@ -368,6 +369,24 @@ void readUser_Enter()
     while(getchar() != '\n');
 }
 
+void scoreboard()
+{
+    clear();
+
+    MessageArray * tmp = recvMessage(sd);
+
+    if (!tmp)
+    {
+        printf("Qualcosa è andato storto nella ricezione della classifica\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < tmp->size; i++)
+        printf("%s\n", (char *) tmp->messages[i].payload);
+
+    messageArrayDestroy(&tmp);
+}
+
 bool playTopic()
 {
     while(true) // Exyernal topic playing loop
@@ -424,7 +443,7 @@ bool playTopic()
             else if (!strcmp(buffer, "show score"))
             {
                 sendCommand(sd, CMD_RANK);
-                // TODO
+                scoreboard();
                 readUser_Enter();
                 continue;
             }
