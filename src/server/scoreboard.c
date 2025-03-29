@@ -153,15 +153,15 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                 char buffer[512];
 
                 #ifdef PRINT_TOPIC_NAMES_ALWAYS
-                    if (!i)
-                        sprintf(buffer, "Punteggio tema \"%d - %s\"\n", t + 1, topics->topics[t].name);
+                    if (i == SCR_CURRENT)
+                        snprintf(buffer, sizeof(buffer), "Punteggio tema \"%d - %s\"\n", t + 1, topics->topics[t].name);
                     else
-                        sprintf(buffer, "Quiz tema \"%d - %s\" completato\n", t + 1, topics->topics[t].name);
+                        snprintf(buffer, sizeof(buffer), "Quiz tema \"%d - %s\" completato\n", t + 1, topics->topics[t].name);
                 #else
-                    if (!type)
-                        sprintf(buffer, "Punteggio tema %d\n", i + 1);
+                    if (i == SCR_CURRENT)
+                        snprintf(buffer, sizeof(buffer), "Punteggio tema %d\n", i + 1);
                     else
-                        sprintf(buffer, "Quiz tema %d completato\n", i + 1);
+                        snprintf(buffer, sizeof(buffer), "Quiz tema %d completato\n", i + 1);
                 #endif
                 
                 current->serialized_lenght[t] = strcpyResize(&current->string[t], 
@@ -174,9 +174,9 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                     Score *score = node->data;
 
                     #ifdef PRINT_COLON_SCORE
-                        sprintf(buffer, "- %s: %d\n", current->name, current->score);
+                        snprintf(buffer, sizeof(buffer), "- %s: %d\n", current->name, current->score);
                     #else
-                        sprintf(buffer, "- %s %d\n", score->name, score->score);
+                        snprintf(buffer, sizeof(buffer), "- %s %d\n", score->name, score->score);
                     #endif
 
                     current->serialized_lenght[t] += strcpyResize(&current->string[t], 
