@@ -236,7 +236,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
                 if (msg->transmitted < lenght_size)
                 {
                     int lenght = htonl(msg->lenght);
-                    if ((ret = sendData(socket, &lenght, lenght_size, &msg->transmitted)) != OP_DONE)
+                    if ((ret = sendData(socket, &lenght, lenght_size, &msg->transmitted, !msgs->isInterruptible)) != OP_DONE)
                         return ret;
                 }
 
@@ -244,7 +244,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
                 {
                     unsigned int sent = msg->transmitted - lenght_size;
 
-                    if ((ret = sendData(socket, msg->payload, msg->lenght, &sent)) != OP_DONE)
+                    if ((ret = sendData(socket, msg->payload, msg->lenght, &sent, !msgs->isInterruptible)) != OP_DONE)
                         return ret;
                 }
 

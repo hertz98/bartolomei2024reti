@@ -75,10 +75,11 @@ enum Command recvCommand(int socket);
 /// @param buffer Buffer contenente i dati grezzi
 /// @param lenght Numero di byte da inviare
 /// @param sent Numero di byte già inviati
+/// @param block L'operazione diventa bloccante finché tutti i byte non saranno inviati
 /// @return OP_DONE se l'invio è avvenuto completamente, 
 /// OP_OK se sarà necessario richiamare la funzione per terminare l'invio
 /// OP_FAIL in caso di errore
-OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent);
+OperationResult sendData(int socket, void * buffer, unsigned int lenght, unsigned int * sent, bool block);
 
 /// @brief Funzione che riceve dati, gestisce la recv
 /// @param socket Indice del descrittore di socket del client

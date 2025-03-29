@@ -166,26 +166,33 @@ inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
     return false;
 }
 
-OperationResult sendData(int socket, void *buffer, unsigned int lenght, unsigned int *sent)
+OperationResult sendData(int socket, void *buffer, unsigned int length, unsigned int *sent, bool block)
 {          
     int ret;
-
-    ret = send(socket, buffer + *sent, lenght - *sent, 0);
-
-    if (ret >= 0)
-        *sent += ret;
-    else
-    {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) // Ripeti l'operazione, socket non pronto
-            return OP_OK; 
-        else 
-            return OP_FAIL;
-    }
     
-    if (lenght == *sent)
-        return OP_DONE;
-    else
-        return OP_OK;
+    while (true)
+    {
+        ret = send(socket, buffer + *sent, length - *sent, 0);
+
+        if (ret >= 0)
+        {
+            *sent += ret;
+            if (*sent == length)
+                return OP_DONE;  // Terminato
+            // continue;
+        }
+        else
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                if (!block)
+                    return OP_OK;  // Se non bloccante, ritorna e ritenta più tardi (select)
+                // continue;
+            }
+            else 
+                return OP_FAIL;  // Qualcosa è andato storto
+        }
+    }
 }
 
 enum Command recvCommand(int socket)
@@ -383,5 +390,5 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
     if (lenght == *received)
         return OP_DONE;
     else
-        return OP_OK;
+        return OP_OK; // Non è detto di ricevere tutti i byte voluti
 }
