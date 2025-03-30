@@ -129,7 +129,7 @@ int main (int argc, char ** argv)
 
 int init(int argc, char ** argv)
 {
-    listener = socket(AF_INET, SOCK_STREAM, 0);
+    listener = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
     struct sockaddr_in my_addr;
     memset(&my_addr, 0, sizeof(my_addr)); // Pulizia
