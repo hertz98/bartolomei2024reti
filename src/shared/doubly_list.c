@@ -20,6 +20,9 @@ DNode * listDoubly_create_node(void *data)
 
 DNode * listDoubly_append(DNode ** head, void *data)
 {
+    if (!head)
+        return NULL;
+    
     DNode *tmp = listDoubly_create_node(data);
     if (!tmp)
         return NULL;
@@ -67,31 +70,42 @@ DNode *listDoubly_extractHead(DNode ** head)
 
 DNode *listDoubly_insert(DNode **head, void *data, int(compare)(void *, void *))
 {
+    if (!head)
+        return NULL;
+
     DNode *tmp = listDoubly_create_node(data);
     if (!tmp)
         return NULL;
     
-    if (!(*head) || dNode_compare(*head, tmp, compare) >= 0 )
+    return listDoubly_DNode_insert(head, tmp, compare);
+}
+
+DNode *listDoubly_DNode_insert(DNode **head, DNode *elem, int(compare)(void *, void *))
+{
+    if (!head)
+        return NULL;
+
+    if (!(*head) || dNode_compare(*head, elem, compare) >= 0 )
     {
-        tmp->next = *head;
+        elem->next = *head;
         if (*head)
-             (*head)->prev = tmp;   
-        *head = tmp;
+             (*head)->prev = elem;   
+        *head = elem;
     }
     else
     {
         DNode * current = *head;
-        while (current->next && dNode_compare(tmp, current->next, compare) >= 0)
+        while (current->next && dNode_compare(elem, current->next, compare) >= 0)
             current = current->next;
         
-        tmp->prev = current;
-        tmp->next = current->next;
+        elem->prev = current;
+        elem->next = current->next;
         if (current->next)
-            current->next->prev = tmp;
-        current->next = tmp;
+            current->next->prev = elem;
+        current->next = elem;
     }
     
-    return tmp;
+    return elem;
 }
 
 int inline listDoubly_count(DNode *head)
@@ -308,4 +322,17 @@ void listDoubly_destroy(DNode *node, void (*release)(void *))
     if (release)
         release(node->data);
     free(node);
+}
+
+bool listDoubly_DNode_insertHead(DNode **head, DNode *elem)
+{
+    if (!head || !elem)
+        return false;
+    
+    DNode *next = *head;
+    *head = elem;
+    (*head)->next = next;
+    (*head)->next->prev = elem;
+
+    return true;
 }

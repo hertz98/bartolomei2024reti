@@ -44,6 +44,13 @@ DNode *listDoubly_extractHead(DNode ** head);
 /// @return Il puntatore al nodo appena creato, altrimenti NULL
 DNode * listDoubly_insert(DNode ** head, void *data, int (compare)(void *, void *));
 
+/// @brief Inserzione ordinata di un elemento esistente (non alloca il nodo)
+/// @param head Puntatore al puntatore alla lista
+/// @param data dato del Nodo
+/// @param compare Funzione che determina l'ordinamento comparando i nodi
+/// @return Il puntatore al nodo appena creato, altrimenti NULL
+DNode * listDoubly_DNode_insert(DNode ** head, DNode *data, int (compare)(void *, void *));
+
 /// @brief Conta il numero di nodi in una lista
 /// @param head Puntatore alla testa della lista
 /// @return il numero di nodi della lista
@@ -106,6 +113,13 @@ bool listDoubly_DNode_moveBack(DNode **head, DNode **tail, DNode *elem);
 /// @param elem Nodo da estrarre
 /// @return Il nodo appena estratto, altrimenit NULL
 DNode * listDoubly_DNode_extract(DNode ** head, DNode ** tail, DNode *elem);
+
+/// @brief Inserisce un nodo esistente in testa, al contrario della listDoubly_insert, 
+/// non crea il nodo
+/// @param head Puntatore al puntatore alla testa della lista
+/// @param elem Elemento da inserire in testa
+/// @return true se è l'insersione è andata a buon fine
+bool listDoubly_DNode_insertHead(DNode **head, DNode *elem);
 
 /********** DEBUG **********/
 

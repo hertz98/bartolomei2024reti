@@ -105,23 +105,14 @@ void clientRemove(ClientsContext * context, int socket)
         if (client->game.score)
         {
             if (client->game.playing != -1)
-            {
-                DNode * score = client->game.score[client->game.playing];
-                listDoubly_DNode_extract( &context->scoreboard.scores[SCR_CURRENT][client->game.playing], NULL, score);
-                context->scoreboard.serialized[SCR_CURRENT].modified[client->game.playing] = true;
+                completedScore(&context->scoreboard, client->game.score[client->game.playing], client->game.playing);
 
-                listDoubly_insert( &context->scoreboard.scores[SCR_COMPLETED][client->game.playing], score->data, scoreboard_scoreCompare); // TODO: if not by specs
-                context->scoreboard.serialized[SCR_COMPLETED].modified[client->game.playing] = true;
-
-                if (score)
-                    free(score);
-            }
             free(client->game.score);
         }
 
         if (client->operation)
         {
-            list_destroy(client->operation, operationDestroy);
+            list_destroyPreorder(client->operation, operationDestroy);
             client->operation = NULL;
         }       
 
@@ -391,4 +382,24 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
         return OP_DONE;
     else
         return OP_OK; // Non è detto di ricevere tutti i byte voluti
+}
+
+bool completedScore(Scoreboard *scoreboard, DNode * elem, int topic)
+{
+    if (!scoreboard || !elem || topic < 0)
+        return false;
+
+    DNode *tmp = listDoubly_DNode_extract( &scoreboard->scores[SCR_CURRENT][topic], NULL, elem);
+
+    if (!tmp)
+        return false;
+
+    scoreboard->serialized[SCR_CURRENT].modified[topic] = true;
+
+    if (!listDoubly_DNode_insert( &scoreboard->scores[SCR_COMPLETED][topic], tmp, scoreboard_scoreCompare))
+        return false;
+
+    scoreboard->serialized[SCR_COMPLETED].modified[topic] = true;
+
+    return true;
 }

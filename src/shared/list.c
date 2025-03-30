@@ -90,3 +90,17 @@ void list_destroy(Node *node, void (*release)(void *))
         release(node->data);
     free(node);
 }
+
+void list_destroyPreorder(Node *node, void (*release)(void *))
+{
+    if (!node)
+        return;
+
+    Node *next = node->next;
+
+    if (release)
+        release(node->data);
+    free(node);
+
+    list_destroy(next, release);
+}

@@ -139,4 +139,11 @@ bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
 /// @return true se è andato tutto liscio
 bool client_sendTopics(ClientsContext *context, int socket, TopicsContext * topics);
 
+/// @brief Sposta il punteggio corrente in quelli completati
+/// @param scoreboard Struttura dati inerente alla classifica
+/// @param elem Nodo corrispondente nella lista dei punteggi correnti
+/// @param topic Indice del topic corrispondente
+/// @return true se ha avuto successo
+bool completedScore(Scoreboard *scoreboard, DNode * elem, int topic);
+
 #endif

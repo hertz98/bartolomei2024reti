@@ -44,6 +44,11 @@ int list_count(Node * head);
 /// @param release Funzione per deallocare il campo data
 void list_destroy(Node *node, void (*release)(void *));
 
+/// @brief Distrugge una lista cominciando dal primo elemento (la differnza può stare nella release)
+/// @param node Il puntatore alla testa della lista
+/// @param release Funzione per deallocare il campo data
+void list_destroyPreorder(Node *node, void (*release)(void *));
+
 /// @brief Stampa il contenuto della lista a video (DEBUG)
 /// @param head Il puntatore alla testa della lista
 /// @param print Funzione per stampare il contenuto del campo data
