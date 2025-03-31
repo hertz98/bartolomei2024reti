@@ -70,25 +70,31 @@ void scoreboard_destroy(Scoreboard *scoreboard)
                     listDoubly_destroy(scoreboard->scores[i][j], scoreboard_scoreDestroy);
                     scoreboard->scores[i][j] = NULL;
                 }
+        free(scoreboard->scores[i]);
+        scoreboard->scores[i] = NULL;
         
-        if (scoreboard->serialized->modified)
-            free(scoreboard->serialized->modified);
-        scoreboard->serialized->modified = NULL;
+        SerializedScoreboard * serialized = &scoreboard->serialized[i];
+
+        if (serialized->modified)
+            free(serialized->modified);
+        serialized->modified = NULL;
         
         for (int j = 0; j < scoreboard->nTopics; j++)
-            if (scoreboard->serialized[i].string[j])
+            if (serialized->string[j])
                 {
-                    free(scoreboard->serialized[i].string[j]);
-                    scoreboard->serialized[i].string[j] = NULL;
+                    free(serialized->string[j]);
+                    serialized->string[j] = NULL;
                 }
+        free(serialized->string);
+        serialized->string = NULL;
         
-        if (scoreboard->serialized->serialized_allocated)
-            free(scoreboard->serialized->serialized_allocated);
-        scoreboard->serialized->serialized_allocated = NULL;
+        if (serialized->serialized_allocated)
+            free(serialized->serialized_allocated);
+        serialized->serialized_allocated = NULL;
 
-        if (scoreboard->serialized->serialized_lenght)
-            free(scoreboard->serialized->serialized_lenght);
-        scoreboard->serialized->serialized_lenght = NULL;
+        if (serialized->serialized_lenght)
+            free(serialized->serialized_lenght);
+        serialized->serialized_lenght = NULL;
     }
 }
 
@@ -96,8 +102,12 @@ void scoreboard_scoreDestroy(void *p)
 {
     Score * score = p;
 
-    if (score->name)
-        free(score->name);
+    // Lascio al sistema operativo pulire i nomi, dovrei 
+    // tenere traccia di quante volte è usata quella stringa
+    // indipendentemente dai client
+    
+    // if (score->name)
+    //     free(score->name);
 
     free(score);
 }

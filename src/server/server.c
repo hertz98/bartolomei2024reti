@@ -47,7 +47,6 @@ void commandHandler();
 void printServer();
 void signalhandler(int signal);
 void exiting();
-void closeSockets(void * p);
 
 /********** VARIABILI GLOBALI **********/
 
@@ -283,11 +282,7 @@ void signalhandler(int signal)
 
 void exiting()
 {
-    closeSockets(NULL);
-}
-
-void closeSockets(void * p)
-{
     clientsFree(&clientsContext);
     topicsFree(&topicsContext);
+    scoreboard_destroy(&clientsContext.scoreboard);
 }
