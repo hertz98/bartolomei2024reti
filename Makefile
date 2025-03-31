@@ -36,4 +36,4 @@ gdb_client: client
 	gdb -x ./src/client/.gdbinit ./bin/client
 
 testing:
-	gcc -g -Wall ./src/testing/main.c ./src/shared/*.c ./src/server/scoreboard.c -o ./bin/testing && ./bin/testing
+	gcc -g -Wall ./src/testing/main.c ./src/server/util.c  -o ./bin/testing && ./bin/testing

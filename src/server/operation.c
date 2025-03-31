@@ -439,7 +439,10 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         MessageArray *answer_msg = currentOperation->tmp;
         answer_msg->messages[0].toFree = true;
         
-        if (!stricmp(answer_msg->messages[0].payload, currentQuestion->answer)) // TODO: Custom answer compare
+        if (!stricmpTol(answer_msg->messages[0].payload, 
+                        currentQuestion->answer, 
+                        MAX_ANSWER_ERRORS,
+                        SMALL_ANSWER))
         {
             if (!sendCommand(socket, CMD_CORRECT))
                 return OP_FAIL;
@@ -448,7 +451,8 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
             DNode * score = client->game.score[client->game.playing];
             ((Score*) score->data)->score++;
             
-            listDoubly_sortElement( &context->scoreboard.scores[SCR_CURRENT][client->game.playing], NULL, score, scoreboard_scoreCompare);
+            listDoubly_sortElement( &context->scoreboard.scores[SCR_CURRENT][client->game.playing],
+                                    NULL, score, scoreboard_scoreCompare);
             context->scoreboard.serialized[SCR_CURRENT].modified[client->game.playing] = true;
         }
         else
@@ -457,7 +461,8 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
 
         if (++client->game.currentQuestion >= currentTopic->nQuestions)
         {
-            completedScore(&context->scoreboard, client->game.score[client->game.playing], client->game.playing);
+            completedScore(&context->scoreboard, client->game.score[client->game.playing],
+                            client->game.playing);
 
             client->game.playing = -1;
             client->game.currentQuestion = -1;

@@ -175,3 +175,84 @@ char * executablePath(char * string)
     }
 }
 
+// This algotithm is not suitable for checking the answer because
+// can be exploited easily, in fact by submitting more words I can
+// try differents answer
+bool wordInString(const char * string, const char * substring, int tol)
+{
+    int correct = 0; // Indicizza la risposta giusta
+    int errors = 0; // Numero di errori
+
+    for ( ; *string != '\0'; string++)
+    {
+        char tmpSub = substring[correct],
+             tmpString = *string;
+
+        if ( tmpSub == '\0' && !isalpha(tmpString))    // Se la risposta giusta termina insieme alla parola
+            return true;
+
+        if (tmpString == ' ' && tmpSub != ' ') // Inizia una nuova parola, reinizia da capo
+        {
+            errors = correct = 0;
+            continue;
+        }
+
+        if (errors == -1) // Scarto la parola corrente
+            continue;
+
+        // Conversione da maiuscolo a minuscolo
+
+        if (tmpSub >= 'A' && tmpSub <= 'Z')
+            tmpSub += 'a' - 'A';
+
+        if (tmpString >= 'A' && tmpString <= 'Z')
+            tmpString += 'a' - 'A';
+
+        // Test corrispondenza
+
+        if (tmpSub != tmpString && ++errors > tol)
+            errors = -1;
+        else
+            correct++;
+    }
+
+    // Caso in cui entrambe le stringhe terminano
+    if (*string == '\0' && substring[correct] == '\0')
+        return true;
+
+    return false;
+}
+
+int stricmpTol(const char *string1, const char *string2, int tol, int small)
+{
+    int errors = 0;
+
+    int i = 0;
+    while (string1[i] != '\0' && string2[i] != '\0')
+    {
+        char tmp1 = string1[i],
+             tmp2 = string2[i];
+
+        if (tmp1 >= 'A' && tmp1 <= 'Z')
+            tmp1 += 'a' - 'A';
+
+        if (tmp2 >= 'A' && tmp2 <= 'Z')
+            tmp2 += 'a' - 'A';
+
+        // La tolleranza agli errori non si applica ai numeri
+        if ((isdigit(tmp1) || isdigit(tmp2)) && (tmp1 != tmp2) )
+            return tmp1 - tmp2;
+        else if (tmp1 != tmp2 && ++errors > tol)
+            return tmp1 - tmp2;
+        
+        i++;
+    }
+
+    if ( !(i <= small && errors) &&      // Non applico la tolleranza agli errori alle risposte brevi
+        (string1[i] == '\0' && string2[i] == '\0') )
+        return 0;
+    else if (string1[i] == '\0')
+        return -1;
+    else
+        return 1;
+}

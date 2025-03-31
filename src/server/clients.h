@@ -18,6 +18,9 @@
 #define CLIENT_NAME_MAX 32
 #define CLIENT_NAME_MIN 4
 
+#define MAX_ANSWER_ERRORS 1
+#define SMALL_ANSWER 4
+
 typedef struct Client Client;
 typedef struct ClientsContext ClientsContext;
 typedef struct Message Message;

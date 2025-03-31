@@ -31,8 +31,8 @@ char * executablePath(char * string);
 bool newlineReplace(char * path);
 
 /// @brief Comparazione tra stringhe case Insensitive
-/// @param string1 Stringa 1
-/// @param string2 Stringa 2
+/// @param string1
+/// @param string2
 /// @return Ritorna 0 se sono uguali, >0 se string1 > string2, <0 se string1 < string2
 int stricmp(const char * string1, const char * string2);
 
@@ -53,5 +53,23 @@ void shuffleArrayPtr(void **array, int arraySize);
 /// @param pos Posizione dove iniziare la copia
 /// @return The number of bytes copied, excluded the null char
 int strcpyResize(char **dst, const char *src, int *allocatedSize, int pos);
+
+/// @brief Verifica se la sottostringa è presente nella stringa data
+/// ma verifica che sia una parola, e ammettendo una tolleranza di errori
+/// @param string 
+/// @param substring parola di cui verificarne la presenza
+/// @param tol Numero massimo di errori nella parola
+/// @return True nel caso la parola sia contenutra nella stringa, altrimenti false
+bool wordInString(const char * string, const char * substring, int tol);
+
+/// @brief Simile a stricmp, ma ammette un numero di errori, le stringhe
+/// devono avere lo stesso numero di caratteri, inoltre la tolleranza agli
+/// errori non si applica ai numeri e alle risposte brevi
+/// @param string1 
+/// @param string2 
+/// @param tol Numero massimo di errori
+/// @param small Numero di caratteri per cui una risposta si considera breve
+/// @return Ritorna 0 se le stringhe corrispondono non superando tol errori
+int stricmpTol(const char *string1, const char *string2, int tol, int small);
 
 #endif
