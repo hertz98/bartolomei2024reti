@@ -8,53 +8,40 @@ bool scoreboard_init(Scoreboard *scoreboard, TopicsContext * topics)
 {
     scoreboard->nTopics = topics->nTopics;
 
+    scoreboard->serialized = malloc(sizeof(SerializedScoreboard) * SCOREBOARD_SIZE * scoreboard->nTopics);
+    if (!scoreboard->serialized)
+        return false;
+
     for (int i = 0; i < SCOREBOARD_SIZE; i++)
     {
-        scoreboard->scores[i] = malloc(sizeof(DNode *) * topics->nTopics);
+        scoreboard->scores[i] = malloc(sizeof(DNode *) * scoreboard->nTopics);
         if (!scoreboard->scores[i])
             return false;
         memset(scoreboard->scores[i], 0, sizeof(DNode *) * scoreboard->nTopics);
     
-        scoreboard_serialize_init(&scoreboard->serialized[i], topics->nTopics);
-
+        for (int t = 0; t < scoreboard->nTopics; t++)
+            if (!scoreboard_serialize_init(&scoreboard->serialized[ scoreboard_serialize_index(scoreboard, i, t) ]))
+                return false;
     }
+    
     scoreboard_serialize_update(scoreboard, topics);
 
     return true;
 }
 
-bool scoreboard_serialize_init(SerializedScoreboard * scoreboard, int size)
+bool scoreboard_serialize_init(SerializedScoreboard * scoreboard)
 {
-    scoreboard->modified = malloc(sizeof(bool) * size);
-    if (!scoreboard->modified)
-        return false;
-    
-    scoreboard->string = malloc(sizeof(char *) * size);
+    scoreboard->string = malloc(sizeof(char) * DEFAULT_SCOREBOARD_ALLOCATION);
     if (!scoreboard->string)
         return false;
-    
-    for (int i = 0; i < size; i++)
-    {
-        scoreboard->string[i] = malloc(DEFAULT_SCOREBOARD_ALLOCATION);
-        if (!scoreboard->string[i])
-            return false;
-        scoreboard->string[i][0] = '\0';
-    }
 
-    scoreboard->serialized_lenght = malloc(sizeof(int) * size);
-    if (!scoreboard->serialized_lenght)
-        return false;
-    
-    scoreboard->serialized_allocated = malloc(sizeof(int) * size);
-    if (!scoreboard->serialized_allocated)
-        return false;
-    
-    // Devo impostare la classifica come modificata se voglio che venga aggiornata subito
-    memset(scoreboard->modified, 1, sizeof(bool) * size);
-    memset(scoreboard->serialized_lenght, 0, sizeof(int) * size);
-    
-    for (int i = 0; i < size; i++)
-        scoreboard->serialized_allocated[i] = DEFAULT_SCOREBOARD_ALLOCATION;
+    scoreboard->string[0] = '\0';
+
+    scoreboard->modified = true;
+
+    scoreboard->serialized_allocated = DEFAULT_SCOREBOARD_ALLOCATION;
+
+    scoreboard->serialized_lenght = 0;
 
     return true;
 }
@@ -64,38 +51,27 @@ void scoreboard_destroy(Scoreboard *scoreboard)
     for (int i = 0; i < SCOREBOARD_SIZE; i++)
     {
         if (scoreboard->scores[i])
-            for (int j = 0; j < scoreboard->nTopics; j++)
-                if (scoreboard->scores[i][j])
+            for (int t = 0; t < scoreboard->nTopics; t++)
+                if (scoreboard->scores[i][t])
                 {
-                    listDoubly_destroy(scoreboard->scores[i][j], scoreboard_scoreDestroy);
-                    scoreboard->scores[i][j] = NULL;
+                    listDoubly_destroy(scoreboard->scores[i][t], scoreboard_scoreDestroy);
+                    scoreboard->scores[i][t] = NULL;
                 }
+        
         free(scoreboard->scores[i]);
         scoreboard->scores[i] = NULL;
         
-        SerializedScoreboard * serialized = &scoreboard->serialized[i];
-
-        if (serialized->modified)
-            free(serialized->modified);
-        serialized->modified = NULL;
-        
-        for (int j = 0; j < scoreboard->nTopics; j++)
-            if (serialized->string[j])
-                {
-                    free(serialized->string[j]);
-                    serialized->string[j] = NULL;
-                }
-        free(serialized->string);
-        serialized->string = NULL;
-        
-        if (serialized->serialized_allocated)
-            free(serialized->serialized_allocated);
-        serialized->serialized_allocated = NULL;
-
-        if (serialized->serialized_lenght)
-            free(serialized->serialized_lenght);
-        serialized->serialized_lenght = NULL;
+        for (int t = 0; t < scoreboard->nTopics; t++)
+        {
+            int index = scoreboard_serialize_index(scoreboard, i, t);
+            if (scoreboard->serialized[index].string)
+                free(scoreboard->serialized[index].string);
+            scoreboard->serialized[index].string = NULL;
+        }
     }
+
+    if (scoreboard->serialized)
+        free(scoreboard->serialized);
 }
 
 void scoreboard_scoreDestroy(void *p)
@@ -104,8 +80,8 @@ void scoreboard_scoreDestroy(void *p)
 
     // Lascio al sistema operativo pulire i nomi, dovrei 
     // tenere traccia di quante volte è usata quella stringa
-    // indipendentemente dai client
-    
+    // indipendentemente dai client, e non ne vale 
+
     // if (score->name)
     //     free(score->name);
 
@@ -155,10 +131,11 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
 {
     for (int i = 0; i < SCOREBOARD_SIZE; i++)
     {
-        SerializedScoreboard *current = &scoreboard->serialized[i];
 
         for (int t = 0; t < scoreboard->nTopics; t++)
-            if (current->modified[t])
+        {
+            SerializedScoreboard *current = &scoreboard->serialized[ scoreboard_serialize_index(scoreboard, i, t) ];
+            if (current->modified)
             {
                 char buffer[512];
 
@@ -174,9 +151,9 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                         snprintf(buffer, sizeof(buffer), "Quiz tema %d completato\n", i + 1);
                 #endif
                 
-                current->serialized_lenght[t] = strcpyResize(&current->string[t], 
+                current->serialized_lenght = strcpyResize(&current->string, 
                                                             buffer, 
-                                                            &current->serialized_allocated[t], 
+                                                            &current->serialized_allocated, 
                                                             0);
 
                 for (DNode * node = scoreboard->scores[i][t]; node; node = node->next)
@@ -189,15 +166,16 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                         snprintf(buffer, sizeof(buffer), "- %s %d\n", score->name, score->score);
                     #endif
 
-                    current->serialized_lenght[t] += strcpyResize(&current->string[t], 
+                    current->serialized_lenght += strcpyResize(&current->string, 
                                                                 buffer, 
-                                                                &current->serialized_allocated[t], 
-                                                                current->serialized_lenght[t]);
+                                                                &current->serialized_allocated, 
+                                                                current->serialized_lenght);
                 }
 
                 // current->serialized_lenght[t]++; // The last NULL caracher
-                current->modified[t] = false;
-            }   
+                current->modified = false;
+            }
+        }
     }
 }
 

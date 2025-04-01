@@ -411,14 +411,11 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
 
                 tmp->isInterruptible = false;
 
-                for (int i = 0; i < SCOREBOARD_SIZE; i++)
-                    for (int t = 0; t < context->scoreboard.nTopics; t++)
-                    {
-                        messageStringReady(&tmp->messages[i * context->scoreboard.nTopics + t], 
-                                            context->scoreboard.serialized[i].string[t], 
-                                            context->scoreboard.serialized[i].serialized_lenght[t],
-                                            false);
-                    }
+                for (int i = 0; i < SCOREBOARD_SIZE * context->scoreboard.nTopics; i++)
+                    messageStringReady(&tmp->messages[i], 
+                                        context->scoreboard.serialized[i].string, 
+                                        context->scoreboard.serialized[i].serialized_lenght,
+                                        false);
 
                 operationCreate(sendMessage, context, socket, tmp);
                 return OP_OK;
@@ -451,9 +448,10 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
             DNode * score = client->game.score[client->game.playing];
             ((Score*) score->data)->score++;
             
-            listDoubly_sortElement( &context->scoreboard.scores[SCR_CURRENT][client->game.playing],
+            Scoreboard * scoreboard = &context->scoreboard;
+            listDoubly_sortElement( &scoreboard->scores[SCR_CURRENT][client->game.playing],
                                     NULL, score, scoreboard_scoreCompare);
-            context->scoreboard.serialized[SCR_CURRENT].modified[client->game.playing] = true;
+            scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, client->game.playing) ].modified = true;
         }
         else
             if (!sendCommand(socket, CMD_WRONG))

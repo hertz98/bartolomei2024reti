@@ -301,8 +301,10 @@ bool client_quizInit(ClientsContext * context, int socket, TopicsContext *topics
         count++;
     }
 
-    client->game.score[client->game.playing] = scoreboard_get(&context->scoreboard.scores[SCR_CURRENT][client->game.playing], client->name);
-    context->scoreboard.serialized[SCR_CURRENT].modified[client->game.playing] = true;
+    Scoreboard * scoreboard = &context->scoreboard;
+
+    client->game.score[client->game.playing] = scoreboard_get( &scoreboard->scores[SCR_CURRENT][client->game.playing], client->name);
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, client->game.playing) ].modified = true;
 
     if (!client->game.score[client->game.playing])
         return false;
@@ -394,12 +396,12 @@ bool completedScore(Scoreboard *scoreboard, DNode * elem, int topic)
     if (!tmp)
         return false;
 
-    scoreboard->serialized[SCR_CURRENT].modified[topic] = true;
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
 
     if (!listDoubly_DNode_insert( &scoreboard->scores[SCR_COMPLETED][topic], tmp, scoreboard_scoreCompare))
         return false;
 
-    scoreboard->serialized[SCR_COMPLETED].modified[topic] = true;
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_COMPLETED, topic) ].modified = true;
 
     return true;
 }

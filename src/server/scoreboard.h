@@ -26,18 +26,18 @@ typedef struct Score
 
 typedef struct SerializedScoreboard
 {
-    bool * modified; // This is the only optimization, serialize only the modified topics
-    char ** string;
-    int * serialized_lenght; // The size of the string
-    int * serialized_allocated; // The allocated size
+    bool modified; // This is the only optimization, serialize only the modified topics
+    char * string;
+    int serialized_lenght; // The size of the string
+    int serialized_allocated; // The allocated size
 } SerializedScoreboard;
 
 typedef struct Scoreboard
 {
     int nTopics;
 
-    DNode ** scores[2]; // Array di liste a Score
-    SerializedScoreboard serialized[2];
+    DNode ** scores[ SCOREBOARD_SIZE ]; // Array di liste a Score
+    SerializedScoreboard * serialized;;
 } Scoreboard;
 
 /// @brief Inizializza le strutture dati inerenti ai punteggi
@@ -82,12 +82,21 @@ Score * scoreboard_newScore(char * name, int score);
 
 /// @brief Inizializza le strutture dati che rappresentano la classifica serializzata
 /// @param scoreboard Il puntatore alla struttura dati inerenti alla classifica
-/// @param size Numero di elementi
 /// @return true in caso di successo, false altrimenti
-bool scoreboard_serialize_init(SerializedScoreboard * scoreboard, int size);
+bool scoreboard_serialize_init(SerializedScoreboard * scoreboard);
 
 /// @brief Aggiorna le serializzazioni della classifica se necessario
 /// @param scoreboard Puntatore a struttura dati contenente la classifica
 void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext * topics);
+
+/// @brief Tratta un array continuo come foesse una matrice
+/// @param scoreboard Puntatore alla struttura dati inerente alla classifica
+/// @param index Indice della serialized scoreboard
+/// @param topic Indice del topic 
+/// @return L'indice rispetto all'array 1D
+static inline int scoreboard_serialize_index(Scoreboard *scoreboard, int index, int topic)
+{
+    return index * scoreboard->nTopics + topic;
+}
 
 #endif

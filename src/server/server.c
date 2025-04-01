@@ -265,9 +265,8 @@ void printServer()
 
     scoreboard_serialize_update(scoreboard, &topicsContext);
 
-    for (int i = 0; i < SCOREBOARD_SIZE; i++)
-        for (int t = 0; t < scoreboard->nTopics; t++)
-            printf("%s\n", scoreboard->serialized[i].string[t]);
+    for (int i = 0; i < SCOREBOARD_SIZE * scoreboard->nTopics; i++)
+        printf("%s\n", scoreboard->serialized[i].string);
 
 }
 
