@@ -445,13 +445,9 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                 return OP_FAIL;
             
             // Incremento il punteggio
-            DNode * score = client->game.score[client->game.playing];
-            ((Score*) score->data)->score++;
-            
-            Scoreboard * scoreboard = &context->scoreboard;
-            listDoubly_sortElement( &scoreboard->scores[SCR_CURRENT][client->game.playing],
-                                    NULL, score, scoreboard_scoreCompare);
-            scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, client->game.playing) ].modified = true;
+            scoreboard_increaseScore(&context->scoreboard, 
+                                        client->game.score[client->game.playing], 
+                                        client->game.playing);
         }
         else
             if (!sendCommand(socket, CMD_WRONG))
@@ -459,7 +455,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
 
         if (++client->game.currentQuestion >= currentTopic->nQuestions)
         {
-            completedScore(&context->scoreboard, client->game.score[client->game.playing],
+            scoreboard_completedScore(&context->scoreboard, client->game.score[client->game.playing],
                             client->game.playing);
 
             client->game.playing = -1;

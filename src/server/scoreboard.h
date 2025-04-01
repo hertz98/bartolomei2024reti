@@ -99,4 +99,17 @@ static inline int scoreboard_serialize_index(Scoreboard *scoreboard, int index, 
     return index * scoreboard->nTopics + topic;
 }
 
+/// @brief Incrementa un punteggio e ordina la classifica
+/// @param scoreboard Struttura dati inerente alla classifica
+/// @param score Punteggio da incrementare
+/// @param topic Indice del topic a cui appartiene il punteggio
+void scoreboard_increaseScore(Scoreboard * scoreboard, DNode * score, int topic);
+
+/// @brief Sposta il punteggio corrente in quelli completati
+/// @param scoreboard Struttura dati inerente alla classifica
+/// @param elem Nodo corrispondente nella lista dei punteggi correnti
+/// @param topic Indice del topic corrispondente
+/// @return true se ha avuto successo
+bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic);
+
 #endif

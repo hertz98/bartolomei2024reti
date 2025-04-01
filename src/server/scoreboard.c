@@ -218,3 +218,32 @@ void scoreboard_scorePrint(void *score)
 {
     printf("- %s: %d", ((Score *) score)->name, ((Score *) score)->score);
 }
+
+void scoreboard_increaseScore(Scoreboard * scoreboard, DNode * score, int topic)
+{
+    ((Score*) score->data)->score++;
+    
+    listDoubly_sortElement( &scoreboard->scores[SCR_CURRENT][topic],
+                            NULL, score, scoreboard_scoreCompare);
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
+}
+
+bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic)
+{
+    if (!scoreboard || !elem || topic < 0)
+        return false;
+
+    DNode *tmp = listDoubly_DNode_extract( &scoreboard->scores[SCR_CURRENT][topic], NULL, elem);
+
+    if (!tmp)
+        return false;
+
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
+
+    if (!listDoubly_DNode_insert( &scoreboard->scores[SCR_COMPLETED][topic], tmp, scoreboard_scoreCompare))
+        return false;
+
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_COMPLETED, topic) ].modified = true;
+
+    return true;
+}
