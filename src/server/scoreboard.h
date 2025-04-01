@@ -56,9 +56,12 @@ void scoreboard_scoreDestroy(void * p);
 
 /// @brief Verifica se nella lista di Score esiste un punteggio
 // che identifica lo stesso client, in caso contrario lo crea 
-/// @param score_list Lista di puntatori a Score
-/// @return Il puntatore a Score trovato o quello appena allocato, NULL in caso di fallimento
-DNode *scoreboard_get(DNode **score_list, char * name);
+/// @param scoreboard Puntatore a strutture dati inerenti alla classifica
+/// @param index Indice della classifica
+/// @param topic Indice del topic
+/// @param name Nome del giocatore
+/// @return Un nodo di una lista contenente il punteggio desiderato o NULL in caso di fallimento
+DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name);
 
 /// @brief Funzione che compara due Score
 /// @param a_ptr Primo punteggio
@@ -111,5 +114,12 @@ void scoreboard_increaseScore(Scoreboard * scoreboard, DNode * score, int topic)
 /// @param topic Indice del topic corrispondente
 /// @return true se ha avuto successo
 bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic);
+
+/// @brief 
+/// @param scoreboard 
+/// @param score 
+/// @param index 
+/// @param topic 
+void scoreboard_removeScore(Scoreboard *scoreboard, DNode *score, int index, int topic);
 
 #endif

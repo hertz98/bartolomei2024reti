@@ -180,7 +180,7 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         if (!client_checkTopicIndex(client, topics, client->game.playing))
             return false;
         
-        if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // TODO: Distinzione errore nel server da input scorretto
+        if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing))
         {
             sendCommand(socket, CMD_NOTVALID);
             return OP_FAIL;

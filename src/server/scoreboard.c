@@ -88,15 +88,24 @@ void scoreboard_scoreDestroy(void *p)
     free(score);
 }
 
-DNode *scoreboard_get(DNode **score_list, char * name)
+DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name)
 {
+    if (topic < 0 || topic >= scoreboard->nTopics)
+        return NULL;
+
+    DNode ** score_list = &scoreboard->scores[index][topic];
+
     if (!score_list || !name)
         return NULL;
-    
-    Score * tmp = scoreboard_newScore(name, 0);
 
     if (!*score_list)
+    {
+        Score * tmp = scoreboard_newScore(name, 0);
+        if (!tmp)
+            return NULL;
+        scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
         return listDoubly_append(score_list, tmp);
+    }
 
     DNode *current = *score_list;
     for (; current && current->next; current = current->next)
@@ -109,8 +118,13 @@ DNode *scoreboard_get(DNode **score_list, char * name)
     // Evito di ripercorrere tutta la intera lista
     // Aggiungo in fondo perchè è probabile che il punteggio sia 0 inizialmente
     DNode *ret;
+    Score * tmp = scoreboard_newScore(name, 0);
+    if (!tmp)
+        return NULL;
     if (!(ret = listDoubly_append(&current, tmp)))
         free(tmp);
+
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
     return ret;
 }
 
@@ -139,7 +153,7 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
             {
                 char buffer[512];
 
-                #ifdef PRINT_TOPIC_NAMES_ALWAYS
+                #ifndef PRINT_BY_SPECS
                     if (i == SCR_CURRENT)
                         snprintf(buffer, sizeof(buffer), "Punteggio tema \"%d - %s\"\n", t + 1, topics->topics[t].name);
                     else
@@ -160,8 +174,8 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                 {
                     Score *score = node->data;
 
-                    #ifdef PRINT_COLON_SCORE
-                        snprintf(buffer, sizeof(buffer), "- %s: %d\n", current->name, current->score);
+                    #ifndef PRINT_BY_SPECS
+                        snprintf(buffer, sizeof(buffer), "- %s: %d\n", score->name, score->score);
                     #else
                         snprintf(buffer, sizeof(buffer), "- %s %d\n", score->name, score->score);
                     #endif
@@ -246,4 +260,22 @@ bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic)
     scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_COMPLETED, topic) ].modified = true;
 
     return true;
+}
+
+void scoreboard_removeScore(Scoreboard * scoreboard, DNode * score, int index, int topic)
+{
+    if (topic < 0 || topic >= scoreboard->nTopics)
+        return;
+
+    if (!scoreboard || !score)
+        return;
+
+    DNode * tmp = listDoubly_DNode_extract(&scoreboard->scores[index][topic], NULL, score);
+
+    if (!tmp)
+        return;
+
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, index, topic) ].modified = true;
+    scoreboard_scoreDestroy(tmp->data);
+    free(tmp);
 }

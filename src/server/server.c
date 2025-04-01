@@ -32,10 +32,9 @@
 // #define BY_SPECIFICATIONS // Abilitare per l'esame
 
 #ifndef BY_SPECIFICATIONS
-    #define DEBUG // Disabilitare per l'esame
-    #define PRINT_TOPIC_NAMES_ALWAYS
-    #define PRINT_COLON_SCORE
-    #define PRINT_SCORE_COMPLETED
+    #define DEBUG
+    #define PRINT_BY_SPECS
+    #define KEEP_SCORE_ON_CLIENT_REMOVE
 #endif
 
 /********** PROTOTIPI DI FUNZIONE **********/

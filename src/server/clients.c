@@ -98,14 +98,30 @@ void clientRemove(ClientsContext * context, int socket)
 
         // if (client->name)
         //     free(client->name);
+
         if (client->game.playableTopics)
             free(client->game.playableTopics);
         if (client->game.questions)
             free(client->game.questions);
         if (client->game.score)
         {
+            #ifdef KEEP_SCORE_ON_CLIENT_REMOVE
+
             if (client->game.playing != -1)
                 scoreboard_completedScore(&context->scoreboard, client->game.score[client->game.playing], client->game.playing);
+            
+            #else
+
+            for (int t = 0; t < context->scoreboard.nTopics; t++)
+                if (client->game.score[t])
+                {
+                    if (t == client->game.playing)
+                        scoreboard_removeScore(&context->scoreboard, client->game.score[t], SCR_CURRENT, t);
+                    else
+                        scoreboard_removeScore(&context->scoreboard, client->game.score[t], SCR_COMPLETED, t);
+                }
+            
+            #endif
 
             free(client->game.score);
         }
@@ -114,7 +130,7 @@ void clientRemove(ClientsContext * context, int socket)
         {
             list_destroyPreorder(client->operation, operationDestroy);
             client->operation = NULL;
-        }       
+        }
 
         free(client);
 
@@ -303,9 +319,7 @@ bool client_quizInit(ClientsContext * context, int socket, TopicsContext *topics
 
     Scoreboard * scoreboard = &context->scoreboard;
 
-    client->game.score[client->game.playing] = scoreboard_get( &scoreboard->scores[SCR_CURRENT][client->game.playing], client->name);
-    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, client->game.playing) ].modified = true;
-
+    client->game.score[client->game.playing] = scoreboard_get( scoreboard, SCR_CURRENT, client->game.playing, client->name);
     if (!client->game.score[client->game.playing])
         return false;
 
