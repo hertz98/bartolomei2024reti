@@ -1,3 +1,7 @@
+/* DOUBLY_LIST.H
+ * Lista generica a doppio puntatore
+*/
+
 #pragma once
 
 #ifndef DOUBLYLIST_HEADER

@@ -1,3 +1,7 @@
+/* LIST.H
+ * Lista generica
+*/
+
 #pragma once
 
 #ifndef LIST_HEADER

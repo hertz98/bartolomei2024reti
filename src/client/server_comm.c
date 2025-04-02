@@ -17,15 +17,15 @@ bool sendMessage(int socket, MessageArray * msgs)
         return false;
     }
 
-    for (int i = -1; i < msgs->size; i++)
+    for (int i = -1; i < msgs->size; i++) // Per ciascun messaggio
     {
         Message *msg;
         if (i == -1)
-            msg = &msgs->messages[msgs->size];
+            msg = &msgs->messages[msgs->size]; // L'ultimo messaggio contiene la dimensione del MessageArray
         else
             msg = &msgs->messages[i];
         
-        if (msgs->size > CLIENT_MAX_MESSAGE_LENGHT)
+        if (msgs->size > CLIENT_MAX_MESSAGE_LENGHT) // Limite HARD CODED
         {
             printf("Errore, messaggio troppo grande\n");
             return false;
@@ -33,13 +33,13 @@ bool sendMessage(int socket, MessageArray * msgs)
 
         uint32_t lenght = htonl(msg->lenght);
 
-        sendData(socket, &lenght, sizeof(lenght));
+        sendData(socket, &lenght, sizeof(lenght)); // Invio la dimensione del messaggio
 
         if (msg->lenght && msg->payload)
-            sendData(socket, msg->payload, msg->lenght);
+            sendData(socket, msg->payload, msg->lenght); // Invio il messaggio effettivo
     }
 
-    return recvCommand(socket) == CMD_OK;
+    return recvCommand(socket) == CMD_OK; // Conferma da parte del server
 }
 
 bool sendData(int socket, void * buffer, unsigned int lenght)
@@ -47,18 +47,18 @@ bool sendData(int socket, void * buffer, unsigned int lenght)
     int ret;
     unsigned int sent = 0;
     
-    while(sent < lenght)
+    while(sent < lenght) // Finchè ci sono byte disponibili insisti
     {
         if ((ret = send(socket, buffer + sent, lenght - sent, 0)) >= 0)
             sent += ret;
-        else
-            return false;
+        else 
+            return false; // Se non ha inviato byte errore
     }
 
     return true;
 }
 
-enum Command inline recvCommand(int socket)
+Command inline recvCommand(int socket)
 {
     u_int8_t tmp;
 
@@ -74,29 +74,28 @@ MessageArray * recvMessage(int socket)
     if (recvCommand(socket) != CMD_MESSAGE)
         return false;
 
-    if (!recvData(socket, &lenght, sizeof(lenght)))
+    if (!recvData(socket, &lenght, sizeof(lenght))) // Ricevo la dimensione del MessageArray
         return false;
 
     lenght = ntohl(lenght);
-    MessageArray *tmp = messageArray(lenght);
-
+    MessageArray *tmp = messageArray(lenght); // Allocazione
     if (!tmp){
         printf("impossibile allocare %d bytes", lenght);
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < tmp->size; i++)
+    for (int i = 0; i < tmp->size; i++) // Per ciascun messaggio
     {
         Message * msg = &tmp->messages[i];
 
-        if (!recvData(socket, &msg->lenght, sizeof(msg->lenght)))
+        if (!recvData(socket, &msg->lenght, sizeof(msg->lenght))) // Ricevo la dimensione del messaggio
             return false;
         msg->lenght = ntohl(msg->lenght);
 
         if (!msg->lenght)
             break;
         
-        msg->payload = (void *) malloc(msg->lenght);
+        msg->payload = (void *) malloc(msg->lenght); // Alloco
         if (!msg->payload)
         {
             printf("Errore nella allocazione\n");
@@ -105,7 +104,7 @@ MessageArray * recvMessage(int socket)
         
         msg->toFree = true;
 
-        if (!recvData(socket, msg->payload, msg->lenght))
+        if (!recvData(socket, msg->payload, msg->lenght)) // Ricevo effettivamente il messaggio
             return false;
     }
 

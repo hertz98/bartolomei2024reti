@@ -1,3 +1,9 @@
+/* CLIENTS.H
+ * Contiene funzioni e strutture dati inerenti ai clients e la comunicazione con essi
+ * 
+ * I clients vengono identificati tramite il loro indice di socket
+*/
+
 #pragma once
 
 #ifndef CLIENTS_HEADER
@@ -18,7 +24,6 @@
 
 typedef struct Client Client;
 typedef struct ClientsContext ClientsContext;
-typedef struct Message Message;
 
 struct Client
 {
@@ -51,22 +56,49 @@ struct ClientsContext {
     int fd_max; // Massimo intero nel set master
     int listener;
 
-    Client ** clients;
+    Client ** clients; // Array dinamico dei puntatori a Client
     int allocated; // Numero di strutture allocate per i clients
 
     Scoreboard scoreboard;
 };
 
+/// @brief Inizializza il contesto dei Client
+/// @param clientsContext Puntatore alle strutture dati inerenti ai clients non inizializzate
+/// @param max Massimo numero di clients
+/// @return true in caso di successo, false altrimenti
 int clientsInit(ClientsContext * clientsContext, int max);
 
+/// @brief Crea le strutture dati di un client appena accettato
+/// @param context Puntatore alle strutture dati inerenti ai clients
+/// @param socket socket corrispondente al client
+/// @return true in caso di successo, false altrimenti
 bool clientAdd(ClientsContext * context, int socket);
+
+/// @brief Rimuove un client ed eventuali sotto strutture dati
+/// @param context Puntatore alle strutture dati inerenti ai clients
+/// @param socket Socket corrispondente al client
 void clientRemove(ClientsContext * context, int socket);
+
+/// @brief Rimuove tutti i clients e il contesto
+/// @param context Puntatore alle strutture dati inerenti ai clients
 void clientsFree(ClientsContext *context);
 
+/// @brief Indica se un certo indice di socket corrisponde ad un client valido
+/// @param context Puntatore alle strutture dati inerenti ai clients
+/// @param socket Socket corrispondente al client
+/// @param onlyRegistered Aggiunge il requisito che il client deve avere un nome
+/// @return true se rispetta le condizioni, false altrimenti
 bool isClient(ClientsContext *context, int socket, bool onlyRegistered);
 
+/// @brief Funzione bloccante, invia un comando di un singolo byte al client
+/// @param socket Socket corrispondente al client
+/// @return true se ha avuto successo, false altrimenti
 bool sendCommand(int socket, enum Command);
-enum Command recvCommand(int socket);
+
+/// @brief Riceve un comando dal client
+/// @param socket Socket corrispondente al client
+/// @return Il comando ricevuto o False
+Command recvCommand(int socket);
 
 /// @brief Funzione che invia dati, gestisce la send
 /// @param socket Indice del descrittore di socket del client
@@ -123,7 +155,7 @@ int client_playableIndex(Client * client, TopicsContext * topics, int playable);
 /// @return Indice dello stesso topic corrispondente nell'array dei topics
 bool client_checkTopicIndex(Client * client, TopicsContext * topics, int playable);
 
-/// @brief Determina un topic come giocato sia a livello di strutture dati che su disco
+/// @brief Setta un topic come giocato sia a livello di strutture dati che su disco
 /// @param client Struttura dati del client corrispondente con dati di gioco inizializzati
 /// @param topics Strutture dati inerenti ai topics finalizzate
 /// @param topic Indice reale del topic

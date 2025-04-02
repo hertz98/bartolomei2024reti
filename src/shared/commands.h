@@ -1,3 +1,7 @@
+/* COMMANDS.H
+ * Elenco dei comandi (bytes) che vengono usati per sincronizzare la logica del server e del client
+*/
+
 #pragma once
 
 #ifndef COMMANDS_HEADER
@@ -11,7 +15,7 @@ typedef enum Command
     CMD_REGISTER, // Client: Ask register
     CMD_MESSAGE, // Ask to send a message
     CMD_RANK, // Client wants the rank
-    CMD_NOTVALID, // Not valid client name
+    CMD_NOTVALID, // Invalid client name or invalid request
     CMD_EXISTING, // Name duplicate
     CMD_TOPICS, // Client ask for topics data
     CMD_TOPICPLAY, // Client ask for play a topic

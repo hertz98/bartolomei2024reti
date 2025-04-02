@@ -158,7 +158,7 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
 
     switch (currentOperation->step++)
     {
-    case 0:
+    case 0: // invio la lista dei giochi disponibili al client
         MessageArray *tmp = messageArray(1);
         messageBoolArray( &((MessageArray *) tmp)->messages[0], client->game.playableTopics, topics->nTopics);
         currentOperation->step++;
@@ -169,25 +169,27 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
     case 2:
         return OP_OK;
 
-    case 3:
+    case 3: // Ricevo la risposta
         return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
 
     case 4:
+        // Ottengo la risposta
         ((MessageArray *) currentOperation->tmp)->messages[0].toFree = true;
         client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload);
         messageArrayDestroy((MessageArray**) &currentOperation->tmp);
         
-        if (!client_checkTopicIndex(client, topics, client->game.playing))
+        if (!client_checkTopicIndex(client, topics, client->game.playing)) // Verifico l'indice
             return false;
         
-        if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing))
+        if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // Aggiorno su disco
         {
             sendCommand(socket, CMD_NOTVALID);
             return OP_FAIL;
             break;
         }
+
         client->game.currentQuestion = 0;
-        if (!client_quizInit(context, socket, topics))
+        if (!client_quizInit(context, socket, topics)) // Inizializzo il gioco, shuffle
             return OP_FAIL;
         return OP_DONE;
 
@@ -209,42 +211,44 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
 
     MessageArray *msgs = (MessageArray *) message_array;
 
-    switch (currentOperation->step)
+    switch (currentOperation->step) // Incremento non automatico
     {
-        case 0:
-            if (sendCommand(socket, CMD_MESSAGE))
+        case 0: 
+            if (sendCommand(socket, CMD_MESSAGE)) // Il client si deve aspettare questo comando
                 FD_SET(socket, &context->write_fds);
             else 
                 return OP_FAIL;
 
-            client->sending = true;
-            currentOperation->count = -1;
+            client->sending = true; // Da adesso verrà richiamata questa funzione ogni qual volta il socket è ready in scrittura
+            currentOperation->count = -1; // Inizializzazione
             currentOperation->step++;
 
         case 1:
             OperationResult ret;
-            while (currentOperation->count < msgs->size)
+
+            bool block = !msgs->isInterruptible;
+            while (currentOperation->count < msgs->size) // Invio la dimensionde del MessageArray
             {
                 Message * msg;
                 if (currentOperation->count == -1)
-                    msg = &msgs->messages[msgs->size];
+                    msg = &msgs->messages[msgs->size]; // L'ultimo messaggio contiene il numero di MessageArray
                 else
-                    msg = &msgs->messages[currentOperation->count];
+                    msg = &msgs->messages[currentOperation->count]; // Indirizzamento normale
 
                 int lenght_size = sizeof(msg->lenght);
-                if (msg->transmitted < lenght_size)
+                if (msg->transmitted < lenght_size) // Invio la dimensione del messaggio
                 {
                     int lenght = htonl(msg->lenght);
-                    if ((ret = sendData(socket, &lenght, lenght_size, &msg->transmitted, !msgs->isInterruptible)) != OP_DONE)
-                        return ret;
+                    if ((ret = sendData(socket, &lenght, lenght_size, &msg->transmitted, block)) != OP_DONE)
+                        return ret; // Ritorna in caso di non completamento
                 }
 
-                if (msg->payload)
+                if (msg->payload) // Invio effettivamente il messaggio
                 {
                     unsigned int sent = msg->transmitted - lenght_size;
 
-                    if ((ret = sendData(socket, msg->payload, msg->lenght, &sent, !msgs->isInterruptible)) != OP_DONE)
-                        return ret;
+                    if ((ret = sendData(socket, msg->payload, msg->lenght, &sent, block)) != OP_DONE)
+                        return ret; // Ritorna in caso di non completamento
                 }
 
                 currentOperation->count++;
@@ -256,8 +260,11 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
             return OP_OK;
 
         case 2:
-            if (recvCommand(socket) == CMD_OK)
+            if (recvCommand(socket) == CMD_OK) // Mi aspetto di ricevere conferma
                 return OP_DONE;
+            else
+                return OP_FAIL;
+
             break;
 
         default:
@@ -274,32 +281,32 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
 
     Operation *currentOperation = client->operation->data;
 
-    MessageArray ** msgs = (MessageArray **) pointer;
+    MessageArray ** msgs = (MessageArray **) pointer; // Voglio allocare il MessageArray all'indirizzo che mi è stato passato
 
-    switch (currentOperation->step)
+    switch (currentOperation->step) // Non incremento automaticamente
     {
     case 0:
         // if(*msgs != NULL) // Parametri limite, non implementato, uso i #define
         //     currentOperation->tmp = *msgs;
 
         *msgs = messageArray(0);
-        currentOperation->count = -1;
+        currentOperation->count = -1; // Inizializzazione
         currentOperation->step++;
-
+        // continuo
     case 1:
-        if (currentOperation->count == -1)
+        if (currentOperation->count == -1) // Inizializzazione
         {
             Message *tmp = &(*msgs)->messages[0];
-            if ((ret = recvData(socket, &tmp->lenght, sizeof(tmp->lenght), &tmp->transmitted)) == OP_DONE)
+            if ((ret = recvData(socket, &tmp->lenght, sizeof(tmp->lenght), &tmp->transmitted)) == OP_DONE) // Ricevo dimensione del MessageArray
             {
                 int size = ntohl(tmp->lenght);
                 messageArrayDestroy((MessageArray **) msgs);
 
-                if (size > CLIENT_MAX_MESSAGEARRAY_SIZE)
+                if (size > CLIENT_MAX_MESSAGEARRAY_SIZE) // Limite HARD CODED 
                     return OP_FAIL;
 
                 *msgs = messageArray(size);
-                currentOperation->count = 0;
+                currentOperation->count = 0; // Uso count per indicizzare il messaggio corrente
             }
             return (bool) ret;
         }
@@ -308,37 +315,41 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
         {
             Message * msg = &(*msgs)->messages[currentOperation->count];
 
-            if (msg->transmitted < sizeof(msg->lenght))
+            if (msg->transmitted < sizeof(msg->lenght)) // Ricezione della dimensione del messaggio e allocazione
             {
                 if ((ret = recvData(socket, &msg->lenght, sizeof(msg->lenght), &msg->transmitted)) == OP_DONE)
                     {
                         msg->lenght = ntohl(msg->lenght);
-                        if (msg->lenght > CLIENT_MAX_MESSAGE_LENGHT)
+                        if (msg->lenght > CLIENT_MAX_MESSAGE_LENGHT) // Limite HARD CODED 
                             return OP_FAIL;
-                        msg->payload = (void *) malloc(msg->lenght + 1);
-                        msg->toFree = true;
+
+                        msg->payload = (void *) malloc(msg->lenght + 1); // Aggiungo un byte in più per il carattere di terminazione nullo
+                        if (!msg->payload)
+                            return OP_FAIL;
+
+                        msg->toFree = true; // Di default non voglio mantenere la risposta in memoria alla distruzione del MessageArray
                     }
                 else
-                    return (bool) ret;
+                    return (bool) ret; // Se non ho ricevuto tutto il messaggio ripeto dopo (o fallimento) 
             }
 
-            if (msg->lenght)
+            if (msg->lenght) // Ricezione del messaggio vero e proprio
             {
                 unsigned int sent = msg->transmitted - sizeof(msg->lenght);
 
                 if ((ret = recvData(socket, msg->payload, msg->lenght, &sent)) == OP_DONE)
                     *(char*) (msg->payload + msg->lenght) = '\0'; // Proteggo le stringhe ponendo il byte (in più) nullo
                 else
-                    return (bool) ret;
+                    return (bool) ret; // Se non ho ricevuto tutto il messaggio ripeto dopo (o fallimento) 
             }
 
-            currentOperation->count++;
+            currentOperation->count++; // Messaggio successivo
         }
 
-        currentOperation->step++;
+        currentOperation->step++; // Se arrivo a questo punto ho ricevuto tutto il MessageArray 
 
     case 2:
-        return sendCommand(socket, CMD_OK) ? OP_DONE : OP_FAIL;
+        return sendCommand(socket, CMD_OK) ? OP_DONE : OP_FAIL; // Proseguo inviando conferma
 
     default:
         break;
@@ -360,26 +371,27 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
 
     if (client->game.playing < 0 || client->game.currentQuestion < 0) // ridondante
     {
-        if (!sendCommand(socket, CMD_NONE))
-            return OP_FAIL;
-        return OP_DONE;
+        if (sendCommand(socket, CMD_NOTVALID))
+            return OP_DONE;
+        return OP_FAIL;
     }
 
-    Topic *currentTopic = &topics->topics[client->game.playing];
-    Question *currentQuestion = client->game.questions[client->game.currentQuestion];
+    Topic *currentTopic = &topics->topics[ client->game.playing ];
+    Question *currentQuestion = client->game.questions[ client->game.currentQuestion ];
 
     switch (currentOperation->step++)
     {
     case 0:
-        if (client->game.playing < 0 || client->game.currentQuestion < 0)
+        if (client->game.playing < 0 || client->game.currentQuestion < 0) // Non sta giocando
         {
-            if (sendCommand(socket, CMD_NONE))
+            if (sendCommand(socket, CMD_NOTVALID))
                 return OP_DONE;
-            else return OP_FAIL;
+            else
+                return OP_FAIL;
         }
         else
         {
-            if (sendCommand(socket, CMD_OK))
+            if (sendCommand(socket, CMD_OK)) // Confermo e preparo il messaggio
             {
                 MessageArray *question_msg = messageArray(1);
                 messageString(&question_msg->messages[0], currentQuestion->question, false);
@@ -390,6 +402,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         currentOperation->step++;
 
     case 1:
+        // e invio il messaggio
         MessageArray *question_msg = currentOperation->tmp;
         return operationCreate(sendMessage, context, socket, question_msg);
     
@@ -398,7 +411,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         return OP_OK;
     
     case 3:
-        switch( recvCommand(socket) )
+        switch( recvCommand(socket) ) // Mi comporto diversamente in base alla conferma
         {
             case CMD_ANSWER:
                 currentOperation->step = 5;
@@ -436,11 +449,12 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
         MessageArray *answer_msg = currentOperation->tmp;
         answer_msg->messages[0].toFree = true;
         
+        // Verifica della risposta
         if (!stricmpTol(answer_msg->messages[0].payload, 
                         currentQuestion->answer, 
                         MAX_ANSWER_ERRORS,
                         SMALL_ANSWER))
-        {
+        { // Caso risposta corretta
             if (!sendCommand(socket, CMD_CORRECT))
                 return OP_FAIL;
             
@@ -449,11 +463,11 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                                         client->game.score[client->game.playing], 
                                         client->game.playing);
         }
-        else
+        else // Caso risposta errata
             if (!sendCommand(socket, CMD_WRONG))
                 return OP_FAIL;
 
-        if (++client->game.currentQuestion >= currentTopic->nQuestions)
+        if (++client->game.currentQuestion >= currentTopic->nQuestions) // Domande terminate
         {
             scoreboard_completedScore(&context->scoreboard, client->game.score[client->game.playing],
                             client->game.playing);

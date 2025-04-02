@@ -1,3 +1,18 @@
+/* OPERATION.H
+ * Una operazione è una struttura dati che permette alle funzioni di mantenere lo stato per ogni client
+
+ * Le caratteristiche sono:
+ * - Il poter eseguire funzioni in più passi permettendo di servire altri client nell'attesa della risposta,
+ * in particolare si verifica sempre che il client sia in sync con il server
+ * - Il meccanismo permette di accodare le operazioni in una lista e richiamare sempre l'ultima creata, e
+ * al termine di continuare quella precedente
+ * 
+ * La lista è contenuta nel contesto del client, se non è vuota verrà chiamata la funzione puntata dalla operazione
+ * in testa alla lista, ad eccezione della sendMessage che viene chiamata direttamente della select
+ * 
+ * Questa header contiene le funzioni per gestire le operazioni e le operazioni stesse
+*/
+
 #pragma once
 
 #ifndef OPERATION_HEADER
@@ -13,20 +28,20 @@ typedef struct ClientsContext ClientsContext;
 // Operations
 
 typedef enum OperationResult {
-    OP_FAIL = false, // L'operazione non ha avuto successo
-    OP_OK = true, // L'operazione sta procedendo
+    OP_FAIL = false, // L'operazione non ha avuto successo per un qualsiasi errore
+    OP_OK = true, // La funzione necessita di essere richiamata per proseguire alla prossima ricezione di dati dal client
     OP_DONE // L'operazione è terminata con successo
 } OperationResult;
 
 typedef struct Operation
 {
-    OperationResult (* function)(ClientsContext *context, int socket, void *);
+    OperationResult (* function)(ClientsContext *context, int socket, void *); // Puntatore alla funzione voluta
     // Parametri con cui verrà richiamata la funzione
-    int step;
-    void * p;
+    int step; // Contatore che identifica lo stato
+    void * p; // Parametro passato alla funzione
 
-    void *tmp;
-    int count;
+    void *tmp; // Variabile temporanea
+    int count; // Altro contatore generico
 } Operation;
 
 /// @brief Si occupa di gestire e eseguire le operazioni in ordine e di deallocarle al termine

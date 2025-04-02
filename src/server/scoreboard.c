@@ -103,7 +103,7 @@ DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name
         Score * tmp = scoreboard_newScore(name, 0);
         if (!tmp)
             return NULL;
-        scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
+        scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_PLAYING, topic) ].modified = true;
         return listDoubly_append(score_list, tmp);
     }
 
@@ -124,7 +124,7 @@ DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name
     if (!(ret = listDoubly_append(&current, tmp)))
         free(tmp);
 
-    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_PLAYING, topic) ].modified = true;
     return ret;
 }
 
@@ -159,7 +159,7 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                     else
                         snprintf(buffer, sizeof(buffer), "Quiz tema \"%d - %s\" completato\n", t + 1, topics->topics[t].name);
                 #else
-                    if (i == SCR_CURRENT)
+                    if (i == SCR_PLAYING)
                         snprintf(buffer, sizeof(buffer), "Punteggio tema %d\n", i + 1);
                     else
                         snprintf(buffer, sizeof(buffer), "Quiz tema %d completato\n", i + 1);
@@ -237,9 +237,9 @@ void scoreboard_increaseScore(Scoreboard * scoreboard, DNode * score, int topic)
 {
     ((Score*) score->data)->score++;
     
-    listDoubly_sortElement( &scoreboard->scores[SCR_CURRENT][topic],
+    listDoubly_sortElement( &scoreboard->scores[SCR_PLAYING][topic],
                             NULL, score, scoreboard_scoreCompare);
-    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_PLAYING, topic) ].modified = true;
 }
 
 bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic)
@@ -247,12 +247,12 @@ bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic)
     if (!scoreboard || !elem || topic < 0)
         return false;
 
-    DNode *tmp = listDoubly_DNode_extract( &scoreboard->scores[SCR_CURRENT][topic], NULL, elem);
+    DNode *tmp = listDoubly_DNode_extract( &scoreboard->scores[SCR_PLAYING][topic], NULL, elem);
 
     if (!tmp)
         return false;
 
-    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_CURRENT, topic) ].modified = true;
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_PLAYING, topic) ].modified = true;
 
     if (!listDoubly_DNode_insert( &scoreboard->scores[SCR_COMPLETED][topic], tmp, scoreboard_scoreCompare))
         return false;

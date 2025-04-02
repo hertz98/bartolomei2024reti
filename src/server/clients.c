@@ -173,6 +173,11 @@ inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
     return false;
 }
 
+/* 
+ * Si occupa di inviare dati grezzi, il funzionamento è il seguente:
+ * Se block == false: invio dati normalmente, ritorno OP_DONE o OP_OK in base alla variabile errno
+ * Se block == true: invio dati e (in base a errno) ciclo finché non ho terminato il messaggio
+ */
 OperationResult sendData(int socket, void *buffer, unsigned int length, unsigned int *sent, bool block)
 {          
     OperationResult ret_block = OP_DONE;
@@ -209,7 +214,7 @@ OperationResult sendData(int socket, void *buffer, unsigned int length, unsigned
     }
 }
 
-enum Command recvCommand(int socket)
+Command recvCommand(int socket)
 {
     int ret,
         sent = 0;
@@ -326,7 +331,7 @@ bool client_quizInit(ClientsContext * context, int socket, TopicsContext *topics
 
     Scoreboard * scoreboard = &context->scoreboard;
 
-    client->game.score[client->game.playing] = scoreboard_get( scoreboard, SCR_CURRENT, client->game.playing, client->name);
+    client->game.score[client->game.playing] = scoreboard_get( scoreboard, SCR_PLAYING, client->game.playing, client->name);
     if (!client->game.score[client->game.playing])
         return false;
 

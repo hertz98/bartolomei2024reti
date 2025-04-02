@@ -1,3 +1,7 @@
+/* MESSAGE.H
+ * contiene definizioni di strutture e funzioni per la standarizzare la trasmissione dei dati
+*/
+
 #pragma once
 
 #ifndef MESSAGE_HEADER

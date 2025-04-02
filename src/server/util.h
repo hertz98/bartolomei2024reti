@@ -1,3 +1,7 @@
+/* UTIL.H
+ * Funzioni di utilità
+*/
+
 #pragma once
 
 #ifndef UTIL_HEADER

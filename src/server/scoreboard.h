@@ -1,3 +1,8 @@
+/* SCOREBOARD.H
+ * La scoreboard si occupa di mantenere i punteggi dei giocatori in maniera ordianta  
+ * e distinta per ogni topic, oltre a mantenere una cache della serializzazione degli stessi
+ */
+
 #pragma once
 
 #ifndef SCOREBOARD_HEADER
@@ -12,28 +17,32 @@
 #include "../shared/doubly_list.h"
 
 #define SCOREBOARD_SIZE 2
-enum ScoreboardType {SCR_CURRENT, SCR_COMPLETED};
+enum ScoreboardType 
+{
+    SCR_PLAYING, // Rappresenta la classifica dei giocatori in gioco
+    SCR_COMPLETED // Rappresenta la classifica dei giochi completati
+};
 
 typedef struct Score
 {
-    char *name;
-    int score;
+    char *name; // Nome del giocatore
+    int score; // Punteggio
 } Score;
 
 typedef struct SerializedScoreboard
 {
-    bool modified; // This is the only optimization, serialize only the modified topics
-    char * string;
-    int serialized_lenght; // The size of the string
-    int serialized_allocated; // The allocated size
+    bool modified; // Unica ottimizzazione fatta: vengono aggiornati solo le serializzazioni modificate
+    char * string; // Serializzazione della classifica corrispondente al topic
+    int serialized_lenght; // Dimensione della serializzazione attuale
+    int serialized_allocated; // Dimensione attualmente allocata dall'array dinamico
 } SerializedScoreboard;
 
 typedef struct Scoreboard
 {
-    int nTopics;
+    int nTopics; // Numero di topics (ridondante ma utile)
 
     DNode ** scores[ SCOREBOARD_SIZE ]; // Array di liste a Score
-    SerializedScoreboard * serialized;;
+    SerializedScoreboard * serialized;; // Array 1D delle serializzazioni
 } Scoreboard;
 
 /// @brief Inizializza le strutture dati inerenti ai punteggi
@@ -99,23 +108,23 @@ static inline int scoreboard_serialize_index(Scoreboard *scoreboard, int index, 
 }
 
 /// @brief Incrementa un punteggio e ordina la classifica
-/// @param scoreboard Struttura dati inerente alla classifica
+/// @param scoreboard Puntatorte alla struttura dati inerente alla classifica
 /// @param score Punteggio da incrementare
 /// @param topic Indice del topic a cui appartiene il punteggio
 void scoreboard_increaseScore(Scoreboard * scoreboard, DNode * score, int topic);
 
 /// @brief Sposta il punteggio corrente in quelli completati
-/// @param scoreboard Struttura dati inerente alla classifica
+/// @param scoreboard Puntatorte alla struttura dati inerente alla classifica
 /// @param elem Nodo corrispondente nella lista dei punteggi correnti
 /// @param topic Indice del topic corrispondente
 /// @return true se ha avuto successo
 bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic);
 
-/// @brief 
-/// @param scoreboard 
-/// @param score 
-/// @param index 
-/// @param topic 
+/// @brief Rimuove un punteggio dalla classifica corrispondente
+/// @param scoreboard Puntatore alla struttura dati inerente alla classifica
+/// @param score Puntatore al nodo contenente il punteggio
+/// @param index Indice della classifica corrispondente
+/// @param topic Indice del topic corrispondente
 void scoreboard_removeScore(Scoreboard *scoreboard, DNode *score, int index, int topic);
 
 #endif

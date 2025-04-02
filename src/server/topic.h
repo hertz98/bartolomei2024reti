@@ -1,3 +1,7 @@
+/* TOPIC.H
+ * Le strutture e le funzioni dei topic organizzano in memoria le domande e le risposte suddivisi per topic
+ */
+
 #pragma once
 
 #ifndef TOPIC_HEADER
@@ -28,7 +32,7 @@ typedef struct TopicsContext
     char directory[PATH_MAX];
     int nTopics;
     struct Topic * topics;
-    MessageArray * topicsString;
+    MessageArray * topicsString; // Cache per inviare la lista dei topics
 } TopicsContext;
 
 /// @brief Inizializza le strutture dati inerrenti ai topic
