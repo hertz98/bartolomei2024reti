@@ -175,18 +175,24 @@ inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
 
 OperationResult sendData(int socket, void *buffer, unsigned int length, unsigned int *sent, bool block)
 {          
-    int ret;
+    OperationResult ret_block = OP_DONE;
     
     while (true)
     {
-        ret = send(socket, buffer + *sent, length - *sent, 0);
+        int tmp = send(socket, buffer + *sent, length - *sent, 0);
 
-        if (ret >= 0)
+        if (tmp >= 0)
         {
-            *sent += ret;
+            *sent += tmp;
             if (*sent == length)
-                return OP_DONE;  // Terminato
-            // continue;
+            {
+                // Se bloccante ritorna OP_DONE in caso il socket non abbia bloccato, 
+                // altrimenti OP_OK in maniera da proseguire con gli altri client
+                if (!block)
+                    return OP_DONE;
+                else
+                    return ret_block;
+            }
         }
         else
         {
@@ -194,7 +200,8 @@ OperationResult sendData(int socket, void *buffer, unsigned int length, unsigned
             {
                 if (!block)
                     return OP_OK;  // Se non bloccante, ritorna e ritenta più tardi (select)
-                // continue;
+                else
+                    ret_block = OP_OK; // Se bloccante insisti fino al termine del messaggio corrente, e prosegui con altri clients
             }
             else 
                 return OP_FAIL;  // Qualcosa è andato storto
