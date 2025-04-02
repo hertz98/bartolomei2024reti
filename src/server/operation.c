@@ -22,23 +22,24 @@ bool operationHandler(ClientsContext *context, int socket)
         OperationResult ret; 
         switch (ret = (*currentOperation->function)(context, socket, currentOperation->p))
         {
-            case OP_OK:
-                if (socketReady(socket)) // Se ci sono messaggi disponibili finisci a servire il client
+            case OP_OK: // Caso operazione non terminata
+                if (socketReady(socket)) // Se ci sono messaggi disponibili finisci di servire il client
                     continue;
                 else
                     return true; // Servi più tardi
-            case OP_DONE:
+
+            case OP_DONE: // Caso operazione terminata
                 Node * tmp = list_extractHead(&client->operation);
                 operationDestroy(tmp->data);
                 free(tmp);
                 client->nOperations--;
                 continue;
-            case OP_FAIL:
+            
+            case OP_FAIL: // Caso operazione fallita
             default:
                 return false; // Rimuovi il client
         }
     }
-
     return true; // In questo caso nessuna operazione è in corso, ritorno true per non rimuovere il client
 }
 
@@ -70,10 +71,10 @@ bool operationCreate(OperationResult (*function)(ClientsContext *context, int so
     tmp->tmp = NULL;
     tmp->count = 0;
 
-    if (list_insertHead(&client->operation, tmp))
+    if (list_insertHead(&client->operation, tmp)) // Inserisci in testa la nuova operazione
     {
         client->nOperations++;
-        return operationHandler(context, socket);
+        return operationHandler(context, socket); // Prosegui con la prossima operazione
     }
     else
     {
@@ -167,18 +168,16 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
     case 0: // invio la lista dei giochi disponibili al client
         MessageArray *tmp = messageArray(1);
         messageBoolArray( &((MessageArray *) tmp)->messages[0], client->game.playableTopics, topics->nTopics);
-        currentOperation->step++;
 
-    case 1:
         return operationCreate(sendMessage, context, socket, tmp);
     
-    case 2:
-        return OP_OK;
+    case 1:
+        return OP_OK; // Ritorno dalla sendMessage
 
-    case 3: // Ricevo la risposta
+    case 2: // Ricevo la risposta
         return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
 
-    case 4:
+    case 3:
         // Ottengo la risposta
         ((MessageArray *) currentOperation->tmp)->messages[0].toFree = true;
         client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload);
@@ -402,22 +401,20 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
             }
             else return OP_FAIL;
         }
-        currentOperation->step++;
 
-    case 1:
         // e invio il messaggio
         MessageArray *question_msg = currentOperation->tmp;
         return operationCreate(sendMessage, context, socket, question_msg);
     
-    case 2: // The function will be called again after the termination of next operation
+    case 1: // The function will be called again after the termination of next operation
         currentOperation->tmp = NULL;
         return OP_OK;
     
-    case 3:
+    case 2:
         switch( recvCommand(socket) ) // Mi comporto diversamente in base alla conferma
         {
             case CMD_ANSWER:
-                currentOperation->step = 5;
+                currentOperation->step = 4; // Passa allo stato per ricevere la risposta
                 return OP_OK; // Wait for the next message
             
             case CMD_RANK:
@@ -440,15 +437,15 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                 return OP_FAIL;
         }
     
-    case 4: // Ritorno dalla sendMessage (classifica)
-        currentOperation->step = 3; // Ritorno in attesa della risposta
+    case 3: // Ritorno dalla sendMessage (classifica)
+        currentOperation->step = 2; // Ritorno in attesa della risposta
         currentOperation->tmp = NULL;
         return OP_OK;
 
-    case 5:
+    case 4:
         return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
 
-    case 6:
+    case 5: // Ricezione e verifica risposta
         MessageArray *answer_msg = currentOperation->tmp;
         answer_msg->messages[0].toFree = true;
         
