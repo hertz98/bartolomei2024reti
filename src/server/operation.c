@@ -156,6 +156,12 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
 
     Operation *currentOperation = client->operation->data;
 
+    if (!(client->game.playing < 0 || client->game.currentQuestion < 0)) // The client must not be playing
+    {
+        sendCommand(socket, CMD_NOTVALID);
+        return OP_FAIL;
+    }
+
     switch (currentOperation->step++)
     {
     case 0: // invio la lista dei giochi disponibili al client
@@ -371,8 +377,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
 
     if (client->game.playing < 0 || client->game.currentQuestion < 0) // ridondante
     {
-        if (sendCommand(socket, CMD_NOTVALID))
-            return OP_DONE;
+        sendCommand(socket, CMD_NOTVALID);
         return OP_FAIL;
     }
 
@@ -384,10 +389,8 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
     case 0:
         if (client->game.playing < 0 || client->game.currentQuestion < 0) // Non sta giocando
         {
-            if (sendCommand(socket, CMD_NOTVALID))
-                return OP_DONE;
-            else
-                return OP_FAIL;
+            sendCommand(socket, CMD_NOTVALID);
+            return OP_FAIL;
         }
         else
         {
