@@ -1,12 +1,11 @@
 #include <time.h>
 #include <stdbool.h>
 #include <sys/select.h>
+
+#include "../parameters.h"
 #include "../shared/commands.h"
 #include "../shared/list.h"
 #include "../shared/message.h"
-
-#define SEND_MAX_MESSAGEARRAY_SIZE 1
-#define SEND_MAX_MESSAGE_LENGHT 256
 
 bool serverTimeout(int, int);
 

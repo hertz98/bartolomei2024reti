@@ -6,12 +6,9 @@
 #include <stdbool.h>
 #include <limits.h>
 
+#include "../parameters.h"
 #include "../shared/message.h"
 #include "../shared/list.h"
-
-#define DATA_DIR "./data/"
-#define TOPICS_DIR "./topics/"
-#define USERS_DIR "./users/"
 
 typedef struct Question 
 {

@@ -295,7 +295,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
                 int size = ntohl(tmp->lenght);
                 messageArrayDestroy((MessageArray **) msgs);
 
-                if (size > RECV_MAX_MESSAGEARRAY_SIZE)
+                if (size > CLIENT_MAX_MESSAGEARRAY_SIZE)
                     return OP_FAIL;
 
                 *msgs = messageArray(size);
@@ -313,7 +313,7 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
                 if ((ret = recvData(socket, &msg->lenght, sizeof(msg->lenght), &msg->transmitted)) == OP_DONE)
                     {
                         msg->lenght = ntohl(msg->lenght);
-                        if (msg->lenght > RECV_MAX_MESSAGE_LENGHT)
+                        if (msg->lenght > CLIENT_MAX_MESSAGE_LENGHT)
                             return OP_FAIL;
                         msg->payload = (void *) malloc(msg->lenght + 1);
                         msg->toFree = true;

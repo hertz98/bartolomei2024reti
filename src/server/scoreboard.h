@@ -11,10 +11,6 @@
 
 #include "../shared/doubly_list.h"
 
-//#define SCOREBOARD_SAVE_SCORE
-#define PRINT_TOPIC_NAMES_ALWAYS
-
-#define DEFAULT_SCOREBOARD_ALLOCATION 4096
 #define SCOREBOARD_SIZE 2
 enum ScoreboardType {SCR_CURRENT, SCR_COMPLETED};
 

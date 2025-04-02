@@ -11,10 +11,6 @@
 #include "topic.h"
 #include "util.h"
 
-// #define DEBUG_PATH
-// #define DEBUG_TOPIC
-// #define DEBUG_QUESTION
-
 bool directoryCreate(char * buffer_path, char * directory)
 {
     int endline = strlen(buffer_path);

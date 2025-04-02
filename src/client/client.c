@@ -10,14 +10,10 @@
 #include <signal.h>
 #include <time.h>
 
+#include "../parameters.h"
 #include "server_comm.h"
 #include "../shared/message.h"
 #include "../shared/list.h"
-
-/********** PARAMETRI **********/
-
-#define DEFAULT_BIND_IP "127.0.0.1"
-#define DEFAULT_BIND_PORT 1234
 
 /********** PROTOTIPI DI FUNZIONE **********/
 

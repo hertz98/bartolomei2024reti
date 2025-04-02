@@ -6,6 +6,8 @@
 #include <time.h>
 #include <stdbool.h>
 #include <sys/select.h>
+
+#include "../parameters.h"
 #include "../shared/commands.h"
 #include "../shared/message.h"
 #include "../shared/doubly_list.h"
@@ -13,13 +15,6 @@
 #include "topic.h"
 #include "operation.h"
 #include "scoreboard.h"
-
-// Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
-#define CLIENT_NAME_MAX 32
-#define CLIENT_NAME_MIN 4
-
-#define MAX_ANSWER_ERRORS 1
-#define SMALL_ANSWER 4
 
 typedef struct Client Client;
 typedef struct ClientsContext ClientsContext;

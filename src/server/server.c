@@ -14,28 +14,13 @@
 #include <time.h>
 #include <stdbool.h>
 
+#include "../parameters.h"
 #include "topic.h"
 #include "clients.h"
 #include "util.h"
 #include "operation.h"
 #include "scoreboard.h"
 #include "../shared/message.h"
-
-/********** PARAMETRI **********/
-
-#define DEFAULT_BIND_IP "127.0.0.1"
-#define DEFAULT_BIND_PORT 1234
-
-#define MAX_CLIENTs 32
-#define REFRESH_RATE 1000
-
-// #define BY_SPECIFICATIONS // Abilitare per l'esame
-
-#ifndef BY_SPECIFICATIONS
-    #define DEBUG
-    #define PRINT_BY_SPECS
-    #define KEEP_SCORE_ON_CLIENT_REMOVE
-#endif
 
 /********** PROTOTIPI DI FUNZIONE **********/
 

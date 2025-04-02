@@ -10,8 +10,8 @@ bool sendMessage(int socket, MessageArray * msgs)
 {
     if (!msgs)
         return false;
-    
-    if (msgs->size > SEND_MAX_MESSAGEARRAY_SIZE)
+
+    if (msgs->size > CLIENT_MAX_MESSAGEARRAY_SIZE)
     {
         printf("Errore, messaggio troppo grande\n");
         return false;
@@ -25,7 +25,7 @@ bool sendMessage(int socket, MessageArray * msgs)
         else
             msg = &msgs->messages[i];
         
-        if (msgs->size > SEND_MAX_MESSAGE_LENGHT)
+        if (msgs->size > CLIENT_MAX_MESSAGE_LENGHT)
         {
             printf("Errore, messaggio troppo grande\n");
             return false;
