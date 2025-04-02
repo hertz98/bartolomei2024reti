@@ -136,3 +136,12 @@ bool inline sendCommand(int socket, enum Command cmd)
     return sendData(socket, &tmp, sizeof(tmp));
 }
 
+bool socketReady(int socket)
+{
+    fd_set test_fds;
+    FD_ZERO(&test_fds);
+    FD_SET(socket, &test_fds);
+    if (select(socket + 1, &test_fds, NULL, NULL, &(struct timeval) {0,0} ) > 0)
+        return true;
+    return false;
+}

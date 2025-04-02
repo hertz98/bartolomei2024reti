@@ -17,6 +17,9 @@
 
 /********** PROTOTIPI DI FUNZIONE **********/
 
+typedef enum InputType {INPUT_INT, INPUT_STRING} InputType;
+typedef enum InputOperation {IN_TOPIC = 1, IN_SCORE = 2} InputOperation;
+
 void clear();
 bool mainMenu();
 bool signup();
@@ -27,6 +30,8 @@ bool playTopic();
 void readUser_Enter();
 bool getTopicsData();
 void scoreboard();
+int input(InputType type, void * output, int size, bool showscore, bool endquiz);
+
 
 /// @brief Converte l'indice del topic dal punto di vista dell'utente a quello
 /// dal punto di vista dell'array dei topic nel server
@@ -369,6 +374,12 @@ void scoreboard()
 {
     clear();
 
+    if (!sendCommand(sd, CMD_RANK))
+    {
+        printf("Errore di comunicazione con il server\n");
+        exit(EXIT_FAILURE);
+    }
+
     MessageArray * tmp = recvMessage(sd);
 
     if (!tmp)
@@ -409,7 +420,7 @@ bool playTopic()
         MessageArray *question_msg = recvMessage(sd);
         question_msg->messages[0].toFree = true;
 
-        char buffer[128];
+        char buffer[CLIENT_MAX_MESSAGE_LENGHT];
         while(true) // Printing loop
         {
             clear();
@@ -419,40 +430,21 @@ bool playTopic()
             printf("%s\n", (char *) question_msg->messages[0].payload);
             printf("\n");
 
-            while(true) // User input loop
+            int ret;
+            do
             {
                 printf("Risposta: ");
                 fflush(stdout);
-                int ret;
-                if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer))) > 1)
-                {
-                    buffer[ret - 1] = '\0';
-                    break;
-                }
-            }
+            } while ((ret = input(INPUT_STRING, buffer, sizeof(buffer), true, true)) == 0);
 
-            if (!strcmp(buffer, "endquiz"))
-            {
-                sendCommand(sd, CMD_STOP);
-                exit(0);
-            }
-            else if (!strcmp(buffer, "show score"))
-            {
-                sendCommand(sd, CMD_RANK);
-                scoreboard();
-                readUser_Enter();
-                continue;
-            }
-            else // It's an answer!
-            {
-                if ( !sendCommand(sd, CMD_ANSWER) )
-                {
-                    printf("Errore nell'invio della risposta\n");
-                    return false;
-                }
-                else
-                    break; // Internal user input loop
-            }
+            if (ret > 0)
+                break;
+        }
+
+        if ( !sendCommand(sd, CMD_ANSWER) )
+        {
+            printf("Errore nell'invio della risposta\n");
+            exit(EXIT_FAILURE);
         }
 
         MessageArray *answer_msg = messageArray(1);
@@ -486,4 +478,76 @@ bool playTopic()
     }
 }
 
+int input(InputType type, void * output, int size, bool showscore, bool endquiz)
+{
+    char buffer[CLIENT_MAX_MESSAGE_LENGHT];
+    int ret;
 
+    while(true)
+    {
+        fd_set test_fds;
+        FD_ZERO(&test_fds);
+        FD_SET(sd, &test_fds);
+        FD_SET(STDIN_FILENO, &test_fds);
+
+        if (select(sd + 1, &test_fds, NULL, NULL, NULL) == -1)
+        {
+            perror("Errore: ");
+            exit(EXIT_FAILURE);
+        }
+
+        if (FD_ISSET(sd, &test_fds))
+            if (recvCommand(sd) == false)
+            {
+                printf("Connessione con il server interrotta\n");
+                exit(EXIT_FAILURE);
+            }
+        
+        if (FD_ISSET(STDIN_FILENO, &test_fds))
+            break;
+        
+    }
+
+    if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer) - 1)) > 0)
+    {
+        buffer[ret - 1] = '\0';
+
+        if (!strncmp(buffer, "quit", sizeof(buffer)) ||
+                !strncmp(buffer, "exit", sizeof(buffer)) )
+            exit(EXIT_SUCCESS);
+
+        if (showscore && !strncmp(buffer, "show score", sizeof(buffer)))
+        {
+            scoreboard();
+            readUser_Enter();
+            return -1;
+        }
+
+        if (endquiz && !strncmp(buffer, "endquiz", sizeof(buffer)))
+        {
+            sendCommand(sd, CMD_STOP);
+            exit(EXIT_SUCCESS);
+        }
+
+        if (type == INPUT_STRING)
+        {
+            strncpy(output, buffer, size);
+            return ret - 1;
+        }
+
+        if (type == INPUT_INT && (ret = sscanf(buffer, "%d", (int*) output)) > 0)
+            return ret;
+        else
+            return -1;
+    }
+    else if (ret == 0)
+    {
+        printf("EOF rilevato, uscita...\n");
+        exit(EXIT_SUCCESS);
+    }
+    else
+    {
+        perror("Errore: ");
+        exit(EXIT_FAILURE);
+    }
+}
