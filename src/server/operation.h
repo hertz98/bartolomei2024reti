@@ -49,11 +49,6 @@ typedef struct Operation
 /// @return Il risultato dell'operazione, false in caso di fallimento
 bool operationHandler(ClientsContext *context, int socket);
 
-/// @brief Verifica se un socket ha ulteriori dati disponibili
-/// @param socket Indice del descrittore del socket
-/// @return true se il socket ha dati disponibili, false altrimenti (o in caso di errore)
-bool socketReady(int socket);
-
 /// @brief Alloca una nuova operazione e la esegue
 /// @param function Operazione da eseguire
 /// @param context Strutture dati inerenti ai client inizializzate da passare alla operazione

@@ -411,3 +411,13 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
     else
         return OP_OK; // Non è detto di ricevere tutti i byte voluti
 }
+
+bool socketReady(int socket)
+{
+    fd_set test_fds;
+    FD_ZERO(&test_fds);
+    FD_SET(socket, &test_fds);
+    if (select(socket + 1, &test_fds, NULL, NULL, &(struct timeval) {0,0} ) > 0)
+        return true;
+    return false;
+}

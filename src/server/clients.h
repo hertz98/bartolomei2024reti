@@ -169,4 +169,9 @@ bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
 /// @return true se è andato tutto liscio
 bool client_sendTopics(ClientsContext *context, int socket, TopicsContext * topics);
 
+/// @brief Verifica se un socket ha ulteriori dati disponibili
+/// @param socket Indice del descrittore del socket
+/// @return true se il socket ha dati disponibili, false altrimenti (o in caso di errore)
+bool socketReady(int socket);
+
 #endif

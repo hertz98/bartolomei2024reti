@@ -43,16 +43,6 @@ bool operationHandler(ClientsContext *context, int socket)
     return true; // In questo caso nessuna operazione è in corso, ritorno true per non rimuovere il client
 }
 
-bool socketReady(int socket)
-{
-    fd_set test_fds;
-    FD_ZERO(&test_fds);
-    FD_SET(socket, &test_fds);
-    if (select(socket + 1, &test_fds, NULL, NULL, &(struct timeval) {0,0} ) > 0)
-        return true;
-    return false;
-}
-
 bool operationCreate(OperationResult (*function)(ClientsContext *context, int socket, void *), ClientsContext *context, int socket, void *p)
 {
     Client * client = context->clients[socket];
