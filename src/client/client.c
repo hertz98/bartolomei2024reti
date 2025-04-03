@@ -25,13 +25,11 @@ bool mainMenu();
 bool signup();
 bool topicsSelection();
 char * newlineReplace(char * string);
-bool readUser_int(int * number);
 bool playTopic();
 void readUser_Enter();
 bool getTopicsData();
 void scoreboard();
-int input(InputType type, void * output, int size, bool showscore, bool endquiz);
-
+int input(InputType type, void * output, int size, bool server, bool showscore, bool endquiz);
 
 /// @brief Converte l'indice del topic dal punto di vista dell'utente a quello
 /// dal punto di vista dell'array dei topic nel server
@@ -143,8 +141,8 @@ bool mainMenu()
         printf("La tua scelta: ");
         fflush(stdout);
 
-        int selection;
-        if (!readUser_int(&selection))
+        int selection, ret;
+        if ((ret = input(INPUT_INT, &selection, sizeof(selection), false, false, false)) <= 0)
             continue;
 
         if (selection == 1)
@@ -172,9 +170,8 @@ bool signup()
         printf("Scegli un nickname (deve essere univoco): ");
         fflush(stdout);
 
-        if ((ret = read(STDIN_FILENO, context.name, sizeof(context.name))) <= 0)
+        if ((ret = input(INPUT_STRING, context.name, sizeof(context.name), true, false, false)) <= 0)
             continue;
-        context.name[ret - 1] = '\0';
 
         if (!sendCommand(sd, CMD_REGISTER))
         {
@@ -310,9 +307,11 @@ bool topicsSelection() // TODO: attenersi alle specifiche
     {
         printf("La tua scelta: ");
         fflush(stdout);
+
+        if (input(INPUT_INT, &context.playing, sizeof(context.playing), true, true, true) <= 0)
+            continue;
         
-        if (readUser_int(&context.playing) 
-            && context.playing >= 1 
+        if (context.playing >= 1 
             && context.playing <= nPlayable)
             break;
     }
@@ -338,30 +337,6 @@ char * newlineReplace(char * string)
         }
     }
     return NULL;
-}
-
-bool readUser_int(int * number)
-{
-    char buffer[32];
-    if (fgets(buffer, sizeof(buffer), stdin)) 
-    {
-        if (!strncmp(buffer, "quit", sizeof(buffer)) ||
-             !strncmp(buffer, "exit", sizeof(buffer)) )
-            exit(0);
-        if (sscanf(buffer, "%d", number) > 0)
-            return true;
-        else
-            return false;
-    }
-    else
-    {
-        if (feof(stdin))
-        {
-            printf("EOF rilevato, uscita...\n");
-            exit(0);
-        }
-        return false;
-    }
 }
 
 void readUser_Enter()
@@ -435,7 +410,7 @@ bool playTopic()
             {
                 printf("Risposta: ");
                 fflush(stdout);
-            } while ((ret = input(INPUT_STRING, buffer, sizeof(buffer), true, true)) == 0);
+            } while ((ret = input(INPUT_STRING, buffer, sizeof(buffer), true, true, true)) == 0);
 
             if (ret > 0)
                 break;
@@ -478,12 +453,12 @@ bool playTopic()
     }
 }
 
-int input(InputType type, void * output, int size, bool showscore, bool endquiz)
+int input(InputType type, void * output, int size, bool server, bool showscore, bool endquiz)
 {
     char buffer[CLIENT_MAX_MESSAGE_LENGHT];
     int ret;
 
-    while(true)
+    while(server)
     {
         fd_set test_fds;
         FD_ZERO(&test_fds);
