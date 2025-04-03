@@ -202,9 +202,7 @@ bool clientHandler(ClientsContext * context, int socket)
         break;
     
     case CMD_TOPICS:
-        if (!sendCommand(socket, CMD_OK))
-            return false;
-        return operationCreate(sendMessage, context, socket, MessageArrayCpy(topicsContext.topicsString));
+        return client_sendTopics(context, socket, &topicsContext);
     
     case CMD_TOPICS_PLAYABLE:
         return client_sendPlayable(&clientsContext, &topicsContext, socket);

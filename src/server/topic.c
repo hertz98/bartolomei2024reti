@@ -86,7 +86,9 @@ bool topicsLoader(TopicsContext *context)
 
     qsort(context->topics, context->nTopics, sizeof(Topic), topics_compare);
 
-    context->topicsString = messageArray(context->nTopics);
+    context->topicsString = messageArray(context->nTopics + 1);
+    if (!context->topicsString)
+        return false;
 
     for (int i = 0; i < context->nTopics; i++)
     {

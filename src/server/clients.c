@@ -388,6 +388,25 @@ bool client_setPlayed(Client * client, TopicsContext * topics, int topic)
     return false;
 }
 
+OperationResult client_sendTopics(ClientsContext *context, int socket, TopicsContext *topics)
+{
+    Client * client = context->clients[socket];
+
+    if (!sendCommand(socket, CMD_OK))
+        return false;
+
+    MessageArray * tmp = MessageArrayCpy(topics->topicsString);
+
+    if (isClient(context, socket, true))
+        messageBoolArray( &((MessageArray *) tmp)->messages[tmp->size - 1],
+                            client->game.playableTopics,
+                            topics->nTopics);
+    else
+        memset(&tmp->messages[tmp->size - 1], 0, sizeof(Message));
+    
+    return operationCreate(sendMessage, context, socket, tmp);
+}
+
 OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned int *received)
 {
     int ret;

@@ -162,20 +162,29 @@ bool client_checkTopicIndex(Client * client, TopicsContext * topics, int playabl
 /// @return true se è andato tutto liscio
 bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
 
-/// @brief Invia l'intera lista dei topics al client
+/// @brief Invia l'intera lista dei topics al client e quali giocabili
 /// @param context Struttura dati inerenti ai client inizializzate
 /// @param socket Indice del descrittore del socket del client
 /// @param topics Strutture dati inerenti ai topics finalizzate
-/// @return true se è andato tutto liscio
-bool client_sendTopics(ClientsContext *context, int socket, TopicsContext * topics);
+OperationResult client_sendTopics(ClientsContext *context, int socket, TopicsContext * topics);
+/// @return Ritorna l'esito dell'operazione creata
 
 /// @brief Verifica se un socket ha ulteriori dati disponibili
 /// @param socket Indice del descrittore del socket
 /// @return true se il socket ha dati disponibili, false altrimenti (o in caso di errore)
 bool client_socketReady(int socket);
 
+/// @brief Invia la classifica ai client
+/// @param context Struttura dati inerenti ai client inizializzate
+/// @param socket Indice del descrittore del socket del client
+/// @return Ritorna l'esito dell'operazione creata
 OperationResult client_sendScoreboard(ClientsContext *context, int socket);
 
+/// @brief Invia un array di booleani che indica quali topics sono stati giocati
+/// @param context Strutture dati inerenti ai client inizializzate
+/// @param topics Strutture dati inerenti ai topics inizializzate
+/// @param socket Indice del descrittore del socket del client
+/// @return Ritorna l'esito dell'operazione creata
 OperationResult client_sendPlayable(ClientsContext *context, TopicsContext * topics, int socket);
 
 #endif
