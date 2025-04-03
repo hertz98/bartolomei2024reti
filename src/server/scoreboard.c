@@ -153,16 +153,16 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
             {
                 char buffer[512];
 
-                #ifndef PRINT_BY_SPECS
-                    if (i == SCR_CURRENT)
+                #ifdef CUSTOM_PRINT
+                    if (i == SCR_PLAYING)
                         snprintf(buffer, sizeof(buffer), "Punteggio tema \"%d - %s\"\n", t + 1, topics->topics[t].name);
                     else
                         snprintf(buffer, sizeof(buffer), "Quiz tema \"%d - %s\" completato\n", t + 1, topics->topics[t].name);
                 #else
                     if (i == SCR_PLAYING)
-                        snprintf(buffer, sizeof(buffer), "Punteggio tema %d\n", i + 1);
+                        snprintf(buffer, sizeof(buffer), "Punteggio tema %d\n", t + 1);
                     else
-                        snprintf(buffer, sizeof(buffer), "Quiz tema %d completato\n", i + 1);
+                        snprintf(buffer, sizeof(buffer), "Quiz tema %d completato\n", t + 1);
                 #endif
                 
                 current->serialized_lenght = strcpyResize(&current->string, 
@@ -174,7 +174,7 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                 {
                     Score *score = node->data;
 
-                    #ifndef PRINT_BY_SPECS
+                    #ifdef CUSTOM_PRINT
                         snprintf(buffer, sizeof(buffer), "- %s: %d\n", score->name, score->score);
                     #else
                         snprintf(buffer, sizeof(buffer), "- %s %d\n", score->name, score->score);

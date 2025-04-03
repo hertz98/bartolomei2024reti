@@ -15,7 +15,7 @@
 
 #ifndef BY_SPECIFICATIONS
     #define DEBUG
-    #define PRINT_BY_SPECS
+    #define CUSTOM_PRINT
     #define KEEP_SCORE_ON_CLIENT_REMOVE
 #endif
 
