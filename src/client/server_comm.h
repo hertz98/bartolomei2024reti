@@ -49,4 +49,4 @@ bool recvData(int socket, void * buffer, unsigned int lenght);
 /// @brief Verifica se un socket ha ulteriori dati disponibili
 /// @param socket Indice del descrittore del socket
 /// @return true se il socket ha dati disponibili, false altrimenti (o in caso di errore)
-bool socketReady(int socket);
+bool client_socketReady(int socket);

@@ -264,14 +264,12 @@ int client_playableIndex(int playable)
     return -1;
 }
 
-bool topicsSelection() // TODO: attenersi alle specifiche
+bool topicsSelection()
 {
-    clear();
-
-    if (!(sendCommand(sd, CMD_TOPICPLAY) && recvCommand(sd) == CMD_OK))
+    if (!(sendCommand(sd, CMD_TOPICS_PLAYABLE) && recvCommand(sd) == CMD_OK))
     {
         printf("Errore nella comunicazione");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if (context.playable)
@@ -294,27 +292,39 @@ bool topicsSelection() // TODO: attenersi alle specifiche
         readUser_Enter();
         exit(0);
     }
-
-    printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
-
-    for (int i = 0, n = 0; i < context.nTopics; i++)
-        if (context.playable[i])
-            printf("%d - %s\n", ++n, (char*) context.topics[i]);
-
-    printf("+++++++++++++++++++++++++++++++\n");
-
+    
     while(true)
     {
+        clear();
+
+        printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
+
+        for (int i = 0, n = 0; i < context.nTopics; i++)
+            if (context.playable[i])
+                printf("%d - %s\n", ++n, (char*) context.topics[i]);
+
+        printf("+++++++++++++++++++++++++++++++\n");
+
         printf("La tua scelta: ");
         fflush(stdout);
 
-        if (input(INPUT_INT, &context.playing, sizeof(context.playing), true, true, true) <= 0)
-            continue;
+        int ret;
+        do
+        {
+            printf("Risposta: ");
+            fflush(stdout);
+        } while ((ret = input(INPUT_INT, &context.playing, sizeof(context.playing), true, true, true)) == 0);
         
-        if (context.playing >= 1 
-            && context.playing <= nPlayable)
+        if (ret > 0 &&  context.playing >= 1 && context.playing <= nPlayable)
             break;
     }
+
+    if (!(sendCommand(sd, CMD_SELECT) && recvCommand(sd) == CMD_OK))
+    {
+        printf("Errore nella comunicazione");
+        exit(EXIT_FAILURE);
+    }
+
     context.playing = client_playableIndex(context.playing - 1);
 
     MessageArray * message_sel = messageArray(1);
@@ -349,7 +359,7 @@ void scoreboard()
 {
     clear();
 
-    if (!sendCommand(sd, CMD_RANK))
+    if (!sendCommand(sd, CMD_RANK) || recvCommand(sd) != CMD_OK)
     {
         printf("Errore di comunicazione con il server\n");
         exit(EXIT_FAILURE);
@@ -388,8 +398,8 @@ bool playTopic()
             return true;
         
         default:
-            return false;
-            break;
+            printf("Errore di comunicazione con il server\n");
+            exit(EXIT_FAILURE);
         }
 
         MessageArray *question_msg = recvMessage(sd);
@@ -449,7 +459,7 @@ bool playTopic()
             break;
         }
 
-    readUser_Enter();    
+    readUser_Enter();
     }
 }
 

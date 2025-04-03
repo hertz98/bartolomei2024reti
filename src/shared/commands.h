@@ -18,7 +18,8 @@ typedef enum Command
     CMD_NOTVALID, // Invalid client name or invalid request
     CMD_EXISTING, // Name duplicate
     CMD_TOPICS, // Client ask for topics data
-    CMD_TOPICPLAY, // Client ask for play a topic
+    CMD_TOPICS_PLAYABLE, // Client ask for its playable topics
+    CMD_SELECT, // Client ask to select a topic
     CMD_ANSWER, // Client wants to send an answer
     CMD_NEXTQUESTION, // Client ask to play next question
     CMD_CORRECT, // Server informs that the answer is correct

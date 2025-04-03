@@ -136,7 +136,7 @@ bool inline sendCommand(int socket, enum Command cmd)
     return sendData(socket, &tmp, sizeof(tmp));
 }
 
-bool socketReady(int socket)
+bool client_socketReady(int socket)
 {
     fd_set test_fds;
     FD_ZERO(&test_fds);

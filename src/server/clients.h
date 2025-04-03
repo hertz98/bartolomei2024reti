@@ -172,6 +172,10 @@ bool client_sendTopics(ClientsContext *context, int socket, TopicsContext * topi
 /// @brief Verifica se un socket ha ulteriori dati disponibili
 /// @param socket Indice del descrittore del socket
 /// @return true se il socket ha dati disponibili, false altrimenti (o in caso di errore)
-bool socketReady(int socket);
+bool client_socketReady(int socket);
+
+OperationResult client_sendScoreboard(ClientsContext *context, int socket);
+
+OperationResult client_sendPlayable(ClientsContext *context, TopicsContext * topics, int socket);
 
 #endif

@@ -412,7 +412,7 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
         return OP_OK; // Non è detto di ricevere tutti i byte voluti
 }
 
-bool socketReady(int socket)
+bool client_socketReady(int socket)
 {
     fd_set test_fds;
     FD_ZERO(&test_fds);
@@ -420,4 +420,39 @@ bool socketReady(int socket)
     if (select(socket + 1, &test_fds, NULL, NULL, &(struct timeval) {0,0} ) > 0)
         return true;
     return false;
+}
+
+OperationResult client_sendScoreboard(ClientsContext *context, int socket)
+{
+    if (!sendCommand(socket, CMD_OK))
+        return false;
+
+    MessageArray * tmp = messageArray(2 * context->scoreboard.nTopics);
+    if (!tmp)
+        return false;
+
+    tmp->isInterruptible = false;
+
+    for (int i = 0; i < SCOREBOARD_SIZE * context->scoreboard.nTopics; i++)
+        messageStringReady(&tmp->messages[i], 
+                            context->scoreboard.serialized[i].string, 
+                            context->scoreboard.serialized[i].serialized_lenght,
+                            false);
+
+    return operationCreate(sendMessage, context, socket, tmp);
+}
+
+OperationResult client_sendPlayable(ClientsContext *context, TopicsContext * topics, int socket)
+{
+    Client * client = context->clients[socket];
+
+    if (!sendCommand(socket, CMD_OK))
+        return false;
+
+    MessageArray *tmp = messageArray(1);
+    if (!tmp)
+        return false;
+
+    messageBoolArray( &((MessageArray *) tmp)->messages[0], client->game.playableTopics, topics->nTopics);
+    return operationCreate(sendMessage, context, socket, tmp);
 }

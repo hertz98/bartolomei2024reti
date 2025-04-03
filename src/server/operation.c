@@ -23,7 +23,7 @@ bool operationHandler(ClientsContext *context, int socket)
         switch (ret = (*currentOperation->function)(context, socket, currentOperation->p))
         {
             case OP_OK: // Caso operazione non terminata
-                if (socketReady(socket)) // Se ci sono messaggi disponibili finisci di servire il client
+                if (client_socketReady(socket)) // Se ci sono messaggi disponibili finisci di servire il client
                     continue;
                 else
                     return true; // Servi più tardi
@@ -155,19 +155,15 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
 
     switch (currentOperation->step++)
     {
-    case 0: // invio la lista dei giochi disponibili al client
-        MessageArray *tmp = messageArray(1);
-        messageBoolArray( &((MessageArray *) tmp)->messages[0], client->game.playableTopics, topics->nTopics);
+    case 0:
+        if (!sendCommand(socket, CMD_OK))
+            return OP_FAIL;
+        return OP_OK;
 
-        return operationCreate(sendMessage, context, socket, tmp);
-    
-    case 1:
-        return OP_OK; // Ritorno dalla sendMessage
-
-    case 2: // Ricevo la risposta
+    case 1: // Ricevo la risposta
         return operationCreate(recvMessage, context, socket, &currentOperation->tmp);
 
-    case 3:
+    case 2:
         // Ottengo la risposta
         ((MessageArray *) currentOperation->tmp)->messages[0].toFree = true;
         client->game.playing = ntohl( *(int32_t*) ((MessageArray *)currentOperation->tmp)->messages[0].payload);
@@ -408,20 +404,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                 return OP_OK; // Wait for the next message
             
             case CMD_RANK:
-                MessageArray * tmp = messageArray(2 * context->scoreboard.nTopics);
-                if (!tmp)
-                    return OP_FAIL;
-
-                tmp->isInterruptible = false;
-
-                for (int i = 0; i < SCOREBOARD_SIZE * context->scoreboard.nTopics; i++)
-                    messageStringReady(&tmp->messages[i], 
-                                        context->scoreboard.serialized[i].string, 
-                                        context->scoreboard.serialized[i].serialized_lenght,
-                                        false);
-
-                operationCreate(sendMessage, context, socket, tmp);
-                return OP_OK;
+                return client_sendScoreboard(context, socket);
 
             default:
                 return OP_FAIL;
@@ -444,7 +427,8 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                         currentQuestion->answer, 
                         MAX_ANSWER_ERRORS,
                         SMALL_ANSWER))
-        { // Caso risposta corretta
+        { 
+            // Caso risposta CORRETTA
             if (!sendCommand(socket, CMD_CORRECT))
                 return OP_FAIL;
             
@@ -453,7 +437,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                                         client->game.score[client->game.playing], 
                                         client->game.playing);
         }
-        else // Caso risposta errata
+        else // Caso risposta ERRATA
             if (!sendCommand(socket, CMD_WRONG))
                 return OP_FAIL;
 
