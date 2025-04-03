@@ -286,8 +286,9 @@ bool topicsSelection()
         if (context.playable[i])
             nPlayable++;
 
-    if (!context.playable)
+    if (!nPlayable)
     {
+        clear();
         printf("Nessun quiz disponibile per l'utente %s\n", context.name);
         readUser_Enter();
         exit(0);
