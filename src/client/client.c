@@ -264,12 +264,12 @@ int client_playableIndex(int playable)
     return -1;
 }
 
-bool topicsSelection()
+bool recvPlayables()
 {
     if (!(sendCommand(sd, CMD_TOPICS_PLAYABLE) && recvCommand(sd) == CMD_OK))
     {
         printf("Errore nella comunicazione");
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     if (context.playable)
@@ -280,6 +280,17 @@ bool topicsSelection()
 
     MessageArray * tmp = recvMessage(sd);
     context.playable = tmp->messages[0].payload;
+
+    return true;
+}
+
+bool topicsSelection()
+{
+    if (!context.playable && !recvPlayables())
+    {
+        printf("Problema di comunicazione con il server\n");
+        return false;
+    }
 
     int nPlayable = 0;
     for (int i = 0; i < context.nTopics; i++)
@@ -327,6 +338,8 @@ bool topicsSelection()
     }
 
     context.playing = client_playableIndex(context.playing - 1);
+
+    context.playable[context.playing] = false;
 
     MessageArray * message_sel = messageArray(1);
     messageInteger(&message_sel->messages[0], context.playing);
