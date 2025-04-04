@@ -21,17 +21,62 @@ typedef enum InputType {INPUT_INT, INPUT_STRING} InputType;
 
 /********** PROTOTIPI DI FUNZIONE **********/
 
+/// @brief Clear the terminal
 void clear();
+
+/// @brief At startup, make you choose between connecting the server or exit
+/// @return True if you select to continue
 bool mainMenu();
-bool signup();
-bool topicsSelection();
-char * newlineReplace(char * string);
-bool playTopic();
-void readUser_Enter();
-bool getTopicsData();
-bool scoreboard();
-int input(InputType type, void * output, int size, bool server, bool showscore, bool endquiz);
+
+/// @brief Inizializza le strutture dati del client e tenta la connessione
+/// @param argc 
+/// @param argv 
+/// @return true in caso di connessione al server, false in caso di insuccesso
 int init(int argc, char ** argv);
+
+/// @brief Permette all'utente di inviare il proprio nickname al server, e
+/// di ritentare in caso non sia valido
+/// @return true in caso di successo, false in caso di errore
+bool signup();
+
+/// @brief Chiede al server le informazioni sui topic, inoltre preleva anche quelli giocabili
+/// @return true in caso di successo, false in caso di errore
+bool getTopicsData();
+
+/// @brief Invia al server l'indice del topic che l'utente vuole giocare
+/// @return true nel caso la selezione sia avvenuta con successo, false in caso di errore
+bool topicsSelection();
+
+/// @brief In loop, chiede al server la prossima domanda e abilita la risposta dall'utente
+/// @return true al termine delle domande, false in caso di errore
+bool playTopic();
+
+/// @brief Sostituisce il primo carattere di fine linea con il carattere nullo
+/// @param string 
+/// @return Il puntatore al carattere successivo a quello sostituito
+char * newlineReplace(char * string);
+
+/// @brief Aspetta che l'utente prema il tasto ENTER dopo aver stampato un messaggio
+void readUser_Enter();
+
+/// @brief Chiede al server la classifica attuale
+/// @return true in caso di successo, false in caso di errore o di errore di comunicazione
+bool scoreboard();
+
+/// @brief Funzione generale di input, legge quello che l'utente scrive ed
+/// eventualmente interpreta i comandi "show score" e "endquiz", inoltre
+/// verifica che la connessione con il server non sia caduta
+/// @param type Permette di specificare se copiare un intero o una stringa nel buffer dato
+/// @param buffer Solitamente un array di char o un puntatore a intero
+/// @param size Dimensione dell'array di caratteri, non importa con l
+/// @param server Se true controlla che la connessione col server non cada
+/// @param showscore Se true permette di chiedere tramite "show score" la classifica al server e di stamparla
+/// @param endquiz Se true permette di attuare il comando "endquiz" di terminare
+/// @return Il numero di byte copiati oppure 0 se non è stato immesso niente, 
+/// oppure -1 in caso di altre operazioni oppure termina il server
+int input(InputType type, void * buffer, int size, bool server, bool showscore, bool endquiz);
+
+/// @brief Da internet... permette fflush(stdin)...
 void clear_stdin();
 
 /// @brief Converte l'indice del topic dal punto di vista dell'utente a quello
@@ -55,7 +100,7 @@ int main (int argc, char ** argv)
     if (!mainMenu())
         return 0;
     
-    if (!init(argc, argv))
+    if (!init(argc, argv)) // Connessione
         return 1;
 
     if (!signup())
@@ -64,7 +109,7 @@ int main (int argc, char ** argv)
     if (!getTopicsData())
         return 3;
 
-    while(true)
+    while(true) // Seleziona il topic e giocalo fino a errore o al termine
     {
         if (!topicsSelection() || !playTopic())
             break;
@@ -72,7 +117,7 @@ int main (int argc, char ** argv)
 
     close(sd);
 
-    return 4;
+    return 4; // Se sono arrivato qua c'è stato un errore
 }
 
 int init(int argc, char ** argv)
@@ -489,7 +534,7 @@ bool playTopic()
     }
 }
 
-int input(InputType type, void * output, int size, bool server, bool showscore, bool endquiz)
+int input(InputType type, void * out_buffer, int size, bool server, bool showscore, bool endquiz)
 {
     char buffer[CLIENT_MAX_MESSAGE_LENGHT];
     int ret;
@@ -539,12 +584,12 @@ int input(InputType type, void * output, int size, bool server, bool showscore, 
 
         if (type == INPUT_STRING)
         {
-            strncpy(output, buffer, size - 1);
+            strncpy(out_buffer, buffer, size - 1);
             buffer[size - 1] = '\0';
             return ret - 1;
         }
 
-        if (type == INPUT_INT && (ret = sscanf(buffer, "%d", (int*) output)) > 0)
+        if (type == INPUT_INT && (ret = sscanf(buffer, "%d", (int*) out_buffer)) > 0)
             return ret;
         else
             return -1;
