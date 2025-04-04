@@ -324,13 +324,10 @@ bool topicsSelection()
 
         printf("+++++++++++++++++++++++++++++++\n");
 
-        printf("La tua scelta: ");
-        fflush(stdout);
-
         int ret;
         do
         {
-            printf("Risposta: ");
+            printf("La tua scelta: ");
             fflush(stdout);
         } while ((ret = input(INPUT_INT, &context.playing, sizeof(context.playing), true, true, true)) == 0);
         
