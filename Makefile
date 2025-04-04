@@ -1,39 +1,62 @@
 # Makefile
 
-all: server client
+COMPILER = gcc
+CFLAGS = -g -Wall
 
-server: ./src/server/server.c
-	gcc -g -Wall ./src/server/*.c ./src/shared/*.c -o ./bin/server
+SERVER_FLAGS := 127.0.0.1 1234
+CLIENT_FLAGS := 127.0.0.1 1234
 
-client: ./src/client/client.c
-	gcc -g -Wall ./src/client/*.c ./src/shared/*.c -o ./bin/client
+DEBUGGER = gdb
+DFLAGS := 
+
+SOURCES_DIR := ./src
+SERVER_DIR := $(SOURCES_DIR)/server
+CLIENT_DIR := $(SOURCES_DIR)/client
+SHARED_DIR := $(SOURCES_DIR)/shared
+TESTING_DIR := $(SOURCES_DIR)/testing
+
+SERVER_SOURCE := $(SERVER_DIR)/server.c
+CLIENT_SOURCE := $(CLIENT_DIR)/client.c
+SERVER_SOURCES := $(wildcard $(SERVER_DIR)/*.c) $(wildcard $(SHARED_DIR)/*.c)
+CLIENT_SOURCES := $(wildcard $(CLIENT_DIR)/*.c) $(wildcard $(SHARED_DIR)/*.c)
+
+BIN_DIR := ./bin
+TARGET_SERVER := $(BIN_DIR)/server
+TARGET_CLIENT := $(BIN_DIR)/client
+
+TESTING_SOURCES := $(foreach dir, $(SERVER_DIR) $(SHARED_DIR) $(TESTING_DIR), $(wildcard $(dir)/*.c)) 
+TESTING_SOURCES := $(filter-out $(SERVER_SOURCE), $(TESTING_SOURCES))
+
+TARGET_TESTING := $(BIN_DIR)/testing
+
+all: build-server build-client
+
+build-server: $(SERVER_SOURCE) data
+	$(COMPILER) $(CFLAGS) $(SERVER_SOURCES) -o $(TARGET_SERVER)
+
+build-client: $(CLIENT_SOURCE) data
+	$(COMPILER) $(CFLAGS) $(CLIENT_SOURCES) -o $(TARGET_CLIENT)
 
 clean:
-	#find . -maxdepth 1 -type f -executable -delete
-	#find . -iname "*.o"
-	rm -f ./bin/server ./bin/client ./bin/testing
-	rm -f ./bin/server.exe ./bin/client.exe ./bin/cygwin1.dll
+	rm -f $(TARGET_SERVER) $(TARGET_CLIENT) $(TARGET_TESTING)
 
-windows: ./src/client/client.c ./src/server/server.c
-	x86_64-pc-cygwin-gcc ./src/server/*.c ./src/shared/*.c -o ./bin/server.exe
-	x86_64-pc-cygwin-gcc ./src/client/*.c ./src/shared/*.c -o ./bin/client.exe
-	cp "/usr/x86_64-pc-cygwin/sys-root/usr/bin/cygwin1.dll"	./bin/
+server: build-server
+	$(TARGET_SERVER) $(SERVER_FLAGS)
 
-run_server: test_server
-test_server: server
-	rm -f bin/data/users/prova.txt
-	./bin/server 127.0.0.1 1234
+client: build-client
+	$(TARGET_CLIENT) $(CLIENT_FLAGS)
 
-run_client: test_client
-test_client: client
-	./bin/client 127.0.0.1 1234
+server-gdb: build-server
+	$(DEBUGGER) $(DFLAGS) -x $(SERVER_DIR)/.gdbinit --args $(TARGET_SERVER) $(SERVER_FLAGS)
 
-gdb_server: server
-	rm -f bin/data/users/prova.txt
-	gdb -x ./src/server/.gdbinit ./bin/server
+client-gdb: build-client
+	$(DEBUGGER) $(DFLAGS) -x $(CLIENT_DIR)/.gdbinit --args $(TARGET_CLIENT) $(CLIENT_FLAGS)
 
-gdb_client: client
-	gdb -x ./src/client/.gdbinit ./bin/client
+clean-users:
+	rm $(BIN_DIR)/data/users/*.txt
 
-testing:
-	gcc -g -Wall ./src/testing/main.c ./src/server/util.c  -o ./bin/testing && ./bin/testing
+data:
+	mkdir -p $(BIN_DIR) $(BIN_DIR)/data $(BIN_DIR)/data/topics $(BIN_DIR)/data/users
+
+testing: data
+	$(COMPILER) $(CFLAGS) $(TESTING_SOURCES) -o $(TARGET_TESTING) && $(TARGET_TESTING)
