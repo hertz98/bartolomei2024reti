@@ -136,12 +136,26 @@ bool inline sendCommand(int socket, enum Command cmd)
     return sendData(socket, &tmp, sizeof(tmp));
 }
 
-bool client_socketReady(int socket)
+int client_socketsReady(int * sockets, int size, struct timeval * timeout)
 {
+    int ret;
+    int max = 0;
     fd_set test_fds;
+
     FD_ZERO(&test_fds);
-    FD_SET(socket, &test_fds);
-    if (select(socket + 1, &test_fds, NULL, NULL, &(struct timeval) {0,0} ) > 0)
-        return true;
-    return false;
+
+    for (int i = 0; i < size; i++)
+    {
+        FD_SET(sockets[i], &test_fds);
+        max = sockets[i] > max ? sockets[i] : max;
+    }
+
+    if ((ret = select(max + 1, &test_fds, NULL, NULL, timeout)) > 0)
+    {
+        for (int i = 0; i < size; i++)
+            if (FD_ISSET(max, &test_fds))
+                return i;
+    }
+
+    return -1;
 }

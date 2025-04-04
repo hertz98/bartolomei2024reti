@@ -296,12 +296,15 @@ bool topicsSelection()
         if (context.playable[i])
             nPlayable++;
 
-    if (!nPlayable)
+    while (!nPlayable) // while (true)
     {
-        clear();
-        printf("Nessun quiz disponibile per l'utente %s\n", context.name);
-        readUser_Enter();
-        exit(0);
+        if (!scoreboard())
+            return false;
+        printf("Nessun quiz disponibile per l'utente \"%s\"\n", context.name);
+        printf("Premere un ENTER per continuare\n");
+        
+        if (client_socketsReady(&(int) {STDIN_FILENO, }, 1, &(struct timeval) {1,0} ) != -1)
+            exit(0);
     }
     
     while(true)

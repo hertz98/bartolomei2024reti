@@ -47,6 +47,8 @@ bool sendData(int socket, void * buffer, unsigned int lenght);
 bool recvData(int socket, void * buffer, unsigned int lenght);
 
 /// @brief Verifica se un socket ha ulteriori dati disponibili
-/// @param socket Indice del descrittore del socket
+/// @param sockets Array contenente indici di descrittore del socket
+/// @param size Dimensione dello array
+/// @param timeout select timeout
 /// @return true se il socket ha dati disponibili, false altrimenti (o in caso di errore)
-bool client_socketReady(int socket);
+int client_socketsReady(int * sockets, int size, struct timeval * timeout);
