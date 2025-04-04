@@ -110,7 +110,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
 
     case 1:
         MessageArray * tmp = (void*) client->name;
-        tmp->messages[0].toFree = false;
+        tmp->messages[0].toFree = false; // Voglio mantenere il nome in memoria, almeno fino alla disconnessione del client
         client->name = (char*) tmp->messages[0].payload;
         messageArrayDestroy(&tmp);
 

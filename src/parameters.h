@@ -24,7 +24,7 @@
 
 /******************** PARAMETRI TOPICS ********************/
 
-// Il nome non può essere più lungo di PATH_MAX - ESTENSIONE
+// Il nome può esserea al più lungo PATH_MAX - ESTENSIONE
 #define CLIENT_NAME_MAX 32
 #define CLIENT_NAME_MIN 4
 

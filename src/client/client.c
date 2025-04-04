@@ -41,17 +41,12 @@ int client_playableIndex(int playable);
 
 /********** VARIABILI GLOBALI **********/
 
-struct sockaddr_in server_addr;
-int sd;
-
-struct Context
-{
-    char name[255];
-    int nTopics;
-    char ** topics;
-    bool * playable;
-    int playing;
-} context;
+int sd = -1; // Indice del socket del server
+char myname[CLIENT_NAME_MAX + 2] = "\0"; // Un byte per rilevare che il nome inserito è troppo lungo, e un'altro per il carattere di terminazione
+int nTopics = 0;
+char ** topics = NULL; // Contiene i nomi dei topics
+bool * playableTopics = NULL;
+int playing = -1;
 
 /********** METODI **********/
 
@@ -82,6 +77,7 @@ int main (int argc, char ** argv)
 
 int init(int argc, char ** argv)
 {
+    struct sockaddr_in server_addr;
     sd = socket(AF_INET, SOCK_STREAM, 0);
     if (sd == -1)
     {
@@ -122,8 +118,6 @@ int init(int argc, char ** argv)
         perror("Errore nella connect");
         return false;
     }
-
-    memset(&context, 0, sizeof(context));
 
     return true;
 }
@@ -170,8 +164,20 @@ bool signup()
         printf("Scegli un nickname (deve essere univoco): ");
         fflush(stdout);
 
-        if ((ret = input(INPUT_STRING, context.name, sizeof(context.name), true, false, false)) <= 0)
+        if ((ret = input(INPUT_STRING, myname, sizeof(myname), true, false, false)) <= 0)
             continue;
+
+        if (strlen(myname) < CLIENT_NAME_MIN)
+        {
+            printf("Troppo corto!\n");
+            continue;
+        }
+
+        if (strlen(myname) > CLIENT_NAME_MAX)
+        {
+            printf("Troppo lungo!\n");
+            continue;
+        }
 
         if (!sendCommand(sd, CMD_REGISTER))
         {
@@ -186,7 +192,7 @@ bool signup()
         }
 
         MessageArray *tmp = messageArray(1);
-        messageString(&tmp->messages[0], context.name, false);
+        messageString(&tmp->messages[0], myname, false);
         sendMessage(sd, tmp);
 
         switch(recvCommand(sd))
@@ -195,11 +201,11 @@ bool signup()
                 return true;
             
             case CMD_EXISTING:
-                printf("Nome duplicato!\n\n");
+                printf("Nickname duplicato!\n\n");
                 break;
 
             case CMD_NOTVALID:
-                printf("Nome non valido\n\n");
+                printf("Nickname non valido\n\n");
                 break;
 
             case false:
@@ -222,11 +228,11 @@ bool getTopicsData()
         return false;
     }
 
-    if (context.topics)
+    if (topics)
     {
-        for (int i = 0; i < context.nTopics; i++)
-            free(context.topics[i]);
-        free(context.topics);
+        for (int i = 0; i < nTopics; i++)
+            free(topics[i]);
+        free(topics);
     }
 
     MessageArray *tmp = recvMessage(sd);
@@ -236,12 +242,12 @@ bool getTopicsData()
         return false;
     }
 
-    context.nTopics = tmp->size - 1;
-    context.topics = messageArray2StringArray(tmp);
-    context.playable = (bool*) tmp->messages[context.nTopics].payload;
+    nTopics = tmp->size - 1;
+    topics = messageArray2StringArray(tmp);
+    playableTopics = (bool*) tmp->messages[nTopics].payload;
     messageArrayDestroy(&tmp);
 
-    if (!context.nTopics)
+    if (!nTopics)
     {
         printf("Nessun quiz disponibile nel server\n");
         readUser_Enter();
@@ -251,14 +257,14 @@ bool getTopicsData()
     return true;
 }
 
-int client_playableIndex(int playable)
+int client_playableIndex(int index)
 {
-    if (playable < 0 || playable >= context.nTopics)
+    if (index < 0 || index >= nTopics)
         return -1;
     
-    for (int i = 0, n = 0; i < context.nTopics; i++)
-        if (context.playable[i])
-            if (n++ == playable)
+    for (int i = 0, n = 0; i < nTopics; i++)
+        if (playableTopics[i])
+            if (n++ == index)
                     return i;
 
     return -1;
@@ -272,29 +278,29 @@ bool recvPlayables()
         return false;
     }
 
-    if (context.playable)
+    if (playableTopics)
     {
-        free(context.playable);
-        context.playable = NULL;
+        free(playableTopics);
+        playableTopics = NULL;
     }
 
     MessageArray * tmp = recvMessage(sd);
-    context.playable = tmp->messages[0].payload;
+    playableTopics = tmp->messages[0].payload;
 
     return true;
 }
 
 bool topicsSelection()
 {
-    if (!context.playable && !recvPlayables())
+    if (!playableTopics && !recvPlayables())
     {
         printf("Problema di comunicazione con il server\n");
         return false;
     }
 
     int nPlayable = 0;
-    for (int i = 0; i < context.nTopics; i++)
-        if (context.playable[i])
+    for (int i = 0; i < nTopics; i++)
+        if (playableTopics[i])
             nPlayable++;
 
     while (!nPlayable) // while (true)
@@ -302,7 +308,7 @@ bool topicsSelection()
         if (!scoreboard())
             return false;
         
-        printf("Nessun quiz disponibile per l'utente \"%s\"\n", context.name);
+        printf("Nessun quiz disponibile per l'utente \"%s\"\n", myname);
         printf("Premere un ENTER per continuare\n");
         
         if (client_socketsReady((int[]) {STDIN_FILENO}, 1, &(struct timeval) {1,0} ) != -1)
@@ -318,9 +324,9 @@ bool topicsSelection()
 
         printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
 
-        for (int i = 0, n = 0; i < context.nTopics; i++)
-            if (context.playable[i])
-                printf("%d - %s\n", ++n, (char*) context.topics[i]);
+        for (int i = 0, n = 0; i < nTopics; i++)
+            if (playableTopics[i])
+                printf("%d - %s\n", ++n, (char*) topics[i]);
 
         printf("+++++++++++++++++++++++++++++++\n");
 
@@ -329,9 +335,9 @@ bool topicsSelection()
         {
             printf("La tua scelta: ");
             fflush(stdout);
-        } while ((ret = input(INPUT_INT, &context.playing, sizeof(context.playing), true, true, true)) == 0);
+        } while ((ret = input(INPUT_INT, &playing, sizeof(playing), true, true, true)) == 0);
         
-        if (ret > 0 &&  context.playing >= 1 && context.playing <= nPlayable)
+        if (ret > 0 &&  playing >= 1 && playing <= nPlayable)
             break;
     }
 
@@ -341,12 +347,12 @@ bool topicsSelection()
         return false;
     }
 
-    context.playing = client_playableIndex(context.playing - 1);
+    playing = client_playableIndex(playing - 1);
 
-    context.playable[context.playing] = false;
+    playableTopics[playing] = false;
 
     MessageArray * message_sel = messageArray(1);
-    messageInteger(&message_sel->messages[0], context.playing);
+    messageInteger(&message_sel->messages[0], playing);
     sendMessage(sd, message_sel);
 
     messageArrayDestroy(&message_sel);
@@ -430,7 +436,7 @@ bool playTopic()
         {
             clear();
             printf("Quiz - %s\n+++++++++++++++++++++++++++++++\n",
-                (char*) context.topics[context.playing]);
+                (char*) topics[playing]);
 
             printf("%s\n", (char *) question_msg->messages[0].payload);
             printf("\n");
@@ -533,7 +539,8 @@ int input(InputType type, void * output, int size, bool server, bool showscore, 
 
         if (type == INPUT_STRING)
         {
-            strncpy(output, buffer, size);
+            strncpy(output, buffer, size - 1);
+            buffer[size - 1] = '\0';
             return ret - 1;
         }
 

@@ -243,10 +243,7 @@ Command nameValid(ClientsContext * context, int socket, char * name)
     if (!name)
         return CMD_STOP;
 
-    if (strlen(name) == 0)
-        return CMD_NOTVALID;
-
-    if (strlen(name) > CLIENT_NAME_MAX && strlen(name) < CLIENT_NAME_MIN)
+    if (strlen(name) > CLIENT_NAME_MAX || strlen(name) < CLIENT_NAME_MIN)
         return CMD_NOTVALID;
 
     for (char *c = name; *c; c++)
