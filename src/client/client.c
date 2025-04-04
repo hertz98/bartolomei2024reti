@@ -134,7 +134,7 @@ int init(int argc, char ** argv)
     server_addr.sin_family = AF_INET;
 
     char * addr;
-    switch (argc)
+    switch (argc) // In base al numero di argomenti passati
     {
     case 0:
     case 1:
@@ -224,15 +224,15 @@ bool signup()
             continue;
         }
 
-        if (!sendCommand(sd, CMD_REGISTER))
+        if (!sendCommand(sd, CMD_REGISTER))  // Inzio la richiesta di registrazione
         {
-            printf("Errore nella comunicazione\n");
+            printf("Errore nella comunicazione...\n");
             return false;
         }
 
-        if ( recvCommand(sd) != CMD_OK)
+        if ( recvCommand(sd) != CMD_OK) // Aspetto conferma
         {
-            printf("Rifiutato dal server\n");
+            printf("Rifiutato dal server...\n");
             return false;
         }
 
@@ -247,11 +247,11 @@ bool signup()
             
             case CMD_EXISTING:
                 printf("Nickname duplicato!\n\n");
-                break;
+                continue;
 
             case CMD_NOTVALID:
                 printf("Nickname non valido\n\n");
-                break;
+                continue;
 
             case false:
                 printf("Rifiutato dal server\n");
@@ -267,13 +267,13 @@ bool signup()
 
 bool getTopicsData()
 {
-    if (sendCommand(sd, CMD_TOPICS) && recvCommand(sd) != CMD_OK)
+    if (sendCommand(sd, CMD_TOPICS) && recvCommand(sd) != CMD_OK) // Chiedo e aspetto conferma
     {
         printf("Errore nello scaricamento dei topics\n");
         return false;
     }
 
-    if (topics)
+    if (topics) // Se sono già presenti mi tocca deallocare tutto
     {
         for (int i = 0; i < nTopics; i++)
             free(topics[i]);
@@ -287,8 +287,8 @@ bool getTopicsData()
         return false;
     }
 
-    nTopics = tmp->size - 1;
-    topics = messageArray2StringArray(tmp);
+    nTopics = tmp->size - 1; // L'ultimo messaggio (il penultimo in realtà) contiene anche i topics giocabili
+    topics = messageArray2StringArray(tmp); // Automaticamente le stringhe non vengono più deallocate
     playableTopics = (bool*) tmp->messages[nTopics].payload;
     messageArrayDestroy(&tmp);
 
@@ -330,6 +330,12 @@ bool recvPlayables()
     }
 
     MessageArray * tmp = recvMessage(sd);
+    if (!tmp)
+    {
+        printf("Errore di comunicazione con il server\n");
+        return false;
+    }
+
     playableTopics = tmp->messages[0].payload;
 
     return true;
@@ -428,14 +434,13 @@ bool scoreboard()
 {
     clear();
 
-    if (!sendCommand(sd, CMD_RANK) || recvCommand(sd) != CMD_OK)
+    if (!sendCommand(sd, CMD_RANK) || recvCommand(sd) != CMD_OK) // Chiedo e aspetto conferma
     {
         printf("Errore di comunicazione con il server\n");
         return false;
     }
 
     MessageArray * tmp = recvMessage(sd);
-
     if (!tmp)
     {
         printf("Qualcosa è andato storto nella ricezione della classifica\n");
@@ -474,6 +479,12 @@ bool playTopic()
         }
 
         MessageArray *question_msg = recvMessage(sd);
+        if (!question_msg)
+        {
+            printf("Errore di comunicazione con il server\n");
+            return false;
+        }
+
         question_msg->messages[0].toFree = true;
 
         char buffer[CLIENT_MAX_MESSAGE_LENGHT];
@@ -539,6 +550,7 @@ int input(InputType type, void * out_buffer, int size, bool server, bool showsco
     char buffer[CLIENT_MAX_MESSAGE_LENGHT];
     int ret;
 
+    // Uso la select per controllare sia STDIN che il socket del server in maniera di accorgermi della disconnessione
     while(server)
     {
         int ready = client_socketsReady( (int[]) {STDIN_FILENO, sd, }, 2, NULL);
@@ -560,6 +572,7 @@ int input(InputType type, void * out_buffer, int size, bool server, bool showsco
         
     }
 
+    // Lettura di STDIN
     if ((ret = read(STDIN_FILENO, buffer, sizeof(buffer) - 1)) > 0)
     {
         buffer[ret - 1] = '\0';
@@ -592,7 +605,7 @@ int input(InputType type, void * out_buffer, int size, bool server, bool showsco
         if (type == INPUT_INT && (ret = sscanf(buffer, "%d", (int*) out_buffer)) > 0)
             return ret;
         else
-            return -1;
+            return 0;
     }
     else if (ret == 0)
     {

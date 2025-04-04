@@ -144,7 +144,7 @@ int client_socketsReady(int * sockets, int size, struct timeval * timeout)
 
     FD_ZERO(&test_fds);
 
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size; i++) // Per ogni socket nell'array
     {
         if (sockets[i] < 0)
             continue;
@@ -156,7 +156,7 @@ int client_socketsReady(int * sockets, int size, struct timeval * timeout)
     if ((ret = select(max + 1, &test_fds, NULL, NULL, timeout)) > 0)
     {
         for (int i = 0; i <= max; i++)
-            if (FD_ISSET(i, &test_fds))
+            if (FD_ISSET(i, &test_fds)) // Ritorno il primo che è ready
                 return i;
     }
 
