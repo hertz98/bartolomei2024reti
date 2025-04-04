@@ -32,6 +32,7 @@ bool getTopicsData();
 bool scoreboard();
 int input(InputType type, void * output, int size, bool server, bool showscore, bool endquiz);
 int init(int argc, char ** argv);
+void clear_stdin();
 
 /// @brief Converte l'indice del topic dal punto di vista dell'utente a quello
 /// dal punto di vista dell'array dei topic nel server
@@ -300,11 +301,15 @@ bool topicsSelection()
     {
         if (!scoreboard())
             return false;
+        
         printf("Nessun quiz disponibile per l'utente \"%s\"\n", context.name);
         printf("Premere un ENTER per continuare\n");
         
-        if (client_socketsReady(&(int) {STDIN_FILENO, }, 1, &(struct timeval) {1,0} ) != -1)
+        if (client_socketsReady((int[]) {STDIN_FILENO}, 1, &(struct timeval) {1,0} ) != -1)
+        {
+            clear_stdin();
             exit(0);
+        }
     }
     
     while(true)
@@ -488,25 +493,21 @@ int input(InputType type, void * output, int size, bool server, bool showscore, 
 
     while(server)
     {
-        fd_set test_fds;
-        FD_ZERO(&test_fds);
-        FD_SET(sd, &test_fds);
-        FD_SET(STDIN_FILENO, &test_fds);
-
-        if (select(sd + 1, &test_fds, NULL, NULL, NULL) == -1)
+        int ready = client_socketsReady( (int[]) {STDIN_FILENO, sd, }, 2, NULL);
+        if (ready == -1) // Non dovrebbe succedere con timeout infinito
         {
-            perror("Errore: ");
+            printf("Problema con la select\n");
             exit(EXIT_FAILURE);
         }
 
-        if (FD_ISSET(sd, &test_fds))
+        if (ready == sd)
             if (recvCommand(sd) == false)
             {
                 printf("Connessione con il server interrotta\n");
                 exit(EXIT_FAILURE);
             }
         
-        if (FD_ISSET(STDIN_FILENO, &test_fds))
+        if (ready == STDIN_FILENO)
             break;
         
     }
@@ -554,4 +555,10 @@ int input(InputType type, void * output, int size, bool server, bool showscore, 
         perror("Errore: ");
         exit(EXIT_FAILURE);
     }
+}
+
+void clear_stdin() {
+    char ch;
+    while ((ch = getchar()) != '\n' && ch != EOF)  // Read and discard characters until newline or EOF
+        ;
 }

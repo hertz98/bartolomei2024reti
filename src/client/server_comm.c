@@ -146,14 +146,17 @@ int client_socketsReady(int * sockets, int size, struct timeval * timeout)
 
     for (int i = 0; i < size; i++)
     {
+        if (sockets[i] < 0)
+            continue;
+        
         FD_SET(sockets[i], &test_fds);
         max = sockets[i] > max ? sockets[i] : max;
     }
 
     if ((ret = select(max + 1, &test_fds, NULL, NULL, timeout)) > 0)
     {
-        for (int i = 0; i < size; i++)
-            if (FD_ISSET(max, &test_fds))
+        for (int i = 0; i <= max; i++)
+            if (FD_ISSET(i, &test_fds))
                 return i;
     }
 
