@@ -33,10 +33,10 @@ bool topicsInit(TopicsContext *context)
     context->topics = NULL;
 
     if (!(executablePath(context->directory)))
-        return true;
+        return false;
 
     if (!parentDirectory(context->directory))
-        return true;
+        return false;
 
     strcat(context->directory, DATA_DIR);
 
@@ -49,7 +49,7 @@ bool topicsInit(TopicsContext *context)
         !directoryCreate(context->directory, USERS_DIR))
         return false;
 
-    return false;
+    return true;
 }
 
 bool topicsLoader(TopicsContext *context)

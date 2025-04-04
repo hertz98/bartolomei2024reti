@@ -15,20 +15,24 @@
 int clientsInit(ClientsContext *context, int max)
 {
     if (max < 0 || max > 1024)
-        return 1;
+        return false;
 
     memset(context, 0, sizeof(ClientsContext));
 
     context->nClients = 0;
     context->maxClients = max;
+    
     context->clients = malloc( sizeof(Client *) * max);
+    if (!context->clients)
+        return false;
+
     context->allocated = max;
     memset(context->clients, 0, context->allocated);
     FD_ZERO(&context->master_fds);
     FD_ZERO(&context->read_fds);
     FD_ZERO(&context->write_fds);
 
-    return 0;
+    return true;
 }
 
 bool clientAdd(ClientsContext * context, int socket)

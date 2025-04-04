@@ -38,12 +38,12 @@ typedef struct TopicsContext
 /// @brief Inizializza le strutture dati inerrenti ai topic
 /// @param context Strutture dati inerenti ai topic non inizializzate
 /// @param directory Percorso contenente i topic
-/// @return Ritorna true se ha successo
+/// @return Ritorna true in caso di successo, false altrimenti
 bool topicsInit(TopicsContext *context);
 
 /// @brief Analizza la cartella dei topic e per ciascun file crea un topic e lo carica in memoria
 /// @param context Strutture dati inerenti ai topic inizializzate
-/// @return Ritorna true se fila tutto liscio
+/// @return Ritorna true se fila tutto liscio, false altrimenti
 bool topicsLoader(TopicsContext *context);
 
 /// @brief Dato il topic si occupa di caricarne domande e risposte nella lista

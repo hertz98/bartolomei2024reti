@@ -15,10 +15,11 @@
 #include "../shared/message.h"
 #include "../shared/list.h"
 
-/********** PROTOTIPI DI FUNZIONE **********/
+/********** DEFINIZIONI **********/
 
 typedef enum InputType {INPUT_INT, INPUT_STRING} InputType;
-typedef enum InputOperation {IN_TOPIC = 1, IN_SCORE = 2} InputOperation;
+
+/********** PROTOTIPI DI FUNZIONE **********/
 
 void clear();
 bool mainMenu();
@@ -28,8 +29,9 @@ char * newlineReplace(char * string);
 bool playTopic();
 void readUser_Enter();
 bool getTopicsData();
-void scoreboard();
+bool scoreboard();
 int input(InputType type, void * output, int size, bool server, bool showscore, bool endquiz);
+int init(int argc, char ** argv);
 
 /// @brief Converte l'indice del topic dal punto di vista dell'utente a quello
 /// dal punto di vista dell'array dei topic nel server
@@ -52,16 +54,39 @@ struct Context
 
 /********** METODI **********/
 
-void socketclose()
-{ 
+int main (int argc, char ** argv)
+{
+    if (!mainMenu())
+        return 0;
+    
+    if (!init(argc, argv))
+        return 1;
+
+    if (!signup())
+        return 2;
+
+    if (!getTopicsData())
+        return 3;
+
+    while(true)
+    {
+        if (!topicsSelection() || !playTopic())
+            break;
+    }
+
     close(sd);
-    printf("\n CTRIL+C: Socket chiuso\n");
-    exit(0);
+
+    return 4;
 }
 
 int init(int argc, char ** argv)
 {
     sd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sd == -1)
+    {
+        perror("Errore nella creazione del socket:");
+        return false;
+    }
     
     memset(&server_addr, 0, sizeof(server_addr)); // Pulizia
     server_addr.sin_family = AF_INET;
@@ -88,44 +113,18 @@ int init(int argc, char ** argv)
     if (inet_pton(AF_INET, addr, &server_addr.sin_addr) == -1)
     {
         printf("Errore nella conversione dell'indirizzo ip\n");
-        return 1;
+        return false;
     }
 
     if (connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1)
     {
         perror("Errore nella connect");
-        return 1;
+        return false;
     }
-
-    signal(SIGINT, socketclose);
 
     memset(&context, 0, sizeof(context));
 
-    return 0;
-}
-
-int main (int argc, char ** argv)
-{
-    int ret;
-
-    if (!mainMenu())
-        return 0;
-    
-    if ((ret = init(argc, argv)))
-        return ret;
-
-    if (!signup() || !getTopicsData())
-        return 1;
-
-    while(true)
-    {
-        if (!topicsSelection() || !playTopic())
-            break;
-    }
-
-    close(sd);
-
-    return(EXIT_FAILURE);
+    return true;
 }
 
 bool mainMenu()
@@ -155,7 +154,7 @@ bool mainMenu()
 
 inline void clear()
 {
-    printf("\033[H\033[J"); // system("clear");
+    printf("\033[H\033[J"); // or system("clear");
 }
 
 bool signup()
@@ -233,7 +232,7 @@ bool getTopicsData()
     if (!tmp)
     {
         printf("Errore nella ricezione dei dati sui topics dal server\n");
-        exit(1);
+        return false;
     }
 
     context.nTopics = tmp->size - 1;
@@ -334,7 +333,7 @@ bool topicsSelection()
     if (!(sendCommand(sd, CMD_SELECT) && recvCommand(sd) == CMD_OK))
     {
         printf("Errore nella comunicazione");
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     context.playing = client_playableIndex(context.playing - 1);
@@ -369,14 +368,14 @@ void readUser_Enter()
     while(getchar() != '\n');
 }
 
-void scoreboard()
+bool scoreboard()
 {
     clear();
 
     if (!sendCommand(sd, CMD_RANK) || recvCommand(sd) != CMD_OK)
     {
         printf("Errore di comunicazione con il server\n");
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     MessageArray * tmp = recvMessage(sd);
@@ -384,13 +383,15 @@ void scoreboard()
     if (!tmp)
     {
         printf("Qualcosa è andato storto nella ricezione della classifica\n");
-        exit(1);
+        return false;
     }
 
     for (int i = 0; i < tmp->size; i++)
         printf("%s\n", (char *) tmp->messages[i].payload);
 
     messageArrayDestroy(&tmp);
+
+    return true;
 }
 
 bool playTopic()
@@ -517,7 +518,8 @@ int input(InputType type, void * output, int size, bool server, bool showscore, 
 
         if (showscore && !strncmp(buffer, "show score", sizeof(buffer)))
         {
-            scoreboard();
+            if (!scoreboard())
+                return false;
             readUser_Enter();
             return -1;
         }

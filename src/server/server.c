@@ -29,7 +29,6 @@ bool clientHandler(ClientsContext * context, int socket);
 bool sendHandler(ClientsContext * context, int socket);
 void commandHandler();
 void printServer();
-void signalhandler(int signal);
 void exiting();
 
 /********** VARIABILI GLOBALI **********/
@@ -42,23 +41,20 @@ TopicsContext topicsContext;
 
 int main (int argc, char ** argv)
 {
-    int newfd;            // Newly accepted socket
-    int ret;
+    if (!init(argc, argv))
+        return 1;
 
-    if ((ret = init(argc, argv)))
-        return ret;
+    if (!clientsInit(&clientsContext, MAX_CLIENTs))
+        return 2;
 
-    if ((ret = clientsInit(&clientsContext, MAX_CLIENTs)))
-        return ret;
-
-    if ((ret = topicsInit(&topicsContext)))
-        return ret;
+    if (!topicsInit(&topicsContext))
+        return 3;
 
     if (!topicsLoader(&topicsContext))
-        return false;
+        return 4;
 
     if (!scoreboard_init(&clientsContext.scoreboard, &topicsContext))
-        return false;
+        return 5;
         
     clientsContext.fd_max = listener > STDIN_FILENO ? listener + 1 : STDIN_FILENO + 1;
 
@@ -71,9 +67,11 @@ int main (int argc, char ** argv)
         FD_SET(listener, &read_fds);
         
         // Use select to wait for activity on the sockets
-        if (select(clientsContext.fd_max + 1, &read_fds, &write_fds, NULL, &((struct timeval) {0, REFRESH_RATE * 1000})) == -1) {
+        if (select(clientsContext.fd_max + 1, &read_fds, &write_fds, 
+                    NULL, &((struct timeval) {0, REFRESH_RATE * 1000})) == -1)
+        {
             perror("Select failed");
-            exit(1);
+            return 1;
         }
 
         // Loop through the file descriptors to check activity
@@ -82,6 +80,7 @@ int main (int argc, char ** argv)
             { 
                 if (i == listener) // Listener socket is ready
                 { 
+                    int newfd;
                     struct sockaddr_in cl_addr;
                     unsigned int addrlen = sizeof(cl_addr);
                     if ((newfd = accept(listener, (struct sockaddr *)&cl_addr, &addrlen)) < 0) 
@@ -102,7 +101,6 @@ int main (int argc, char ** argv)
                 if(isClient(&clientsContext, i, false) &&
                     operationHandler(&clientsContext, i) != OP_OK)
                     {
-                        //ridondante
                         clientsContext.clients[i]->sending = false;
                         FD_CLR(i, &clientsContext.write_fds);
                     }
@@ -113,6 +111,11 @@ int main (int argc, char ** argv)
 int init(int argc, char ** argv)
 {
     listener = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (listener == -1)
+    {
+        perror("Errore nella creazione del socket:");
+        return false;
+    }
 
     struct sockaddr_in my_addr;
     memset(&my_addr, 0, sizeof(my_addr)); // Pulizia
@@ -140,7 +143,7 @@ int init(int argc, char ** argv)
     if (inet_pton(AF_INET, addr, &my_addr.sin_addr) == -1)
     {
         printf("Errore nella conversione dell'indirizzo ip\n");
-        return 1;
+        return false;
     }
 
 #ifdef DEBUG
@@ -156,22 +159,21 @@ int init(int argc, char ** argv)
     if (bind(listener, (struct sockaddr*)&my_addr, sizeof(my_addr)) == -1)
     {
         perror("Errore nella bind");
-        return 1;
+        return false;
     }
 
     if (listen(listener, MAX_CLIENTs) == -1) // Massimo numero di clients prima di scegliere un nome
     {
         perror("Errore nella listen");
-        return 1;
+        return false;
     }
 
     atexit(exiting);
-    signal(SIGINT, signalhandler);
-    signal(SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
 
     srand(time(NULL));
 
-    return 0;
+    return true;
 }
 
 bool clientHandler(ClientsContext * context, int socket)
@@ -254,15 +256,6 @@ void printServer()
     for (int i = 0; i < SCOREBOARD_SIZE * scoreboard->nTopics; i++)
         printf("%s\n", scoreboard->serialized[i].string);
 
-}
-
-void signalhandler(int signal)
-{
-    if (signal == SIGINT)
-    {
-        printf("\nCTRIL+C:\n");
-    }
-    exit(0);
 }
 
 void exiting()
