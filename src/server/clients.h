@@ -76,12 +76,13 @@ bool clientAdd(ClientsContext * context, int socket);
 
 /// @brief Rimuove un client ed eventuali sotto strutture dati
 /// @param context Puntatore alle strutture dati inerenti ai clients
+/// @param topics Strutture dati inerenti ai topics
 /// @param socket Socket corrispondente al client
-void clientRemove(ClientsContext * context, int socket);
+void clientRemove(ClientsContext * context, TopicsContext * topics, int socket);
 
 /// @brief Rimuove tutti i clients e il contesto
 /// @param context Puntatore alle strutture dati inerenti ai clients
-void clientsFree(ClientsContext *context);
+void clientsFree(ClientsContext *context, TopicsContext * topics);
 
 /// @brief Indica se un certo indice di socket corrisponde ad un client valido
 /// @param context Puntatore alle strutture dati inerenti ai clients
@@ -129,10 +130,11 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
 Command nameValid(ClientsContext * context, int socket, char * name);
 
 /// @brief Inizializza le strutture dati inerenti al gioco (si fa dopo la registrazione)
-/// @param client Struttura dati del client inizializzate con dati di gioco non inizializzati
+/// @param context Struttura dati del client inizializzate con dati di gioco inizializzata
+/// @param socket Indice del descrittore del socket corrispettivo al client
 /// @param topicsContext Strutture dati inerenti ai topics
 /// @return true se è andato tutto liscio
-bool client_gameInit(Client * client, TopicsContext * topicsContext);
+bool client_gameInit(ClientsContext * context, int socket, TopicsContext * topicsContext);
 
 /// @brief Carica il topic nella struttura dati del client
 /// @param client Struttura dati del client inizializzata con dati di gioco inizializzati
@@ -159,8 +161,9 @@ bool client_checkTopicIndex(Client * client, TopicsContext * topics, int playabl
 /// @param client Struttura dati del client corrispondente con dati di gioco inizializzati
 /// @param topics Strutture dati inerenti ai topics finalizzate
 /// @param topic Indice reale del topic
+/// @param write Scrivi il punteggio su disco
 /// @return true se è andato tutto liscio
-bool client_setPlayed(Client * client, TopicsContext * topics, int topic);
+bool client_setPlayed(Client * client, TopicsContext * topics, int topic, bool writeScore);
 
 /// @brief Invia l'intera lista dei topics al client e quali giocabili
 /// @param context Struttura dati inerenti ai client inizializzate

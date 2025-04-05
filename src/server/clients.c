@@ -86,7 +86,7 @@ bool clientAdd(ClientsContext * context, int socket)
     return true;
 }
 
-void clientRemove(ClientsContext * context, int socket)
+void clientRemove(ClientsContext *context, TopicsContext *topics, int socket)
 {
     Client * client = context->clients[socket];
 
@@ -103,8 +103,6 @@ void clientRemove(ClientsContext * context, int socket)
         // if (client->name)
         //     free(client->name);
 
-        if (client->game.playableTopics)
-            free(client->game.playableTopics);
         if (client->game.questions)
             free(client->game.questions);
         if (client->game.score)
@@ -112,7 +110,10 @@ void clientRemove(ClientsContext * context, int socket)
             #ifdef KEEP_SCORE_ON_CLIENT_REMOVE
 
             if (client->game.playing != -1)
+            {
                 scoreboard_completedScore(&context->scoreboard, client->game.score[client->game.playing], client->game.playing);
+                client_setPlayed(client, topics, client->game.playing, true);
+            }
             
             #else
 
@@ -120,7 +121,10 @@ void clientRemove(ClientsContext * context, int socket)
                 if (client->game.score[t])
                 {
                     if (t == client->game.playing)
+                    {
                         scoreboard_removeScore(&context->scoreboard, client->game.score[t], SCR_CURRENT, t);
+                        client_setPlayed(client, topics, client->game.playing, true);
+                    }
                     else
                         scoreboard_removeScore(&context->scoreboard, client->game.score[t], SCR_COMPLETED, t);
                 }
@@ -129,6 +133,9 @@ void clientRemove(ClientsContext * context, int socket)
 
             free(client->game.score);
         }
+
+        if (client->game.playableTopics)
+            free(client->game.playableTopics);
 
         if (client->operation)
         {
@@ -151,14 +158,14 @@ void clientRemove(ClientsContext * context, int socket)
     return;
 }
 
-void clientsFree(ClientsContext * context)
+void clientsFree(ClientsContext * context, TopicsContext *topics)
 {
     if (!context)
         return;
 
     for (int i = 0; i <= context->fd_max; i++)
         if (isClient(context, i, false))
-            clientRemove(context, i);
+            clientRemove(context, topics, i);
     
     close(context->listener);
 
@@ -281,24 +288,43 @@ bool sendCommand(int socket, enum Command cmd)
         return true;
 }
 
-bool client_gameInit(Client * client, TopicsContext * topicsContext)
+bool client_gameInit(ClientsContext * context, int socket, TopicsContext * topicsContext)
 {
+    Client * client = context->clients[socket];
+
     client->game.playing = -1;
     client->game.currentQuestion = -1;
-    client->game.playableTopics = topicsUnplayed(topicsContext, client->name);
     client->game.nPlayable = 0;
-    for (int i = 0; i < topicsContext->nTopics; i++)
-        if (client->game.playableTopics[i])
-            client->game.nPlayable++;
-
     client->game.questions = NULL;
 
-    // Inizializzo lo array dei puntatori a punteggi
-    client->game.score = malloc(sizeof(DNode *) * topicsContext->nTopics);
+    // Topics giocati e punteggi
+    int * scores = topicsPlayed(topicsContext, client->name);
+
+    client->game.playableTopics = malloc(sizeof(bool) * topicsContext->nTopics);
+    if (!client->game.playableTopics)
+        return false;
+    memset(client->game.playableTopics, 0, sizeof(bool) * topicsContext->nTopics);
+    
+    client->game.score = malloc(sizeof (DNode *) * topicsContext->nTopics);
     if (!client->game.score)
         return false;
+
     for (int i = 0; i < topicsContext->nTopics; i++)
-        client->game.score[i] = NULL;
+        if (scores[i] == -1)
+        {
+            client->game.nPlayable++;
+            client->game.playableTopics[i] = true;
+            client->game.score[i] = NULL;
+        }
+        else
+        {
+            client->game.playableTopics[i] = false;
+            client->game.score[i] = scoreboard_get(&context->scoreboard, SCR_COMPLETED, i, client->name);
+            if (!client->game.score[i])
+                return false;
+            
+            ((Score *) client->game.score[i]->data)->score = scores[i];
+        }
 
     return true;
 }
@@ -371,22 +397,35 @@ bool client_checkTopicIndex(Client * client, TopicsContext * topics, int playabl
     return false;
 }
 
-bool client_setPlayed(Client * client, TopicsContext * topics, int topic)
+bool client_setPlayed(Client * client, TopicsContext * topics, int topic, bool writeScore)
 {
     if (topic < 0 || topic >= topics->nTopics)
         return false;
+    
+    if (client->game.playableTopics[topic]) // Il topic è già stato giocato?
+    {
+        client->game.playableTopics[topic] = false;
+        if (client->game.nPlayable)
+            client->game.nPlayable--;
 
-    if (!client->game.playableTopics[topic])
+        if (!topicMakePlayed(topics, client->name, topic, -1))
+            return false;
+    }
+    else if (!writeScore) // Se non sono qui per scrivere il punteggio c'è stato un errore
         return false;
+    
+    if (writeScore)
+    {
+        if (!(client->game.playing == topic && client->game.score[topic])) // Non sto salvando il topic che sto giocando
+            return false;
+        
+        int score = ((Score*) client->game.score[topic]->data)->score;
 
-    client->game.playableTopics[topic] = false;
-    client->game.score[topic] = 0;
-    if (client->game.nPlayable)
-        client->game.nPlayable--;
-
-    if (topicPlayed(topics, client->name, topic))
-        return true;
-    return false;
+        if (!topicMakePlayed(topics, client->name, topic, score))
+            return false;
+    }
+    
+    return true;
 }
 
 OperationResult client_sendTopics(ClientsContext *context, int socket, TopicsContext *topics)

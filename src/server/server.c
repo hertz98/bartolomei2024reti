@@ -93,7 +93,7 @@ int main (int argc, char ** argv)
                 } 
                 else
                     if (!clientHandler(&clientsContext, i))
-                        clientRemove(&clientsContext, i);
+                        clientRemove(&clientsContext, &topicsContext, i);
             }
 
         for (int i = 0; i <= clientsContext.fd_max; i++) 
@@ -260,7 +260,7 @@ void printServer()
 
 void exiting()
 {
-    clientsFree(&clientsContext);
+    clientsFree(&clientsContext, &topicsContext);
     topicsFree(&topicsContext);
     scoreboard_destroy(&clientsContext.scoreboard);
 }

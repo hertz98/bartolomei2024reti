@@ -56,18 +56,28 @@ bool topicLoad(char * path, struct Topic * topic);
 /// @param context Strutture dati inerenti ai topic inizializzate
 void topicsFree(TopicsContext *context);
 
-/// @brief Dato l'utente determina a quale dei topic attualmente disponibili abbia effettivamente giocato O(n^2)
+/// @brief Dato l'utente determina a quale dei topic attualmente disponibili
+/// abbia effettivamente giocato O(n^2)
 /// @param context Strutture dati inerenti ai topic inizializzate
 /// @param user Username dell'utente (stringa)
 /// @return Ritorna un array di booleani di lunghezza nTopics, dove true significa giocabile
 bool * topicsUnplayed(TopicsContext *context, char * user);
 
+/// @brief In maniera del tutto simile (ma inversa) a topicsUnplayed, dato l'utente
+/// oltre a determinare quali topic sono stati giocati ne determina anche il punteggio se disponibile
+/// @param context Strutture dati inerenti ai topic inizializzate
+/// @param user Username dell'utente (stringa)
+/// @return Ritorna un array di interi di lunghezza nTopics, dove i topics non giocati hanno
+/// valore -1, mentre quelli giocati hanno il punteggio
+int * topicsPlayed(TopicsContext *context, char *user);
+
 /// @brief Si occupa di contrassegnare su disco un topic come giocato per un certo utente
 /// @param context Strutture dati inerenti ai topic inizializzate 
 /// @param user Username dell'utente (stringa) 
 /// @param topic Topic da contrassegnare come giocato
+/// @param score Il punteggio da registrare, -1 per non scriverlo
 /// @return Ritorna true se ha successo
-bool topicPlayed(TopicsContext * context, char * user, int topic);
+bool topicMakePlayed(TopicsContext * context, char * user, int topic, int score);
 
 /* FUNZIONI UTILITA' */
 

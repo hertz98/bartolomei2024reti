@@ -103,7 +103,9 @@ DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name
         Score * tmp = scoreboard_newScore(name, 0);
         if (!tmp)
             return NULL;
-        scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_PLAYING, topic) ].modified = true;
+
+        scoreboard->serialized[ scoreboard_serialize_index(scoreboard, index, topic) ].modified = true;
+        
         return listDoubly_append(score_list, tmp);
     }
 
@@ -124,7 +126,8 @@ DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name
     if (!(ret = listDoubly_append(&current, tmp)))
         free(tmp);
 
-    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_PLAYING, topic) ].modified = true;
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, index, topic) ].modified = true;
+
     return ret;
 }
 

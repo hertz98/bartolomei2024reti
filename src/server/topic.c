@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <ctype.h>
 #include "topic.h"
 #include "util.h"
 
@@ -39,10 +40,6 @@ bool topicsInit(TopicsContext *context)
         return false;
 
     strcat(context->directory, DATA_DIR);
-
-    #ifdef DEBUG_PATH
-        printf("directory: %s\n", context->directory); // DEBUG
-    #endif
     
     if (!directoryCreate(context->directory, "") ||
         !directoryCreate(context->directory, TOPICS_DIR) ||
@@ -54,10 +51,6 @@ bool topicsInit(TopicsContext *context)
 
 bool topicsLoader(TopicsContext *context)
 {
-    #ifdef DEBUG_PATH
-        printf("directory: %s\n", context->directory); // DEBUG
-    #endif
-
     int endline = strlen(context->directory);
     strncat(context->directory, TOPICS_DIR, NAME_MAX);
     DIR * stream = opendir(context->directory);
@@ -92,9 +85,6 @@ bool topicsLoader(TopicsContext *context)
 
     for (int i = 0; i < context->nTopics; i++)
     {
-    #ifdef DEBUG_TOPIC
-            printf("topic %d: %s\n", i, context->topics[i].name);
-    #endif
         topicLoad(context->directory, &context->topics[i]);
         topic_name(context->topics[i].name);
         messageString(&context->topicsString->messages[i], context->topics[i].name, false);
@@ -102,38 +92,27 @@ bool topicsLoader(TopicsContext *context)
 
     context->directory[endline] = '\0';
 
-    #ifdef DEBUG_PATH
-        printf("directory: %s\n", context->directory); // DEBUG
-    #endif
-
     return true;
 }
 
 bool topicLoad(char * path, Topic * topic)
 {
-    #ifdef DEBUG_PATH
-        printf("directory: %s\n", path);
-    #endif
-
     FILE *file;
 
     int endline = strlen(path);
     strncat(path, topic->name, NAME_MAX);
 
-    #ifdef DEBUG_PATH
-        printf("directory: %s\n", path);
-    #endif
-
     if (!(file = fopen(path, "r")))
         return false;
 
-    char * line = NULL,
-         * current_question = NULL;
-    size_t alloc_len;
-    while( getline(&line, &alloc_len, file) != -1)
+    char * current_question = NULL;
+    char *line = NULL;
+    size_t alloc_len = 0;
+    while(getline(&line, &alloc_len, file) != -1)
     {
         // Ignora linee vuote, valutazione in corto circuito
-        if ((line[0] == '\n' || line[1] == '\n'))
+        if ((line[0] == '\n' || // Linee vuote
+                (line[0] == '\r' && line[1] == '\n'))) // caso Windows, valutazione in corto circuito
         {
             if (current_question)
                 free(current_question);
@@ -142,10 +121,6 @@ bool topicLoad(char * path, Topic * topic)
         }
 
         newlineReplace(line);
-
-        #ifdef DEBUG_QUESTION
-            printf("line %d/%d: _%s_\n", (int) strlen(line), (int) alloc_len, line); // DEBUG
-        #endif
 
         if (!current_question)
         {
@@ -224,10 +199,6 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
     strncat(path, USERS_DIR, NAME_MAX);
     strncat(path, user, NAME_MAX);
     strncat(path, ".txt", NAME_MAX);
-    
-    #ifdef DEBUG_PATH
-        printf("%s\n", path);
-    #endif
 
     bool *unplayed = (bool *) malloc(context->nTopics);
     for (int i = 0; i < context->nTopics; i++)
@@ -236,18 +207,25 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
     FILE *file;
     if ((file = fopen(path, "r")))
     {
-        char * line = (char *) malloc(NAME_MAX * sizeof(char)); // getline() vuole una stringa allocata con la malloc()
-        size_t alloc_len;
+        char *line = NULL;
+        size_t alloc_len = 0;
         while(getline(&line, &alloc_len, file) != -1)
         {
-            if ((line[0] == '\n' || line[1] == '\n')) // Linee vuote
+            if ((line[0] == '\n' || // Linee vuote
+                    (line[0] == '\r' && line[1] == '\n'))) // caso Windows, valutazione in corto circuito
                 continue;
 
             newlineReplace(line);
 
+            if (isdigit(line[0])) // In questo caso ignoro i punteggi
+                continue;
+
             for (int i = 0; i < context->nTopics; i++)
                 if (!strcmp(line, context->topics[i].name ))
+                {
                     unplayed[i] = false;
+                    break;
+                }
 
         }
         free(line);
@@ -259,7 +237,73 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
     return unplayed;
 }
 
-bool topicPlayed(TopicsContext *context, char *user, int i_topic)
+/* topicsPlayed
+ * Per ciascuna riga non vuota:
+ *   se non è un numero la considero un topic e se presente la segno come giocato
+ *   se è un numero la considero il punteggio dell'ultimo topic giocato (nella riga precedente)
+ * 
+ * - i topic giocati senza aver trovato il punteggio avranno punteggio 0
+ */
+int *topicsPlayed(TopicsContext *context, char *user)
+{
+    int endline = strlen(context->directory);
+    
+    char *path = context->directory;
+    strncat(path, USERS_DIR, NAME_MAX);
+    strncat(path, user, NAME_MAX);
+    strncat(path, ".txt", NAME_MAX);
+
+    int *played = (int *) malloc(sizeof(int) * context->nTopics);
+    for (int i = 0; i < context->nTopics; i++)
+        played[i] = -1;
+
+    FILE *file;
+    if ((file = fopen(path, "r")))
+    {
+        int last = -1; // Ricorda l'ultimo indice
+        char *line = NULL;
+        size_t alloc_len = 0;
+        while(getline(&line, &alloc_len, file) != -1)
+        {
+            if ((line[0] == '\n' || // Linee vuote
+                (line[0] == '\r' && line[1] == '\n'))) // caso Windows, valutazione in corto circuito
+            {
+                last = -1;
+                continue;
+            }
+
+            newlineReplace(line);
+
+            if (last != -1 && played[last] == 0 && isdigit(line[0])) // Punteggi
+            {
+                if (sscanf(line, "%d", &played[last]) > 0)
+                {
+                    if (played[last] < 0) // non esistono punteggi minori di 0
+                        played[last] = 0;
+                    last = -1;
+                }
+                continue;
+            }
+
+            for (int i = 0; i < context->nTopics; i++)
+                if (!strcmp(line, context->topics[i].name ))
+                {
+                    last = i;
+                    played[i] = false;
+                    break; // break internal loop
+                }
+
+        }
+        free(line);
+        fclose(file);
+    }
+    
+    context->directory[endline] = '\0'; // ripristino il percorso originale
+
+    return played;
+}
+
+bool topicMakePlayed(TopicsContext *context, char *user, int i_topic, int score)
 {
     if (i_topic >= context->nTopics)
         return false;
@@ -271,17 +315,14 @@ bool topicPlayed(TopicsContext *context, char *user, int i_topic)
     strncat(path, user, NAME_MAX);
     strncat(path, ".txt", NAME_MAX);
 
-    #ifdef DEBUG_PATH
-        printf("%s\n", path);
-    #endif
-
-    char * topic = context->topics[i_topic].name;
-
     FILE *file;
     if (!(file = fopen(path, "a")))
         return false;
 
-    fprintf(file, "%s\n", topic);
+    if (score == -1)
+        fprintf(file, "%s\n", context->topics[i_topic].name);
+    else
+        fprintf(file, "%d\n\n", score);
 
     fclose(file);
 

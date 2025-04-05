@@ -117,7 +117,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
         enum Command ret;
         if ((ret = nameValid(context, socket, client->name)) == CMD_OK)
         {
-            if (client_gameInit(client, topics) && sendCommand(socket, CMD_OK))
+            if (client_gameInit(context, socket, topics) && sendCommand(socket, CMD_OK))
             {
                 context->registered++;
                 client->registered = true;
@@ -172,7 +172,8 @@ OperationResult selectTopic(ClientsContext *context, int socket, void * topicsCo
         if (!client_checkTopicIndex(client, topics, client->game.playing)) // Verifico l'indice
             return false;
         
-        if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing)) // Aggiorno su disco
+        // as result of the checkTopicIndex, and update and on disk
+        if (client->game.playing < 0 || !client_setPlayed(client, topics, client->game.playing, false))
         {
             sendCommand(socket, CMD_NOTVALID);
             return OP_FAIL;
@@ -446,8 +447,12 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
             scoreboard_completedScore(&context->scoreboard, client->game.score[client->game.playing],
                             client->game.playing);
 
+            client_setPlayed(client, topicsContext, client->game.playing, true);
+
             client->game.playing = -1;
             client->game.currentQuestion = -1;
+
+
         }
 
         return OP_DONE;
