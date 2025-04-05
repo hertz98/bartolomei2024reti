@@ -171,11 +171,11 @@ char * executablePath(char * string)
             return NULL;
         path[PATH_MAX] = '\0';
         path = realloc(path, strlen(path) + 1);
-        return path;
+        return path; // return NULL if realloc fails
     }
 }
 
-// This algotithm is not suitable for checking the answer because
+// This algorithm is not suitable for checking the answer because
 // can be exploited easily, in fact by submitting more words I can
 // try differents answer
 bool wordInString(const char * string, const char * substring, int tol)

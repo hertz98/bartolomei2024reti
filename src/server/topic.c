@@ -65,6 +65,8 @@ bool topicsLoader(TopicsContext *context)
 
             context->nTopics++;
             context->topics = realloc(context->topics, sizeof(Topic) * context->nTopics);
+            if (!context->topics)
+                return false;
 
             Topic * current = &context->topics[context->nTopics - 1];
             memset(current, 0, sizeof(Topic));

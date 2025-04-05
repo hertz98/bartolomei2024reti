@@ -20,22 +20,34 @@
 #include "util.h"
 #include "operation.h"
 #include "scoreboard.h"
-#include "../shared/message.h"
 
 /********** PROTOTIPI DI FUNZIONE **********/
 
-int init(int, char **);
+/// @brief Inizializza il server secondo gli argomenti passati
+/// @param argc
+/// @param argv 
+/// @return true in caso di successo, false altirmenti
+bool init(int argc, char ** argv);
+
+/// @brief Gestisce il client nel caso di ricezione di dati da esso
+/// @param context Puntatore alle strutture dati inerenti ai clients
+/// @param socket socket del client corrispondente, 
+/// i client vengono identificati intermente tramite l'indice del socket
+/// @return false nel caso il client debba essere rimosso
 bool clientHandler(ClientsContext * context, int socket);
-bool sendHandler(ClientsContext * context, int socket);
-void commandHandler();
+
+/// @brief Si occupa di stampare a video i topics e la classifica nel server
 void printServer();
+
+/// @brief Pulizia delle strutture dati all'uscita 
+/// (lo farebbe comunque il sistema operativo)
 void exiting();
 
 /********** VARIABILI GLOBALI **********/
 
 int listener;
-ClientsContext clientsContext;
-TopicsContext topicsContext;
+ClientsContext clientsContext; // Contesto dei clients, fd sets, classifica
+TopicsContext topicsContext; // Contesto dei topics
 
 /********** METODI **********/
 
@@ -78,26 +90,28 @@ int main (int argc, char ** argv)
         for (int i = 0; i <= clientsContext.fd_max; i++) 
             if (FD_ISSET(i, &read_fds)) // Found a ready descriptor
             { 
-                if (i == listener) // Listener socket is ready
+                if (i == listener) // Nuovo client
                 { 
                     int newfd;
                     struct sockaddr_in cl_addr;
                     socklen_t addrlen = sizeof(cl_addr);
+
                     if ((newfd = accept(listener, (struct sockaddr *)&cl_addr, &addrlen)) < 0) 
                     {
                         perror("Accept fallita");
                         continue;
                     }
-                    clientAdd(&clientsContext, newfd);
-                    printf("registering\n");    
+
+                    clientAdd(&clientsContext, newfd);  
                 } 
                 else
                     if (!clientHandler(&clientsContext, i))
                         clientRemove(&clientsContext, &topicsContext, i);
             }
-
+        
+        // Clients: sending
         for (int i = 0; i <= clientsContext.fd_max; i++) 
-            if (FD_ISSET(i, &write_fds)) // Found a ready descriptor
+            if (FD_ISSET(i, &write_fds))
                 if(isClient(&clientsContext, i, false) &&
                     operationHandler(&clientsContext, i) != OP_OK)
                     {
@@ -108,7 +122,7 @@ int main (int argc, char ** argv)
 
 }
 
-int init(int argc, char ** argv)
+bool init(int argc, char ** argv)
 {
     listener = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (listener == -1)
@@ -148,6 +162,8 @@ int init(int argc, char ** argv)
 
 #ifdef DEBUG
     
+    // SO_REUSEADDR permette di annullare quel tempo di attesa in cui il
+    // sistema operativo mantiene il socket bloccato 
     int opt = 1;
     if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("setsockopt failed");

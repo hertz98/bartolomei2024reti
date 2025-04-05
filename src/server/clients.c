@@ -22,11 +22,14 @@ int clientsInit(ClientsContext *context, int max)
     context->nClients = 0;
     context->maxClients = max;
     
-    context->clients = malloc( sizeof(Client *) * max);
+    // Quando raggiungo il massimo numero di client posso evitare
+    // di reallocare l'array dei client se considero il primo indice
+    // che viene dato solitamente
+    context->clients = malloc( sizeof(Client *) * (max + CLIENTS_ARRAY_SURPLUS));
     if (!context->clients)
         return false;
 
-    context->allocated = max;
+    context->allocated = max + CLIENTS_ARRAY_SURPLUS;
     memset(context->clients, 0, context->allocated);
     FD_ZERO(&context->master_fds);
     FD_ZERO(&context->read_fds);
@@ -37,23 +40,30 @@ int clientsInit(ClientsContext *context, int max)
 
 bool clientAdd(ClientsContext * context, int socket)
 {
-    const int increment = 10;
-
     if (context->nClients >= context->maxClients)
-        return false;
-
+    return false;
+    
     // Il numero di socket è usato per indirizzare le strutture dati
     // ma non necessariamente coincide col numero di clients
-    if (socket > context->allocated){
-        context->clients = realloc(context->clients, sizeof(Client *) * (socket + increment));
-        memset(context->clients + context->allocated, 0, increment);
+    const int increment = 10;
+    if (socket >= context->allocated) //Realloco l'array dei clients
+    {
+        Client **tmp = realloc(context->clients, sizeof(Client *) * (socket + increment));
+        if (!tmp)
+            return false;
+
+        memset(tmp + context->allocated, 0, sizeof(Client *) * increment);
+
         context->allocated += increment;
+        context->clients = tmp;
     }
 
-    context->clients[socket] = (Client *) malloc(sizeof(Client));
-    Client * client = context->clients[socket];
-    if (!client)
+    // Creo la struttura dati
+    context->clients[socket] = malloc(sizeof(Client));
+    if (!context->clients[socket])
         return false;
+    
+    Client * client = context->clients[socket];
     memset(client, 0, sizeof(Client));
 
     context->nClients++;
@@ -70,7 +80,11 @@ bool clientAdd(ClientsContext * context, int socket)
 
     FD_SET(socket, &context->master_fds);
 
-    int keepalive = 1;
+    // Il protocollo TCP mette a disposizione un'opzione per monitorare il socket
+    // durante la inattività, in caso di mancata risposta per un certo periodo si
+    // termina la connessione
+
+    int keepalive = 1; // enable
     int keepidle = 60; // Tempo di inattività per testare la connessione
     int keepintvl = 10; // Intervallo tra i test
     int keepcnt = 5;  // Numero di tentativi
