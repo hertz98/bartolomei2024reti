@@ -217,7 +217,7 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
 
             newlineReplace(line);
 
-            if (isdigit(line[0])) // In questo caso ignoro i punteggi
+            if (isdigit( (uint8_t) line[0])) // In questo caso ignoro i punteggi
                 continue;
 
             for (int i = 0; i < context->nTopics; i++)
@@ -274,7 +274,7 @@ int *topicsPlayed(TopicsContext *context, char *user)
 
             newlineReplace(line);
 
-            if (last != -1 && played[last] == 0 && isdigit(line[0])) // Punteggi
+            if (last != -1 && played[last] == 0 && isdigit( (uint8_t) line[0])) // Punteggi
             {
                 if (sscanf(line, "%d", &played[last]) > 0)
                 {

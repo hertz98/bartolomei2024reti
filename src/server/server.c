@@ -82,7 +82,7 @@ int main (int argc, char ** argv)
                 { 
                     int newfd;
                     struct sockaddr_in cl_addr;
-                    unsigned int addrlen = sizeof(cl_addr);
+                    socklen_t addrlen = sizeof(cl_addr);
                     if ((newfd = accept(listener, (struct sockaddr *)&cl_addr, &addrlen)) < 0) 
                     {
                         perror("Accept fallita");

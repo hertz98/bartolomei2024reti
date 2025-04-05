@@ -85,7 +85,7 @@ int stricmp(const char *string1, const char *string2)
         return 1;
 }
 
-bool isAlphaNumeric(const char *string)
+bool isAlphaNumeric(const unsigned char *string)
 {
     for (int i = 0; string[i]; i++)
     {

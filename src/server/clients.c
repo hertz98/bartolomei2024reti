@@ -254,7 +254,7 @@ Command nameValid(ClientsContext * context, int socket, char * name)
         return CMD_NOTVALID;
 
     for (char *c = name; *c; c++)
-        if (!isprint(*c))
+        if (!isprint( (uint8_t) *c))
             return CMD_NOTVALID;
 
     for (int i = 0; i <= context->fd_max; i++)

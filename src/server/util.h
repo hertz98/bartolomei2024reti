@@ -43,7 +43,7 @@ int stricmp(const char * string1, const char * string2);
 /// @brief Verifica che la stringa data sia alfanumerica
 /// @param string Stringa da verificare
 /// @return true se la stringa è alfanumerica
-bool isAlphaNumeric(const char * string);
+bool isAlphaNumeric(const unsigned char * string);
 
 /// @brief Usa l'algoritmo di fisher-yates per mescolare gli elementi di un array di puntatori
 /// @param array Puntatore all'array di puntatori
