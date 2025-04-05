@@ -404,7 +404,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                 currentOperation->step = 4; // Passa allo stato per ricevere la risposta
                 return OP_OK; // Wait for the next message
             
-            case CMD_RANK:
+            case CMD_SCOREBOARD:
                 return client_sendScoreboard(context, socket);
 
             default:

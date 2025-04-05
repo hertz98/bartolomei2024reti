@@ -434,7 +434,7 @@ bool scoreboard()
 {
     clear();
 
-    if (!sendCommand(sd, CMD_RANK) || recvCommand(sd) != CMD_OK) // Chiedo e aspetto conferma
+    if (!sendCommand(sd, CMD_SCOREBOARD) || recvCommand(sd) != CMD_OK) // Chiedo e aspetto conferma
     {
         printf("Errore di comunicazione con il server\n");
         return false;

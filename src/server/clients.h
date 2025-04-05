@@ -38,7 +38,6 @@ struct Client
     struct Game{
         int playing; // indice topic corrente
         bool * playableTopics; // array di topic giocabili dal Client
-        int nPlayable;
         DNode ** score; // array di punteggi 
         int currentQuestion; // indice domanda corrente
         Question ** questions; // array di domande (allo scopo di mischiarle)

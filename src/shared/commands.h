@@ -10,11 +10,11 @@
 typedef enum Command 
 {
     CMD_STOP = false, // Terminate
-    CMD_NONE, 
+    CMD_NONE, // Empty
     CMD_OK, // Confirms positively 
     CMD_REGISTER, // Client: Ask register
     CMD_MESSAGE, // Ask to send a message
-    CMD_RANK, // Client wants the rank
+    CMD_SCOREBOARD, // Client wants the rank
     CMD_NOTVALID, // Invalid client name or invalid request
     CMD_EXISTING, // Name duplicate
     CMD_TOPICS, // Client ask for topics data

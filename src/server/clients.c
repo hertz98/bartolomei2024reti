@@ -294,37 +294,44 @@ bool client_gameInit(ClientsContext * context, int socket, TopicsContext * topic
 
     client->game.playing = -1;
     client->game.currentQuestion = -1;
-    client->game.nPlayable = 0;
     client->game.questions = NULL;
 
-    // Topics giocati e punteggi
-    int * scores = topicsPlayed(topicsContext, client->name);
-
+    // Array topics giocabili
     client->game.playableTopics = malloc(sizeof(bool) * topicsContext->nTopics);
     if (!client->game.playableTopics)
         return false;
     memset(client->game.playableTopics, 0, sizeof(bool) * topicsContext->nTopics);
     
+    // Array punteggi
     client->game.score = malloc(sizeof (DNode *) * topicsContext->nTopics);
     if (!client->game.score)
         return false;
 
+    // Topics giocati e riempimento punteggi
+    int * scores = topicsPlayed(topicsContext, client->name);
+
     for (int i = 0; i < topicsContext->nTopics; i++)
         if (scores[i] == -1)
         {
-            client->game.nPlayable++;
             client->game.playableTopics[i] = true;
             client->game.score[i] = NULL;
         }
-        else
+        else // topic giocato
         {
             client->game.playableTopics[i] = false;
-            client->game.score[i] = scoreboard_get(&context->scoreboard, SCR_COMPLETED, i, client->name);
-            if (!client->game.score[i])
-                return false;
             
-            ((Score *) client->game.score[i]->data)->score = scores[i];
+            #ifdef RELOAD_SCORES
+            
+                client->game.score[i] = scoreboard_get(&context->scoreboard, SCR_COMPLETED, i, client->name);
+                if (!client->game.score[i])
+                    return false;
+                
+                ((Score *) client->game.score[i]->data)->score = scores[i];
+            
+            #endif
         }
+    
+    free(scores);
 
     return true;
 }
@@ -405,8 +412,6 @@ bool client_setPlayed(Client * client, TopicsContext * topics, int topic, bool w
     if (client->game.playableTopics[topic]) // Il topic è già stato giocato?
     {
         client->game.playableTopics[topic] = false;
-        if (client->game.nPlayable)
-            client->game.nPlayable--;
 
         if (!topicMakePlayed(topics, client->name, topic, -1))
             return false;
@@ -442,7 +447,7 @@ OperationResult client_sendTopics(ClientsContext *context, int socket, TopicsCon
                             client->game.playableTopics,
                             topics->nTopics);
     else
-        memset(&tmp->messages[tmp->size - 1], 0, sizeof(Message));
+        memset(&tmp->messages[tmp->size - 1], 0, sizeof(Message)); // Se non fosse registrato non mando niente
     
     return operationCreate(sendMessage, context, socket, tmp);
 }
@@ -490,6 +495,9 @@ OperationResult client_sendScoreboard(ClientsContext *context, int socket)
     if (!tmp)
         return false;
 
+    // La serializzazione della scoreboard non può essere aggiornata se non tutti i dati
+    // della singola serializzazione non sono stati inviati nel caso il socket diventasse
+    // non ready
     tmp->isInterruptible = false;
 
     for (int i = 0; i < SCOREBOARD_SIZE * context->scoreboard.nTopics; i++)

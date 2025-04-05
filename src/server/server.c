@@ -212,7 +212,7 @@ bool clientHandler(ClientsContext * context, int socket)
     case CMD_SELECT:
         return operationCreate(selectTopic, context, socket, &topicsContext);
 
-    case CMD_RANK:
+    case CMD_SCOREBOARD:
         return client_sendScoreboard(&clientsContext, socket);
 
     case CMD_NEXTQUESTION:

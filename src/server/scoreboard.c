@@ -31,7 +31,7 @@ bool scoreboard_init(Scoreboard *scoreboard, TopicsContext * topics)
 
 bool scoreboard_serialize_init(SerializedScoreboard * scoreboard)
 {
-    scoreboard->string = malloc(sizeof(char) * DEFAULT_SCOREBOARD_ALLOCATION);
+    scoreboard->string = malloc(sizeof(char) * DEFAULT_SCOREBOARD_SERIALIZE_ALLOCATION);
     if (!scoreboard->string)
         return false;
 
@@ -39,7 +39,7 @@ bool scoreboard_serialize_init(SerializedScoreboard * scoreboard)
 
     scoreboard->modified = true;
 
-    scoreboard->serialized_allocated = DEFAULT_SCOREBOARD_ALLOCATION;
+    scoreboard->serialized_allocated = DEFAULT_SCOREBOARD_SERIALIZE_ALLOCATION;
 
     scoreboard->serialized_lenght = 0;
 

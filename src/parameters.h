@@ -11,16 +11,16 @@
 #define MAX_CLIENTs 32
 #define REFRESH_RATE 1000
 
-// #define BY_SPECIFICATIONS // Abilitare per l'esame
-
-#ifndef BY_SPECIFICATIONS
-    #define DEBUG
-    #define CUSTOM_PRINT
-    #define KEEP_SCORE_ON_CLIENT_REMOVE
-#endif
-
+// CONTROLLO RISPOSTE
 #define MAX_ANSWER_ERRORS 1     // Massimo numero di caratteri errati nella risposta
 #define SMALL_ANSWER 4      // Non permettere errori su risposte più piccole di SMALL_ANSWER caratteri
+
+/******************** PARAMETRI CUSTOM ********************/
+
+#define DEBUG
+#define CUSTOM_PRINT
+#define KEEP_SCORE_ON_CLIENT_REMOVE
+#define RELOAD_SCORES
 
 /******************** PARAMETRI TOPICS ********************/
 
@@ -36,14 +36,14 @@
 
 /******************** PARAMETRI OPERATIONS ********************/
 
-#define MAX_OPERATIONS_PER_CLIENT 5
+#define MAX_OPERATIONS_PER_CLIENT 5 // stackable
 
 // Limito le dimensioni del messaggi del client in base alle esigenze (hard coded)
 #define CLIENT_MAX_MESSAGEARRAY_SIZE 1
-#define CLIENT_MAX_MESSAGE_LENGHT 256
+#define CLIENT_MAX_MESSAGE_LENGHT 255
 
 /******************** PARAMETRI SCOREBOARD ********************/
 
-#define DEFAULT_SCOREBOARD_ALLOCATION 4096
+#define DEFAULT_SCOREBOARD_SERIALIZE_ALLOCATION 4096
 
 #endif
