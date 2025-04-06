@@ -175,8 +175,15 @@ OperationResult client_sendTopics(ClientsContext *context, int socket, TopicsCon
 
 /// @brief Verifica se un socket ha ulteriori dati disponibili
 /// @param socket Indice del descrittore del socket
+/// @param timeout timeout della select
 /// @return true se il socket ha dati disponibili, false altrimenti (o in caso di errore)
-bool client_socketReady(int socket);
+bool client_socketReady(int socket, struct timeval * timeout);
+
+/// @brief Verifica se è possibile scrivere in un socket 
+/// @param socket Indice del descrittore del socket
+/// @param timeout timeout della select
+/// @return true se il socket è pronto, false altrimenti (o in caso di errore)
+bool client_socketWriteReady(int socket, struct timeval *timeout);
 
 /// @brief Invia la classifica ai client
 /// @param context Struttura dati inerenti ai client inizializzate

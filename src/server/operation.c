@@ -23,7 +23,7 @@ bool operationHandler(ClientsContext *context, int socket)
         switch (ret = (*currentOperation->function)(context, socket, currentOperation->p))
         {
             case OP_OK: // Caso operazione non terminata
-                if (client_socketReady(socket)) // Se ci sono messaggi disponibili finisci di servire il client
+                if (client_socketReady(socket, &(struct timeval) {0,0})) // Se ci sono messaggi disponibili finisci di servire il client
                     continue;
                 else
                     return true; // Servi più tardi

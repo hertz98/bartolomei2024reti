@@ -220,6 +220,10 @@ OperationResult sendData(int socket, void *buffer, unsigned int length, unsigned
     
     while (true)
     {
+        if (block)
+            if (!client_socketWriteReady(socket, &(struct timeval) {MAX_SEND_STALL,  0})) // Salvo cicli CPU e ho un timeout per lo stallo del socket
+                return OP_FAIL;
+
         int tmp = send(socket, buffer + *sent, length - *sent, 0);
 
         if (tmp >= 0)
@@ -501,12 +505,22 @@ OperationResult recvData(int socket, void *buffer, unsigned int lenght, unsigned
         return OP_OK; // Non è detto di ricevere tutti i byte voluti
 }
 
-bool client_socketReady(int socket)
+bool client_socketReady(int socket, struct timeval * timeout)
 {
     fd_set test_fds;
     FD_ZERO(&test_fds);
     FD_SET(socket, &test_fds);
-    if (select(socket + 1, &test_fds, NULL, NULL, &(struct timeval) {0,0} ) > 0)
+    if (select(socket + 1, &test_fds, NULL, NULL, timeout ) > 0)
+        return true;
+    return false;
+}
+
+bool client_socketWriteReady(int socket, struct timeval * timeout)
+{
+    fd_set test_fds;
+    FD_ZERO(&test_fds);
+    FD_SET(socket, &test_fds);
+    if (select(socket + 1, NULL, &test_fds, NULL, timeout ) > 0)
         return true;
     return false;
 }
