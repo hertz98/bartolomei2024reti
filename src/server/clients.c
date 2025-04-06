@@ -38,7 +38,10 @@ int clientsInit(ClientsContext *context, int max)
 bool clientAdd(ClientsContext * context, int socket)
 {
     if (context->nClients >= context->maxClients)
+    {
+        sendCommand(socket, CMD_FULL);
         return false;
+    }
     
     // Il numero di socket è usato per indirizzare le strutture dati
     // ma non necessariamente coincide col numero di clients
@@ -94,7 +97,13 @@ bool clientAdd(ClientsContext * context, int socket)
         perror("setsockopt(SO_KEEPALIVE) failed");
     }
 
-    return true;
+    if (!sendCommand(socket, CMD_OK)) // Invio conferma
+    {
+        clientRemove(context, NULL, socket);
+        return false;
+    }
+    else
+        return true;
 }
 
 void clientRemove(ClientsContext *context, TopicsContext *topics, int socket)

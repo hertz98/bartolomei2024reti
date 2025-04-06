@@ -86,9 +86,8 @@ int main (int argc, char ** argv)
             return 1;
         }
 
-        // Loop through the file descriptors to check activity
         for (int i = 0; i <= clientsContext.fd_max; i++) 
-            if (FD_ISSET(i, &read_fds)) // Found a ready descriptor
+            if (FD_ISSET(i, &read_fds))
             { 
                 if (i == listener) // Nuovo client
                 { 
@@ -188,7 +187,7 @@ bool init(int argc, char ** argv)
     atexit(exiting);
     signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
 
-    srand(time(NULL));
+    srand(time(NULL)); // Seed del generatore di numeri casuali
 
     return true;
 }

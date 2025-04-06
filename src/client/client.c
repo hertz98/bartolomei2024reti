@@ -160,11 +160,25 @@ int init(int argc, char ** argv)
 
     if (connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1)
     {
-        perror("Errore nella connect");
+        perror("Errore nella connect: ");
         return false;
     }
 
-    return true;
+    switch (recvCommand(sd))
+    {
+    case CMD_OK:
+        return true;
+    
+    case CMD_FULL:
+        printf("Il server è pieno!\n");
+        return false;
+    
+    default:
+        printf("Il server non può gestire la richiesta\n");
+        return false;
+    } 
+
+    return false;
 }
 
 bool mainMenu()
