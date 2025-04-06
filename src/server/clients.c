@@ -22,14 +22,11 @@ int clientsInit(ClientsContext *context, int max)
     context->nClients = 0;
     context->maxClients = max;
     
-    // Quando raggiungo il massimo numero di client posso evitare
-    // di reallocare l'array dei client se considero il primo indice
-    // che viene dato solitamente
-    context->clients = malloc( sizeof(Client *) * (max + CLIENTS_ARRAY_SURPLUS));
+    context->clients = malloc( sizeof(Client *) * (max));
     if (!context->clients)
         return false;
 
-    context->allocated = max + CLIENTS_ARRAY_SURPLUS;
+    context->allocated = max;
     memset(context->clients, 0, context->allocated);
     FD_ZERO(&context->master_fds);
     FD_ZERO(&context->read_fds);
@@ -41,11 +38,11 @@ int clientsInit(ClientsContext *context, int max)
 bool clientAdd(ClientsContext * context, int socket)
 {
     if (context->nClients >= context->maxClients)
-    return false;
+        return false;
     
     // Il numero di socket è usato per indirizzare le strutture dati
     // ma non necessariamente coincide col numero di clients
-    const int increment = 10;
+    const int increment = CLIENTs_ARRAY_INCREMENT;
     if (socket >= context->allocated) //Realloco l'array dei clients
     {
         Client **tmp = realloc(context->clients, sizeof(Client *) * (socket + increment));
@@ -61,7 +58,7 @@ bool clientAdd(ClientsContext * context, int socket)
     // Creo la struttura dati
     context->clients[socket] = malloc(sizeof(Client));
     if (!context->clients[socket])
-        return false;
+        return false; // No need to clean, the pointer remains NULL
     
     Client * client = context->clients[socket];
     memset(client, 0, sizeof(Client));
@@ -193,7 +190,7 @@ void clientsFree(ClientsContext * context, TopicsContext *topics)
 inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
 {
     if (FD_ISSET(socket, &context->master_fds))
-        if (!onlyRegistered || context->clients[socket]->registered)
+        if (onlyRegistered && context->clients[socket]->registered)
             return true;
     return false;
 }
@@ -273,7 +270,7 @@ Command nameValid(ClientsContext * context, int socket, char * name)
 
     for (int i = 0; i <= context->fd_max; i++)
         if (i != socket && isClient(context, i, false))
-            if (strcmp(name, context->clients[i]->name) == 0)
+            if (context->clients[i]->name && !strcmp(name, context->clients[i]->name))
                 return CMD_EXISTING;
 
     return CMD_OK;

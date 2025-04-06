@@ -9,8 +9,9 @@
 #define DEFAULT_BIND_PORT 1234
 
 #define MAX_CLIENTs 32
-#define CLIENTS_ARRAY_SURPLUS 2
+#define MAX_UNREGISTERED 10
 #define REFRESH_RATE 1000
+#define CLIENTs_ARRAY_INCREMENT 10
 
 // CONTROLLO RISPOSTE
 #define MAX_ANSWER_ERRORS 1     // Massimo numero di caratteri errati nella risposta

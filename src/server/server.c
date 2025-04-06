@@ -102,7 +102,8 @@ int main (int argc, char ** argv)
                         continue;
                     }
 
-                    clientAdd(&clientsContext, newfd);  
+                    if (!clientAdd(&clientsContext, newfd))
+                        close(newfd);
                 } 
                 else
                     if (!clientHandler(&clientsContext, i))
@@ -178,7 +179,7 @@ bool init(int argc, char ** argv)
         return false;
     }
 
-    if (listen(listener, MAX_CLIENTs) == -1) // Massimo numero di clients prima di scegliere un nome
+    if (listen(listener, MAX_UNREGISTERED) == -1) // Massimo numero di clients prima di scegliere un nome
     {
         perror("Errore nella listen");
         return false;
