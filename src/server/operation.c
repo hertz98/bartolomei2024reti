@@ -211,6 +211,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
             else 
                 return OP_FAIL;
 
+            context->sending++;
             client->sending = true; // Da adesso verrà richiamata questa funzione ogni qual volta il socket è ready in scrittura
             currentOperation->count = -1; // Inizializzazione
             currentOperation->step++;
@@ -248,6 +249,7 @@ OperationResult sendMessage(ClientsContext *context, int socket, void *message_a
 
             currentOperation->step++;
             client->sending = false;
+            context->sending--;
             FD_CLR(socket, &context->write_fds);
             return OP_OK;
 

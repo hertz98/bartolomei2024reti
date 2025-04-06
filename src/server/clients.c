@@ -32,6 +32,8 @@ int clientsInit(ClientsContext *context, int max)
     FD_ZERO(&context->read_fds);
     FD_ZERO(&context->write_fds);
 
+    context->sending = 0;
+
     return true;
 }
 
@@ -119,6 +121,9 @@ void clientRemove(ClientsContext *context, TopicsContext *topics, int socket)
         context->nClients--;
         if (client->registered)
             context->registered--;
+
+        if (client->sending)
+            context->sending--;
 
         // if (client->name)
         //     free(client->name);

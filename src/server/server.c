@@ -110,14 +110,15 @@ int main (int argc, char ** argv)
             }
         
         // Clients: sending
-        for (int i = 0; i <= clientsContext.fd_max; i++) 
-            if (FD_ISSET(i, &write_fds))
-                if(isClient(&clientsContext, i, false) &&
-                    operationHandler(&clientsContext, i) != OP_OK)
-                    {
-                        clientsContext.clients[i]->sending = false;
-                        FD_CLR(i, &clientsContext.write_fds);
-                    }
+        if (clientsContext.sending)
+            for (int i = 0; i <= clientsContext.fd_max; i++) 
+                if (FD_ISSET(i, &write_fds) &&
+                        isClient(&clientsContext, i, false) &&
+                            operationHandler(&clientsContext, i) != OP_OK)
+                {
+                    clientsContext.clients[i]->sending = false;
+                    FD_CLR(i, &clientsContext.write_fds);
+                }
     }
 
 }
