@@ -253,6 +253,7 @@ bool signup()
         MessageArray *tmp = messageArray(1);
         messageString(&tmp->messages[0], myname, false);
         sendMessage(sd, tmp);
+        messageArrayDestroy(&tmp);
 
         switch(recvCommand(sd))
         {
