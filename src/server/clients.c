@@ -356,6 +356,7 @@ bool client_gameInit(ClientsContext * context, int socket, TopicsContext * topic
                     return false;
                 
                 ((Score *) client->game.score[i]->data)->score = scores[i];
+                listDoubly_sortElement(&context->scoreboard.scores[SCR_COMPLETED][i], NULL, client->game.score[i], scoreboard_scoreCompare);
             
             #endif
         }
