@@ -88,6 +88,7 @@ DNode *listDoubly_DNode_insert(DNode **head, DNode *elem, int(compare)(void *, v
     if (!(*head) || dNode_compare(*head, elem, compare) >= 0 )
     {
         elem->next = *head;
+        elem->prev = NULL;
         if (*head)
              (*head)->prev = elem;   
         *head = elem;
