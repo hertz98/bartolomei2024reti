@@ -386,14 +386,10 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
             {
                 MessageArray *question_msg = messageArray(1);
                 messageString(&question_msg->messages[0], currentQuestion->question, false);
-                currentOperation->tmp = question_msg;
+                return operationCreate(sendMessage, context, socket, question_msg);
             }
             else return OP_FAIL;
         }
-
-        // e invio il messaggio
-        MessageArray *question_msg = currentOperation->tmp;
-        return operationCreate(sendMessage, context, socket, question_msg);
     
     case 1: // The function will be called again after the termination of next operation
         currentOperation->tmp = NULL;
