@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <ctype.h>
+#include <sys/time.h>
 #include "clients.h"
 #include "util.h"
 
@@ -271,7 +272,7 @@ Command recvCommand(int socket)
             sent += ret;
         else if (errno == EAGAIN || errno == EWOULDBLOCK)
             continue;
-        else
+        else // Non ho ricevuto niente
             return false;
     }
 
@@ -307,6 +308,10 @@ bool sendCommand(int socket, enum Command cmd)
 
     while (received < sizeof(tmp))
     {
+        // Se il socket non è pronto per oltre COMMAND_SEND_TIMEOUT termino
+        if (!client_socketWriteReady(socket, &(struct timeval) {COMMAND_SEND_TIMEOUT, 0}))
+            return false;
+
         if ((ret = send(socket, &tmp + received, sizeof(tmp)- received, 0)) > 0)
             received += ret;
         else if (errno == EAGAIN || errno == EWOULDBLOCK)

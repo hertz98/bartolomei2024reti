@@ -48,10 +48,12 @@
 
 #define DEFAULT_SCOREBOARD_SERIALIZE_ALLOCATION 4096
 
-#endif
-
 /******************** ALTRO ********************/
+
+#define COMMAND_SEND_TIMEOUT 2 // (secondi)
 
 // Massimo tempo consecutivo in cui il socket non pronto durante
 // l'invio in modo bloccante può bloccare il server prima di essere rimosso
 #define MAX_SEND_STALL 2 // (secondi)
+
+#endif
