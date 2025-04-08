@@ -125,13 +125,6 @@ void clientRemove(ClientsContext *context, TopicsContext *topics, int socket)
         if (client->sending)
             context->sending--;
 
-        #ifndef KEEP_SCORE_ON_CLIENT_REMOVE // I punteggi hanno bisogno del nome del client
-
-            if (client->name)
-                free(client->name);
-        
-        #endif
-
         if (client->game.questions)
             free(client->game.questions);
         if (client->game.score)
@@ -151,8 +144,8 @@ void clientRemove(ClientsContext *context, TopicsContext *topics, int socket)
                 {
                     if (t == client->game.playing)
                     {
-                        scoreboard_removeScore(&context->scoreboard, client->game.score[t], SCR_PLAYING, t);
                         client_setPlayed(client, topics, client->game.playing, true);
+                        scoreboard_removeScore(&context->scoreboard, client->game.score[t], SCR_PLAYING, t);
                     }
                     else
                         scoreboard_removeScore(&context->scoreboard, client->game.score[t], SCR_COMPLETED, t);
@@ -171,6 +164,13 @@ void clientRemove(ClientsContext *context, TopicsContext *topics, int socket)
             list_destroyPreorder(client->operation, operationDestroy);
             client->operation = NULL;
         }
+
+        #ifndef KEEP_SCORE_ON_CLIENT_REMOVE // I punteggi hanno bisogno del nome del client
+
+            if (client->name)
+                free(client->name);
+        
+        #endif
 
         free(client);
 
