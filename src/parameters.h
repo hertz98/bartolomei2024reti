@@ -19,9 +19,9 @@
 
 /******************** PARAMETRI CUSTOM ********************/
 
-#define DEBUG
+//#define DEBUG
 #define CUSTOM_PRINT
-#define KEEP_SCORE_ON_CLIENT_REMOVE
+//#define KEEP_SCORE_ON_CLIENT_REMOVE
 #define RELOAD_SCORES
 
 /******************** PARAMETRI TOPICS ********************/
