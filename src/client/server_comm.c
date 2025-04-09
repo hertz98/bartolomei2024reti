@@ -17,6 +17,9 @@ bool sendMessage(int socket, MessageArray * msgs)
         return false;
     }
 
+    if (!sendCommand(socket, CMD_MESSAGE))
+        return false;
+
     for (int i = -1; i < msgs->size; i++) // Per ciascun messaggio
     {
         Message *msg;

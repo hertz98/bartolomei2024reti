@@ -282,6 +282,8 @@ OperationResult recvMessage(ClientsContext *context, int socket, void *pointer)
     case 0:
         // if(*msgs != NULL) // Parametri limite, non implementato, uso i #define
         //     currentOperation->tmp = *msgs;
+        if (recvCommand(socket) != CMD_MESSAGE)
+            return false;
 
         *msgs = messageArray(0);
         currentOperation->count = -1; // Inizializzazione
