@@ -9,22 +9,22 @@
 
 typedef enum Command 
 {
-    CMD_STOP = false, // Terminate
-    CMD_NONE, // Empty
-    CMD_OK, // Confirms positively 
-    CMD_REGISTER, // Client: Ask register
-    CMD_MESSAGE, // Ask to send a message
-    CMD_SCOREBOARD, // Client wants the rank
-    CMD_NOTVALID, // Invalid client name or invalid request
-    CMD_EXISTING, // Name duplicate
-    CMD_TOPICS, // Client ask for topics data
-    CMD_TOPICS_PLAYABLE, // Client ask for its playable topics
-    CMD_SELECT, // Client ask to select a topic
-    CMD_ANSWER, // Client wants to send an answer
-    CMD_NEXTQUESTION, // Client ask to play next question
-    CMD_CORRECT, // Server informs that the answer is correct
-    CMD_WRONG, // Server informs that the answer is wrong
-    CMD_FULL, // Server full
+    CMD_STOP = false, // Chiusura o errore di comunicazione
+    CMD_NONE, // Niente o domande terminate
+    CMD_OK, // Conferma positiva
+    CMD_REGISTER, // Client: Richiesta di registrazione
+    CMD_MESSAGE, // Messaggio, epilogo
+    CMD_SCOREBOARD, // Client: Richiesta classifica
+    CMD_NOTVALID, // Server: Nome client non valido
+    CMD_EXISTING, // Server: client duplicato
+    CMD_TOPICS, // Client: Richiesta informazioni sui topics
+    CMD_TOPICS_PLAYABLE, // Client: Richiesta informazioni sui topics giocabili
+    CMD_SELECT, // Client: Selezione topic da giocare
+    CMD_ANSWER, // Client: Invio risposta (epilogo)
+    CMD_NEXTQUESTION, // Client: Richiesta prossima domanda
+    CMD_CORRECT, // Server: Risposta corretta
+    CMD_WRONG, // Server: Risposta errata
+    CMD_FULL, // Server: server pieno
 } Command;
 
 #endif
