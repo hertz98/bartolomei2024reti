@@ -292,8 +292,8 @@ Command nameValid(ClientsContext * context, int socket, char * name)
             return CMD_NOTVALID;
 
     for (int i = 0; i <= context->fd_max; i++)
-        if (i != socket && isClient(context, i, false))
-            if (context->clients[i]->name && !strcmp(name, context->clients[i]->name))
+        if (i != socket && isClient(context, i, true))
+            if (context->clients[i]->name && !stricmp(name, context->clients[i]->name))
                 return CMD_EXISTING;
 
     return CMD_OK;

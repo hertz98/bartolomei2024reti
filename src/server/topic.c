@@ -214,9 +214,15 @@ bool *topicsUnplayed(TopicsContext *context, char *user)
     int endline = strlen(context->directory);
     
     char *path = context->directory;
-    strncat(path, USERS_DIR, NAME_MAX);
-    strncat(path, user, NAME_MAX);
-    strncat(path, ".txt", NAME_MAX);
+    strcat(path, USERS_DIR);
+
+    // Rendo il nome minuscolo
+    char tmp[CLIENT_NAME_MAX + 1];
+    strncpy(tmp, user, sizeof(tmp));
+    stringLower(tmp);
+    strcat(path, tmp);
+
+    strcat(path, ".txt");
 
     bool *unplayed = (bool *) malloc(context->nTopics); // array dei topic non giocati
     for (int i = 0; i < context->nTopics; i++)
@@ -268,9 +274,15 @@ int *topicsPlayed(TopicsContext *context, char *user)
     int endline = strlen(context->directory);
     
     char *path = context->directory;
-    strncat(path, USERS_DIR, NAME_MAX);
-    strncat(path, user, NAME_MAX);
-    strncat(path, ".txt", NAME_MAX);
+    strcat(path, USERS_DIR);
+
+    // Rendo il nome minuscolo
+    char tmp[CLIENT_NAME_MAX + 1];
+    strncpy(tmp, user, sizeof(tmp));
+    stringLower(tmp);
+    strcat(path, tmp);
+
+    strcat(path, ".txt");
 
     int *played = (int *) malloc(sizeof(int) * context->nTopics);
     for (int i = 0; i < context->nTopics; i++)
@@ -331,9 +343,15 @@ bool topicMakePlayed(TopicsContext *context, char *user, int i_topic, int score)
     int endline = strlen(context->directory);
     
     char *path = context->directory;
-    strncat(path, USERS_DIR, NAME_MAX);
-    strncat(path, user, NAME_MAX);
-    strncat(path, ".txt", NAME_MAX);
+    strcat(path, USERS_DIR);
+
+    // Rendo il nome minuscolo
+    char tmp[CLIENT_NAME_MAX + 1];
+    strncpy(tmp, user, sizeof(tmp));
+    stringLower(tmp);
+    strcat(path, tmp);
+
+    strcat(path, ".txt");
 
     FILE *file;
     if (!(file = fopen(path, "a")))

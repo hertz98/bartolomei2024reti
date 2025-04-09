@@ -242,3 +242,9 @@ int stricmpTol(const char *string1, const char *string2, int tol, int small)
     else
         return 1;
 }
+
+void stringLower(char * string)
+{
+    for (; *string; string++)
+        *string = tolower(*string);
+}
