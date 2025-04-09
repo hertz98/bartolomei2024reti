@@ -62,14 +62,8 @@ int stricmp(const char *string1, const char *string2)
     int i = 0;
     while (string1[i] != '\0' && string2[i] != '\0')
     {
-        char tmp1 = string1[i],
-             tmp2 = string2[i];
-
-        if (tmp1 >= 'A' && tmp1 <= 'Z')
-            tmp1 += 'a' - 'A';
-
-        if (tmp2 >= 'A' && tmp2 <= 'Z')
-            tmp2 += 'a' - 'A';
+        char tmp1 = tolower( (u_int8_t) string1[i] ),
+             tmp2 = tolower( (u_int8_t) string2[i] );
 
         if (tmp1 != tmp2)
             return tmp1 - tmp2;
@@ -143,8 +137,7 @@ bool removeNumbering(char *string)
     int i = 0;
     while(string[i] != '\0')
     {
-        if ((string[i] >= 'A' && string[i] <= 'Z') ||
-            (string[i] >= 'a' && string[i] <= 'z'))
+        if ( isalpha( (u_int8_t) string[i]) )
         {
             if( i == 0 )
                 return false;
@@ -169,8 +162,10 @@ char * executablePath(char * string)
         char * path = malloc( PATH_MAX + 1 );
         if (readlink("/proc/self/exe", path, PATH_MAX) == -1)
             return NULL;
+        
         path[PATH_MAX] = '\0';
         path = realloc(path, strlen(path) + 1);
+        
         return path; // return NULL if realloc fails
     }
 }
@@ -202,11 +197,8 @@ bool wordInString(const char * string, const char * substring, int tol)
 
         // Conversione da maiuscolo a minuscolo
 
-        if (tmpSub >= 'A' && tmpSub <= 'Z')
-            tmpSub += 'a' - 'A';
-
-        if (tmpString >= 'A' && tmpString <= 'Z')
-            tmpString += 'a' - 'A';
+        tmpSub = tolower( (u_int8_t) tmpSub );
+        tmpString = tolower( (u_int8_t) tmpString );
 
         // Test corrispondenza
 
@@ -230,14 +222,8 @@ int stricmpTol(const char *string1, const char *string2, int tol, int small)
     int i = 0;
     while (string1[i] != '\0' && string2[i] != '\0')
     {
-        char tmp1 = string1[i],
-             tmp2 = string2[i];
-
-        if (tmp1 >= 'A' && tmp1 <= 'Z')
-            tmp1 += 'a' - 'A';
-
-        if (tmp2 >= 'A' && tmp2 <= 'Z')
-            tmp2 += 'a' - 'A';
+        char tmp1 = tolower( (u_int8_t) string1[i] ),
+             tmp2 = tolower( (u_int8_t) string2[i] );
 
         // La tolleranza agli errori non si applica ai numeri
         if ((isdigit(tmp1) || isdigit(tmp2)) && (tmp1 != tmp2) )
