@@ -1,5 +1,6 @@
 /* TOPIC.H
  * Le strutture e le funzioni dei topic organizzano in memoria le domande e le risposte suddivisi per topic
+ * Le funzioni in questo header sono quelle a più stretto contatto con i files
  */
 
 #pragma once
