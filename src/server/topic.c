@@ -70,7 +70,10 @@ bool topicsLoader(TopicsContext *context)
 
             Topic * current = &context->topics[context->nTopics - 1];
             memset(current, 0, sizeof(Topic));
-            strncpy(current->name, file->d_name, NAME_MAX);
+
+            strncpy(current->name, file->d_name, NAME_MAX - 1);
+            // current->name[ sizeof(current->name) - 1 ] = '\0';
+
             current->questions = NULL;
             current->nQuestions = 0;
         }
@@ -173,6 +176,8 @@ void topic_name(char *name)
     removeExtension(name);
 
     removeNumbering(name);
+
+    name[0] = toupper( (uint8_t) name[0]); // Capitalize
 
     return;
 }
