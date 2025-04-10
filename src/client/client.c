@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
+#include <stdarg.h>
 
 #include "../parameters.h"
 #include "server_comm.h"
@@ -61,7 +62,7 @@ void readUser_Enter();
 
 /// @brief Chiede al server la classifica attuale
 /// @return true in caso di successo, false in caso di errore o di errore di comunicazione
-bool scoreboard();
+bool scoreboard(char * msg, ...);
 
 /// @brief Funzione generale di input, legge quello che l'utente scrive ed
 /// eventualmente interpreta i comandi "show score" e "endquiz", inoltre
@@ -72,9 +73,10 @@ bool scoreboard();
 /// @param server Se true controlla che la connessione col server non cada
 /// @param showscore Se true permette di chiedere tramite "show score" la classifica al server e di stamparla
 /// @param endquiz Se true permette di attuare il comando "endquiz" di terminare
+/// @param timeout NULL per infinito
 /// @return Il numero di byte copiati oppure 0 se non è stato immesso niente, 
 /// oppure -1 in caso di altre operazioni oppure termina il server
-int input(InputType type, void * buffer, int size, bool server, bool showscore, bool endquiz);
+int input(InputType type, void * buffer, int size, bool server, bool showscore, bool endquiz, struct timeval *timeout);
 
 /// @brief Da internet... permette fflush(stdin)...
 void clear_stdin();
@@ -195,7 +197,7 @@ bool mainMenu()
         fflush(stdout);
 
         int selection, ret;
-        if ((ret = input(INPUT_INT, &selection, sizeof(selection), false, false, false)) <= 0)
+        if ((ret = input(INPUT_INT, &selection, sizeof(selection), false, false, false, NULL)) <= 0)
             continue;
 
         if (selection == 1)
@@ -223,7 +225,7 @@ bool signup()
         printf("Scegli un nickname (deve essere univoco): ");
         fflush(stdout);
 
-        if ((ret = input(INPUT_STRING, myname, sizeof(myname), true, false, false)) <= 0)
+        if ((ret = input(INPUT_STRING, myname, sizeof(myname), true, false, false, NULL)) <= 0)
             continue;
 
         if (strlen(myname) < CLIENT_NAME_MIN)
@@ -371,17 +373,10 @@ bool topicsSelection()
 
     while (!nPlayable) // while (true)
     {
-        if (!scoreboard())
+        if (!scoreboard("Nessun quiz disponibile per l'utente \"%s\"\nPremere un ENTER per continuare\n\n", myname))
             return false;
-        
-        printf("Nessun quiz disponibile per l'utente \"%s\"\n", myname);
-        printf("Premere un ENTER per continuare\n");
-        
-        if (client_socketsReady((int[]) {STDIN_FILENO}, 1, &(struct timeval) {1,0} ) != -1)
-        {
-            clear_stdin();
-            exit(0);
-        }
+
+        exit(0);
     }
     
     while(true)
@@ -401,7 +396,7 @@ bool topicsSelection()
         {
             printf("La tua scelta: ");
             fflush(stdout);
-        } while ((ret = input(INPUT_INT, &playing, sizeof(playing), true, true, true)) == 0);
+        } while ((ret = input(INPUT_INT, &playing, sizeof(playing), true, true, true, NULL)) == 0);
         
         if (ret > 0 &&  playing >= 1 && playing <= nPlayable)
             break;
@@ -442,30 +437,42 @@ char * newlineReplace(char * string)
 void readUser_Enter()
 {
     printf("Premere [Invio] per continuare...\n");
-    while(getchar() != '\n');
+    while (input(INPUT_STRING, NULL, 0, true, false, false, &(struct timeval) {1, 0}) < 0);
 }
 
-bool scoreboard()
+bool scoreboard(char * msg, ...)
 {
-    clear();
-
-    if (!sendCommand(sd, CMD_SCOREBOARD) || recvCommand(sd) != CMD_OK) // Chiedo e aspetto conferma
+    do
     {
-        printf("Errore di comunicazione con il server\n");
-        return false;
-    }
+        clear();
+        
+        if (msg) // Passo a printf i parametri passati a questa stessa funzione
+        {
+            va_list args;
+            va_start(args, msg);    
+            printf(msg, args);
+            va_end(args);
+        }
 
-    MessageArray * tmp = recvMessage(sd);
-    if (!tmp)
-    {
-        printf("Qualcosa è andato storto nella ricezione della classifica\n");
-        return false;
-    }
+        if (!sendCommand(sd, CMD_SCOREBOARD) || recvCommand(sd) != CMD_OK) // Chiedo e aspetto conferma
+        {
+            printf("Errore di comunicazione con il server\n");
+            return false;
+        }
 
-    for (int i = 0; i < tmp->size; i++)
-        printf("%s\n", (char *) tmp->messages[i].payload);
+        MessageArray * tmp = recvMessage(sd);
+        if (!tmp)
+        {
+            printf("Qualcosa è andato storto nella ricezione della classifica\n");
+            return false;
+        }
 
-    messageArrayDestroy(&tmp);
+        for (int i = 0; i < tmp->size; i++)
+            printf("%s\n", (char *) tmp->messages[i].payload);
+
+        messageArrayDestroy(&tmp);
+
+    } while (input(INPUT_STRING, NULL, 0, true, false, false, &(struct timeval) {1, 0}) < 0);
 
     return true;
 }
@@ -517,7 +524,7 @@ bool playTopic()
             {
                 printf("Risposta: ");
                 fflush(stdout);
-            } while ((ret = input(INPUT_STRING, buffer, sizeof(buffer), true, true, true)) == 0);
+            } while ((ret = input(INPUT_STRING, buffer, sizeof(buffer), true, true, true, NULL)) == 0);
 
             if (ret > 0)
                 break;
@@ -560,20 +567,20 @@ bool playTopic()
     }
 }
 
-int input(InputType type, void * out_buffer, int size, bool server, bool showscore, bool endquiz)
+int input(InputType type, void * out_buffer, int size, bool server, bool showscore, bool endquiz, struct timeval *timeout)
 {
     char buffer[CLIENT_MAX_MESSAGE_LENGHT];
     int ret;
 
+    if (size < 0)
+        size = 0;
+
     // Uso la select per controllare sia STDIN che il socket del server in maniera di accorgermi della disconnessione
     while(server)
     {
-        int ready = client_socketsReady( (int[]) {STDIN_FILENO, sd, }, 2, NULL);
-        if (ready == -1) // Non dovrebbe succedere con timeout infinito
-        {
-            printf("Problema con la select\n");
-            exit(EXIT_FAILURE);
-        }
+        int ready = client_socketsReady( (int[]) {STDIN_FILENO, sd, }, 2, timeout);
+        if (ready == -1)
+            return -1;
 
         if (ready == sd)
             if (recvCommand(sd) == false)
@@ -598,9 +605,8 @@ int input(InputType type, void * out_buffer, int size, bool server, bool showsco
 
         if (showscore && !strncmp(buffer, "show score", sizeof(buffer)))
         {
-            if (!scoreboard())
+            if (!scoreboard(NULL))
                 return false;
-            readUser_Enter();
             return -1;
         }
 
@@ -610,17 +616,22 @@ int input(InputType type, void * out_buffer, int size, bool server, bool showsco
             exit(EXIT_SUCCESS);
         }
 
-        if (type == INPUT_STRING)
+        if (size)
         {
-            strncpy(out_buffer, buffer, size - 1);
-            buffer[size - 1] = '\0';
-            return ret - 1;
+            if (type == INPUT_STRING)
+            {
+                strncpy(out_buffer, buffer, size - 1);
+                buffer[size - 1] = '\0';
+                return ret - 1;
+            }
+    
+            if (type == INPUT_INT && (ret = sscanf(buffer, "%d", (int*) out_buffer)) > 0)
+                return ret;
+            else
+                return 0;
         }
-
-        if (type == INPUT_INT && (ret = sscanf(buffer, "%d", (int*) out_buffer)) > 0)
-            return ret;
         else
-            return 0;
+            return ret - 1;
     }
     else if (ret == 0)
     {
