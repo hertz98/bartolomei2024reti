@@ -187,6 +187,8 @@ void topic_name(char *name)
 
     removeNumbering(name);
 
+    stringStrip(name);
+
     name[0] = toupper( (uint8_t) name[0]); // Capitalize
 
     return;

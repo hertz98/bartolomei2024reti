@@ -114,6 +114,8 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
         client->name = (char*) tmp->messages[0].payload;
         messageArrayDestroy(&tmp);
 
+        stringStrip(client->name);
+
         enum Command ret;
         if ((ret = nameValid(context, socket, client->name)) == CMD_OK)
         {

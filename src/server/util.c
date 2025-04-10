@@ -134,6 +134,9 @@ int strcpyResize(char **dst, const char *src, int *allocatedSize, int pos)
 
 bool removeNumbering(char *string)
 {
+    if (!string || !*string)
+        return false;
+
     int i = 0;
     while(string[i] != '\0')
     {
@@ -247,4 +250,30 @@ void stringLower(char * string)
 {
     for (; *string; string++)
         *string = tolower(*string);
+}
+
+void stringStrip(char *string)
+{
+    if (!string || !*string)
+        return;
+    
+    for (int i = 0; string[i]; i++)
+    {
+        if ( isalnum( (u_int8_t) string[i]) )
+        {
+            if( i == 0 )
+                break;
+            
+            memmove(string, string + i, strlen(string) - i + 1);
+            break;
+        }
+    }
+
+    for (int i = strlen(string) - 1; i >= 0; i--) // comincio dal fondo
+        if ( isspace( (u_int8_t) string[i]) ) // Se ho trovato uno spazio
+            string[i] = '\0';
+        else
+            break;
+
+    return;
 }

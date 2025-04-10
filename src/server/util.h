@@ -76,6 +76,10 @@ bool wordInString(const char * string, const char * substring, int tol);
 /// @return Ritorna 0 se le stringhe corrispondono non superando tol errori
 int stricmpTol(const char *string1, const char *string2, int tol, int small);
 
+/// @brief Converte una intera stringa in minuscolo
+/// @param string 
 void stringLower(char *string);
+
+void stringStrip(char *string);
 
 #endif
