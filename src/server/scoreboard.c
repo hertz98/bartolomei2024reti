@@ -8,22 +8,26 @@ bool scoreboard_init(Scoreboard *scoreboard, TopicsContext * topics)
 {
     scoreboard->nTopics = topics->nTopics;
 
+    // Alloco l'area di memoria dedicata a contenere i puntatori delle serializzazioni
     scoreboard->serialized = malloc(sizeof(SerializedScoreboard) * SCOREBOARD_SIZE * scoreboard->nTopics);
     if (!scoreboard->serialized)
         return false;
 
     for (int i = 0; i < SCOREBOARD_SIZE; i++)
     {
+        // Alloco i puntatori alle liste di punteggi per ciascuna classifica (in gioco e completata)
         scoreboard->scores[i] = malloc(sizeof(DNode *) * scoreboard->nTopics);
         if (!scoreboard->scores[i])
             return false;
         memset(scoreboard->scores[i], 0, sizeof(DNode *) * scoreboard->nTopics);
     
+        // Per ciascun topic inizializzo le serializzazioni
         for (int t = 0; t < scoreboard->nTopics; t++)
             if (!scoreboard_serialize_init(&scoreboard->serialized[ scoreboard_serialize_index(scoreboard, i, t) ]))
                 return false;
     }
     
+    // Ora che tutto e inizializzato creo le serializzazioni
     scoreboard_serialize_update(scoreboard, topics);
 
     return true;
@@ -98,17 +102,18 @@ DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name
     if (!score_list || !name)
         return NULL;
 
-    if (!*score_list)
+    if (!*score_list) // Caso lista vuota
     {
         Score * tmp = scoreboard_newScore(name, 0);
         if (!tmp)
             return NULL;
 
-        scoreboard->serialized[ scoreboard_serialize_index(scoreboard, index, topic) ].modified = true;
+        scoreboard->serialized[ scoreboard_serialize_index(scoreboard, index, topic) ].modified = true; // Rifaccio la serializzazione
         
         return listDoubly_append(score_list, tmp);
     }
 
+    // Caso elemento già in lista
     DNode *current = *score_list;
     for (; current && current->next; current = current->next)
     {
@@ -117,6 +122,7 @@ DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name
             return current;
     }
     
+    // Caso elemento non trovato
     // Evito di ripercorrere tutta la intera lista
     // Aggiungo in fondo perchè è probabile che il punteggio sia 0 inizialmente
     DNode *ret;
@@ -126,7 +132,7 @@ DNode *scoreboard_get(Scoreboard * scoreboard, int index, int topic, char * name
     if (!(ret = listDoubly_append(&current, tmp)))
         free(tmp);
 
-    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, index, topic) ].modified = true;
+    scoreboard->serialized[ scoreboard_serialize_index(scoreboard, index, topic) ].modified = true; // Rifaccio la serializzazione
 
     return ret;
 }
@@ -168,11 +174,13 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                         snprintf(buffer, sizeof(buffer), "Quiz tema %d completato\n", t + 1);
                 #endif
                 
+                // Dimensione della stringa
                 current->serialized_lenght = strcpyResize(&current->string, 
                                                             buffer, 
                                                             &current->serialized_allocated, 
                                                             0);
 
+                // Punteggi effettivi: scorro tutta la lista
                 for (DNode * node = scoreboard->scores[i][t]; node; node = node->next)
                 {
                     Score *score = node->data;
@@ -183,13 +191,14 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
                         snprintf(buffer, sizeof(buffer), "- %s %d\n", score->name, score->score);
                     #endif
 
+                    // Dimensione della stringa
                     current->serialized_lenght += strcpyResize(&current->string, 
                                                                 buffer, 
                                                                 &current->serialized_allocated, 
                                                                 current->serialized_lenght);
                 }
 
-                // current->serialized_lenght[t]++; // The last NULL caracher
+                // current->serialized_lenght[t]++; // The last NULL caracher, rimosso perché è più semplice ragionare senza il carattere nullo
                 current->modified = false;
             }
         }
@@ -216,7 +225,7 @@ int scoreboard_scoreCompare(void *a_ptr, void *b_ptr)
         return -1;
 }
 
-void scoreboard_print(Scoreboard *scoreboard)
+void scoreboard_print(Scoreboard *scoreboard) // solo di DEBUG, usare le serializzazioni
 {
     for (int i = 0; i < SCOREBOARD_SIZE; i++)
         for (int t = 0; t < scoreboard->nTopics; t++)
@@ -231,20 +240,23 @@ void scoreboard_print(Scoreboard *scoreboard)
         }
 }
 
-void scoreboard_scorePrint(void *score)
+void scoreboard_scorePrint(void *score) // solo di DEBUG, usare le serializzazioni
 {
     printf("- %s: %d", ((Score *) score)->name, ((Score *) score)->score);
 }
 
+// incremento il punteggio e riordino la lista (O(n))
 void scoreboard_increaseScore(Scoreboard * scoreboard, DNode * score, int topic)
 {
     ((Score*) score->data)->score++;
-    
+     
     listDoubly_sortElement( &scoreboard->scores[SCR_PLAYING][topic],
                             NULL, score, scoreboard_scoreCompare);
+    
     scoreboard->serialized[ scoreboard_serialize_index(scoreboard, SCR_PLAYING, topic) ].modified = true;
 }
 
+// Estraggo il nodo e lo sposto nell'altra lista semplicemente
 bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic)
 {
     if (!scoreboard || !elem || topic < 0)
@@ -265,6 +277,7 @@ bool scoreboard_completedScore(Scoreboard *scoreboard, DNode * elem, int topic)
     return true;
 }
 
+// estraggo il nodo e lo dealloco
 void scoreboard_removeScore(Scoreboard * scoreboard, DNode * score, int index, int topic)
 {
     if (topic < 0 || topic >= scoreboard->nTopics)

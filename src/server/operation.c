@@ -128,7 +128,7 @@ OperationResult regPlayer(ClientsContext *context, int socket, void *topicsConte
         {
             free(client->name);
             client->name = NULL;
-            if (!sendCommand(socket, ret))
+            if (!sendCommand(socket, ret)) // Invio il comando ritornato da nameValid()
                 return OP_FAIL;
             return OP_DONE;
         }
