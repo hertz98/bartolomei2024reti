@@ -381,6 +381,8 @@ bool topicsSelection()
     
     while(true)
     {
+        int ret;
+
         clear();
 
         printf("Quiz disponibili\n+++++++++++++++++++++++++++++++\n");
@@ -391,14 +393,21 @@ bool topicsSelection()
 
         printf("+++++++++++++++++++++++++++++++\n");
 
-        int ret;
-        do
+        while (true)
         {
             printf("La tua scelta: ");
             fflush(stdout);
-        } while ((ret = input(INPUT_INT, &playing, sizeof(playing), true, true, true, NULL)) == 0);
-        
-        if (ret > 0 &&  playing >= 1 && playing <= nPlayable)
+            ret = input(INPUT_INT, &playing, sizeof(playing), true, true, true, NULL);
+
+            if (!ret)
+                continue;
+            else if (ret < 0)
+                break; // Ristampo tutto            
+            else if (playing >= 1 && playing <= nPlayable)
+                break;
+        }
+
+        if (ret > 0) // altrimenti ri-stampo tutto
             break;
     }
 
