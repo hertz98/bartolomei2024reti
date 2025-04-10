@@ -39,9 +39,11 @@ bool clientHandler(ClientsContext * context, int socket);
 /// @brief Si occupa di stampare a video i topics e la classifica nel server
 void printServer();
 
+void signalHandler(int signal);
+
 /// @brief Pulizia delle strutture dati all'uscita 
 /// (lo farebbe comunque il sistema operativo)
-void exiting();
+void cleaning();
 
 /********** VARIABILI GLOBALI **********/
 
@@ -185,8 +187,10 @@ bool init(int argc, char ** argv)
         return false;
     }
 
-    atexit(exiting);
+    atexit(cleaning);
     signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
 
     srand(time(NULL)); // Seed del generatore di numeri casuali
 
@@ -275,7 +279,12 @@ void printServer()
 
 }
 
-void exiting()
+void signalHandler(int signal) // exit chiama cleaning
+{
+    exit(128 + signal); // Convenzione
+}
+
+void cleaning()
 {
     clientsFree(&clientsContext, &topicsContext);
     topicsFree(&topicsContext);

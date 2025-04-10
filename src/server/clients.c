@@ -128,6 +128,7 @@ void clientRemove(ClientsContext *context, TopicsContext *topics, int socket)
 
         if (client->game.questions)
             free(client->game.questions);
+        
         if (client->game.score)
         {
             #ifdef KEEP_SCORE_ON_CLIENT_REMOVE
@@ -209,8 +210,12 @@ void clientsFree(ClientsContext * context, TopicsContext *topics)
 inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
 {
     if (FD_ISSET(socket, &context->master_fds))
-        if (onlyRegistered && context->clients[socket]->registered)
+    {
+        if (!onlyRegistered)
             return true;
+        else if (context->clients[socket]->registered)
+            return true;
+    }
     return false;
 }
 
