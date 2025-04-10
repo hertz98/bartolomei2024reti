@@ -164,9 +164,9 @@ void scoreboard_serialize_update(Scoreboard *scoreboard, TopicsContext *topics)
 
                 #ifdef CUSTOM_PRINT
                     if (i == SCR_PLAYING)
-                        snprintf(buffer, sizeof(buffer), "Punteggio tema \"%d - %s\"\n", t + 1, topics->topics[t].name);
+                        snprintf(buffer, sizeof(buffer), "Punteggio tema \"%d - %s\":\n", t + 1, topics->topics[t].name);
                     else
-                        snprintf(buffer, sizeof(buffer), "Quiz tema \"%d - %s\" completato\n", t + 1, topics->topics[t].name);
+                        snprintf(buffer, sizeof(buffer), "Quiz tema \"%d - %s\" completato:\n", t + 1, topics->topics[t].name);
                 #else
                     if (i == SCR_PLAYING)
                         snprintf(buffer, sizeof(buffer), "Punteggio tema %d\n", t + 1);
