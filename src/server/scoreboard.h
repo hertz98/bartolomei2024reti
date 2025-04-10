@@ -1,6 +1,25 @@
 /* SCOREBOARD.H
  * La scoreboard si occupa di mantenere i punteggi dei giocatori in maniera ordianta  
  * e distinta per ogni topic, oltre a mantenere una cache della serializzazione degli stessi
+ * 
+ * Le strutture dati sono composte nel seguente modo:
+ * Scoreboard/
+ * ├── nTopics
+ * ├── scores [SCR_PLAYING]
+ * │   ├── topic1
+ * │   ├── topic2
+ * │   └── topic3
+ * ├── scores [SCR_COMPLETED]
+ * │   ├── topic1
+ * │   ├── topic2
+ * │   └── topic3
+ * └── serialized   // Array 1D
+ *     ├── SerializedScoreboard0    // ([SCR_PLAYING][topic1])
+ *     ├── SerializedScoreboard1    // ([SCR_PLAYING][topic2])
+ *     ├── SerializedScoreboard2    // ([SCR_PLAYING][topic3])
+ *     ├── SerializedScoreboard3    // ([SCR_COMPLETED][topic1])
+ *     ├── SerializedScoreboard4    // ([SCR_COMPLETED][topic2])
+ *     └── SerializedScoreboard5    // ([SCR_COMPLETED][topic3])
  */
 
 #pragma once

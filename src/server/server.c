@@ -181,7 +181,7 @@ bool init(int argc, char ** argv)
         return false;
     }
 
-    if (listen(listener, MAX_UNREGISTERED) == -1) // Massimo numero di clients prima di scegliere un nome
+    if (listen(listener, MAX_ACCEPTING) == -1) // Massimo numero di clients prima di scegliere un nome
     {
         perror("Errore nella listen");
         return false;

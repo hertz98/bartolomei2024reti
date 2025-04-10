@@ -231,7 +231,7 @@ OperationResult sendData(int socket, void *buffer, unsigned int length, unsigned
     while (true)
     {
         if (block)
-            if (!client_socketWriteReady(socket, &(struct timeval) {MAX_SEND_STALL,  0})) // Salvo cicli CPU e ho un timeout per lo stallo del socket
+            if (!client_socketWriteReady(socket, &(struct timeval) {BLOCKING_SEND_TIMEOUT,  0})) // Salvo cicli CPU e ho un timeout per lo stallo del socket
                 return OP_FAIL;
 
         int tmp = send(socket, buffer + *sent, length - *sent, 0);

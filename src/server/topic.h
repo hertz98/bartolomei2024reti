@@ -1,6 +1,16 @@
 /* TOPIC.H
  * Le strutture e le funzioni dei topic organizzano in memoria le domande e le risposte suddivisi per topic
- * Le funzioni in questo header sono quelle a più stretto contatto con i files
+ * Le funzioni in questo header sono quelle a più stretto contatto con il file system, in particolare si
+ * caricanno in memoria i topics, si carica e si salva lo stato di gioco dei players
+ * 
+ * TopicsContext/
+ * ├── directory [PATH_MAX]
+ * ├── nTopics
+ * ├── topicsString [nTopics]
+ * └── topics [nTopics]
+ *     ├── *questions
+ *     ├── nQuestions
+ *     └── name [NAME_MAX]
  */
 
 #pragma once

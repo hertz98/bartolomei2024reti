@@ -23,7 +23,7 @@
 #include <stdbool.h>
 #include "../parameters.h"
 
-typedef struct ClientsContext ClientsContext;
+typedef struct ClientsContext ClientsContext; // Need to avoid recursive inclusion
 
 // Operations
 

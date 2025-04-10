@@ -1,7 +1,34 @@
 /* CLIENTS.H
  * Contiene funzioni e strutture dati inerenti ai clients e la comunicazione con essi
+ * tra cui funzioni per la gestione dei clients, e della classifica
  * 
- * I clients vengono identificati tramite il loro indice di socket
+ * I clients vengono identificati tramite il loro indice di socket perciò la grandezza del
+ * array dei clients dipende dagli indici assegnati dal sistema operativo ai socket
+ * 
+ * ClientsContext/
+ * ├── nClients
+ * ├── registered
+ * ├── maxClients
+ * ├── sending
+ * ├── master_fds
+ * ├── read_fds
+ * ├── write_fds
+ * ├── fd_max
+ * ├── listener
+ * ├── allocated 
+ * ├── scoreboard   // Scoreboard.h
+ * └── *clients [allocated]
+ *     ├── *name
+ *     ├── *operation
+ *     ├── nOperations
+ *     ├── registered
+ *     ├── sending
+ *     └── game
+ *         ├── playing
+ *         ├── playableTopics [topicsContext->nTopics]
+ *         ├── *score [topicsContext->nTopics]
+ *         ├── currentQuestion
+ *         └── *questions [currentTopic->nQuestions]
 */
 
 #pragma once
@@ -49,7 +76,7 @@ struct ClientsContext {
     int registered; // Numero di client attualmente registrati
     int maxClients; // Numero massimo di clients servibili
 
-    int sending;
+    int sending; // Numero di client a cui stiamo inviando dati
 
     fd_set master_fds,
            read_fds,

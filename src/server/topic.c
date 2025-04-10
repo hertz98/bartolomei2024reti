@@ -50,6 +50,20 @@ bool topicsInit(TopicsContext *context)
     return true;
 }
 
+/* topic.txt
+ *
+ * Domanda 1
+ * Risposta 1
+ * 
+ * Domanda 2
+ * Risposta 2
+ * Domanda 3
+ * Risposta 3
+ * 
+ * Domanda non valida
+ * 
+ * Risposta non valida 
+ */
 bool topicsLoader(TopicsContext *context)
 {
     int endline = strlen(context->directory);
@@ -337,6 +351,15 @@ int *topicsPlayed(TopicsContext *context, char *user)
     return played;
 }
 
+/* user.txt
+ *
+ * Topic 1
+ * 5
+ * 
+ * Topic 2
+ * Topic 3
+ * 3
+ */
 bool topicMakePlayed(TopicsContext *context, char *user, int i_topic, int score)
 {
     if (i_topic >= context->nTopics)

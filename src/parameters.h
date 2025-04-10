@@ -9,7 +9,7 @@
 #define DEFAULT_BIND_PORT 1234
 
 #define MAX_CLIENTs 32
-#define MAX_UNREGISTERED 10
+#define MAX_ACCEPTING 10
 #define REFRESH_RATE 1000
 #define CLIENTs_ARRAY_INCREMENT 10
 
@@ -19,7 +19,7 @@
 
 /******************** PARAMETRI CUSTOM ********************/
 
-#define DEBUG
+//#define DEBUG
 #define CUSTOM_PRINT
 //#define KEEP_SCORE_ON_CLIENT_REMOVE
 #define RELOAD_SCORES
@@ -54,6 +54,6 @@
 
 // Massimo tempo consecutivo in cui il socket non pronto durante
 // l'invio in modo bloccante può bloccare il server prima di essere rimosso
-#define MAX_SEND_STALL 2 // (secondi)
+#define BLOCKING_SEND_TIMEOUT 2 // (secondi)
 
 #endif
