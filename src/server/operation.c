@@ -409,6 +409,12 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
             case CMD_SCOREBOARD:
                 return client_sendScoreboard(context, socket);
 
+            case CMD_ENDQUIZ:
+            {
+                client_endquiz(context, socket, topicsContext);
+                return OP_DONE;
+            }
+
             default:
                 return OP_FAIL;
         }
@@ -445,17 +451,7 @@ OperationResult playTopic(ClientsContext *context, int socket, void *topicsConte
                 return OP_FAIL;
 
         if (++client->game.currentQuestion >= currentTopic->nQuestions) // Domande terminate
-        {
-            scoreboard_completedScore(&context->scoreboard, client->game.score[client->game.playing],
-                            client->game.playing);
-
-            client_setPlayed(client, topicsContext, client->game.playing, true);
-
-            client->game.playing = -1;
-            client->game.currentQuestion = -1;
-
-
-        }
+            client_endquiz(context, socket, topicsContext);
 
         return OP_DONE;
 

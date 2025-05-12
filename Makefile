@@ -1,7 +1,7 @@
 # Makefile
 
 COMPILER = gcc
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -fsanitize=address
 
 SERVER_FLAGS := 127.0.0.1 1234
 CLIENT_FLAGS := 127.0.0.1 1234

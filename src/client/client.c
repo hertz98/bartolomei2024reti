@@ -537,6 +537,8 @@ bool playTopic()
 
             if (ret > 0)
                 break;
+            else if (ret == -2)
+                return true;
         }
 
         if ( !sendCommand(sd, CMD_ANSWER) )
@@ -621,8 +623,8 @@ int input(InputType type, void * out_buffer, int size, bool server, bool showsco
 
         if (endquiz && !strncmp(buffer, "endquiz", sizeof(buffer)))
         {
-            sendCommand(sd, CMD_STOP);
-            exit(EXIT_SUCCESS);
+            sendCommand(sd, CMD_ENDQUIZ);
+            return -2;
         }
 
         if (size)

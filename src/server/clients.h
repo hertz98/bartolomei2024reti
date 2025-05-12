@@ -225,4 +225,10 @@ OperationResult client_sendScoreboard(ClientsContext *context, int socket);
 /// @return Ritorna l'esito dell'operazione creata
 OperationResult client_sendPlayable(ClientsContext *context, TopicsContext * topics, int socket);
 
+/// @brief Imposta il quiz di un client come terminato e salva il punteggio
+/// @param context Strutture dati inerenti ai client inizializzate
+/// @param socket Indice del descrittore del socket del client
+/// @param topicsContext Strutture dati inerenti ai topics inizializzate
+void client_endquiz(ClientsContext *context, int socket, TopicsContext *topicsContext);
+
 #endif

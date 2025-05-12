@@ -25,6 +25,7 @@ typedef enum Command
     CMD_CORRECT, // Server: Risposta corretta
     CMD_WRONG, // Server: Risposta errata
     CMD_FULL, // Server: server pieno
+    CMD_ENDQUIZ, // Client: Richiesta di terminare il quiz corrente
 } Command;
 
 #endif

@@ -577,3 +577,16 @@ OperationResult client_sendPlayable(ClientsContext *context, TopicsContext * top
     messageBoolArray( &((MessageArray *) tmp)->messages[0], client->game.playableTopics, topics->nTopics);
     return operationCreate(sendMessage, context, socket, tmp);
 }
+
+void client_endquiz(ClientsContext *context, int socket, TopicsContext *topics)
+{
+    Client * client = context->clients[socket];
+
+    scoreboard_completedScore(&context->scoreboard, client->game.score[client->game.playing],
+                    client->game.playing);
+
+    client_setPlayed(client, topics, client->game.playing, true);
+
+    client->game.playing = -1;
+    client->game.currentQuestion = -1;
+}
