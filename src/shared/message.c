@@ -115,6 +115,9 @@ void messageString(Message *message, char *string, bool toFree)
     message->lenght = strlen(string) + 1;
     message->transmitted = 0;
     message->toFree = toFree;
+
+    if (message->lenght > TCP_MAX_PAYLOAD)
+        message->lenght = TCP_MAX_PAYLOAD; // Non invio il NULL character, lascio gestire all'altra parte
     
     return;
 }
@@ -135,6 +138,9 @@ void messageStringReady(Message *message, char *string, int size, bool toFree)
     message->lenght = size + 1;
     message->transmitted = 0;
     message->toFree = toFree;
+    
+    if (message->lenght > TCP_MAX_PAYLOAD)
+        message->lenght = TCP_MAX_PAYLOAD; // Non invio il NULL character, lascio gestire all'altra parte
     
     return;
 }

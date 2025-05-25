@@ -10,6 +10,8 @@
 #include <inttypes.h>
 #include "list.h"
 
+#define TCP_MAX_PAYLOAD 65535 // Non voglio confrontarmi con messaggi più grandi di quello che può gestire TCP
+
 /// @brief Un Message è una struttura che contiene i dati grezzi e il loro stato di trasmissione
 typedef struct Message {
     void * payload; // Puntatore al contenuto del messaggio da inviare

@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <sys/time.h>
 #include "clients.h"
+#include "operation.h"
 #include "util.h"
 
 int clientsInit(ClientsContext *context, int max)
@@ -227,7 +228,7 @@ inline bool isClient(ClientsContext *context, int socket, bool onlyRegistered)
 OperationResult sendData(int socket, void *buffer, unsigned int length, unsigned int *sent, bool block)
 {          
     OperationResult ret_block = OP_DONE;
-    
+
     while (true)
     {
         if (block)
